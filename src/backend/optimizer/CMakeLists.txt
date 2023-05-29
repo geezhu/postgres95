@@ -1,0 +1,10 @@
+set(CMAKE_MODULE_PATH
+        ${CMAKE_CURRENT_SOURCE_DIR}/path
+        ${CMAKE_CURRENT_SOURCE_DIR}/plan
+        ${CMAKE_CURRENT_SOURCE_DIR}/prep
+        ${CMAKE_CURRENT_SOURCE_DIR}/util
+        )
+add_subdirectory(path)
+add_subdirectory(plan)
+add_subdirectory(prep)
+add_subdirectory(util)

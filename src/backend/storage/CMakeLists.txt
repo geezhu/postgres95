@@ -1,0 +1,16 @@
+set(CMAKE_MODULE_PATH
+        ${CMAKE_CURRENT_SOURCE_DIR}/buffer
+        ${CMAKE_CURRENT_SOURCE_DIR}/file
+        ${CMAKE_CURRENT_SOURCE_DIR}/ipc
+        ${CMAKE_CURRENT_SOURCE_DIR}/large_object
+        ${CMAKE_CURRENT_SOURCE_DIR}/lmgr
+        ${CMAKE_CURRENT_SOURCE_DIR}/page
+        ${CMAKE_CURRENT_SOURCE_DIR}/smgr
+        )
+add_subdirectory(buffer)
+add_subdirectory(file)
+add_subdirectory(ipc)
+add_subdirectory(large_object)
+add_subdirectory(lmgr)
+add_subdirectory(page)
+add_subdirectory(smgr)

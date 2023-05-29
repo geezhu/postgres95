@@ -11,7 +11,7 @@ set(CMAKE_MODULE_PATH
         ${CMAKE_CURRENT_SOURCE_DIR}/tioga
         ${CMAKE_CURRENT_SOURCE_DIR}/bootstrap
         ${CMAKE_CURRENT_SOURCE_DIR}/commands
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
+#        ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/libpq
         ${CMAKE_CURRENT_SOURCE_DIR}/nodes
         ${CMAKE_CURRENT_SOURCE_DIR}/parser
@@ -33,7 +33,7 @@ add_subdirectory(storage)
 add_subdirectory(tioga)
 add_subdirectory(bootstrap)
 add_subdirectory(commands)
-add_subdirectory(include)
+#add_subdirectory(include)
 add_subdirectory(libpq)
 add_subdirectory(nodes)
 add_subdirectory(parser)
