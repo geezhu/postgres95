@@ -1,0 +1,3 @@
+/src/backend/bootstrap/bootscanner.c
+/src/backend/bootstrap/bootparse.c
+/include/bootstrap/bootstrap_tokens.h
