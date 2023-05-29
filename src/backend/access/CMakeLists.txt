@@ -1,0 +1,16 @@
+set(CMAKE_MODULE_PATH
+        ${CMAKE_CURRENT_SOURCE_DIR}/common
+        ${CMAKE_CURRENT_SOURCE_DIR}/hash
+        ${CMAKE_CURRENT_SOURCE_DIR}/heap
+        ${CMAKE_CURRENT_SOURCE_DIR}/index
+        ${CMAKE_CURRENT_SOURCE_DIR}/nbtree
+        ${CMAKE_CURRENT_SOURCE_DIR}/rtree
+        ${CMAKE_CURRENT_SOURCE_DIR}/transam
+        )
+add_subdirectory(common)
+add_subdirectory(hash)
+add_subdirectory(heap)
+add_subdirectory(index)
+add_subdirectory(nbtree)
+add_subdirectory(rtree)
+add_subdirectory(transam)

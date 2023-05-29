@@ -1,0 +1,43 @@
+set(CMAKE_MODULE_PATH
+        ${CMAKE_CURRENT_SOURCE_DIR}/access
+        ${CMAKE_CURRENT_SOURCE_DIR}/catalog
+        ${CMAKE_CURRENT_SOURCE_DIR}/executor
+        ${CMAKE_CURRENT_SOURCE_DIR}/lib
+        ${CMAKE_CURRENT_SOURCE_DIR}/main
+        ${CMAKE_CURRENT_SOURCE_DIR}/optimizer
+        ${CMAKE_CURRENT_SOURCE_DIR}/port
+        ${CMAKE_CURRENT_SOURCE_DIR}/regex
+        ${CMAKE_CURRENT_SOURCE_DIR}/storage
+        ${CMAKE_CURRENT_SOURCE_DIR}/tioga
+        ${CMAKE_CURRENT_SOURCE_DIR}/bootstrap
+        ${CMAKE_CURRENT_SOURCE_DIR}/commands
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/libpq
+        ${CMAKE_CURRENT_SOURCE_DIR}/nodes
+        ${CMAKE_CURRENT_SOURCE_DIR}/parser
+        ${CMAKE_CURRENT_SOURCE_DIR}/postmaster
+        ${CMAKE_CURRENT_SOURCE_DIR}/rewrite
+        ${CMAKE_CURRENT_SOURCE_DIR}/tcop
+        ${CMAKE_CURRENT_SOURCE_DIR}/utils
+        )
+
+add_subdirectory(access)
+add_subdirectory(catalog)
+add_subdirectory(executor)
+add_subdirectory(lib)
+add_subdirectory(main)
+add_subdirectory(optimizer)
+add_subdirectory(port)
+add_subdirectory(regex)
+add_subdirectory(storage)
+add_subdirectory(tioga)
+add_subdirectory(bootstrap)
+add_subdirectory(commands)
+add_subdirectory(include)
+add_subdirectory(libpq)
+add_subdirectory(nodes)
+add_subdirectory(parser)
+add_subdirectory(postmaster)
+add_subdirectory(rewrite)
+add_subdirectory(tcop)
+add_subdirectory(utils)
