@@ -97,67 +97,66 @@ static Node *makeA_Expr(int op, char *opname, Node *lexpr, Node *rexpr);
     AppendStmt		*astmt;
 }
 
-%type <node>	query, stmt, AddAttrStmt, ClosePortalStmt,
-	CopyStmt, CreateStmt, DefineStmt, DestroyStmt, 
-	ExtendStmt, FetchStmt,	GrantStmt,
-	IndexStmt, MoveStmt, ListenStmt, OptimizableStmt, 
-        ProcedureStmt, PurgeStmt,
-	RecipeStmt, RemoveOperStmt, RemoveFuncStmt, RemoveStmt, RenameStmt,
-        RevokeStmt, RuleStmt, TransactionStmt, ViewStmt, LoadStmt,
-	CreatedbStmt, DestroydbStmt, VacuumStmt, RetrieveStmt, CursorStmt,
-	ReplaceStmt, AppendStmt, NotifyStmt, DeleteStmt, ClusterStmt,
-	ExplainStmt
+%type <node>	query stmt AddAttrStmt ClosePortalStmt
+    CopyStmt CreateStmt DefineStmt DestroyStmt ExtendStmt 
+    FetchStmt GrantStmt IndexStmt MoveStmt ListenStmt 
+    OptimizableStmt ProcedureStmt PurgeStmt RecipeStmt 
+    RemoveOperStmt RemoveFuncStmt RemoveStmt RenameStmt
+    RevokeStmt RuleStmt TransactionStmt ViewStmt LoadStmt
+	CreatedbStmt DestroydbStmt VacuumStmt RetrieveStmt 
+	CursorStmt ReplaceStmt AppendStmt NotifyStmt DeleteStmt 
+	ClusterStmt ExplainStmt
 
-%type <str>	relation_name, copy_file_name, copy_delimiter, def_name,
-	database_name, access_method, attr_name, class, index_name,
-	var_name, name, file_name, recipe_name
+%type <str>	relation_name copy_file_name copy_delimiter def_name
+	database_name access_method attr_name class index_name
+	var_name name file_name recipe_name
 
-%type <str>	opt_id, opt_portal_name,
-	before_clause, after_clause, all_Op, MathOp, opt_name, opt_unique
-	result, OptUseOp, opt_class, opt_range_start, opt_range_end,
+%type <str>	opt_id opt_portal_name
+	before_clause after_clause all_Op MathOp opt_name opt_unique
+	result OptUseOp opt_class opt_range_start opt_range_end
 	SpecialRuleRelation
 
-%type <str>	privileges, operation_commalist, grantee
+%type <str>	privileges operation_commalist grantee
 %type <chr>	operation
 
-%type <list>	queryblock, relation_name_list, OptTableElementList,
-	tableElementList, OptInherit, definition,
-	opt_with, def_args, def_name_list, func_argtypes, oper_argtypes,
-	OptStmtList, OptStmtBlock, opt_column_list, columnList,
-	exprList, sort_clause, sortby_list, index_params, 
-	name_list, from_clause, from_list, opt_array_bounds, nest_array_bounds,
-	expr_list, attrs, res_target_list, res_target_list2, def_list,
-	opt_indirection, group_clause, groupby_list, explain_options
+%type <list>	queryblock relation_name_list OptTableElementList
+	tableElementList OptInherit definition
+	opt_with def_args def_name_list func_argtypes oper_argtypes
+	OptStmtList OptStmtBlock opt_column_list columnList
+	exprList sort_clause sortby_list index_params 
+	name_list from_clause from_list opt_array_bounds nest_array_bounds
+	expr_list attrs res_target_list res_target_list2 def_list
+	opt_indirection group_clause groupby_list explain_options
 
-%type <boolean>	opt_inh_star, opt_binary, opt_instead
+%type <boolean>	opt_inh_star opt_binary opt_instead
 
-%type <ival>	copy_dirn, archive_type, OptArchiveType, OptArchiveLocation, 
-	def_type, opt_direction, remove_type, opt_column, event
+%type <ival>	copy_dirn archive_type OptArchiveType OptArchiveLocation 
+	def_type opt_direction remove_type opt_column event
 
-%type <ival>	OptLocation, opt_move_where, fetch_how_many 
+%type <ival>	OptLocation opt_move_where fetch_how_many 
 
 %type <dstmt>	def_rest
 %type <pstmt>	purge_quals
 %type <astmt>	insert_rest
 
-%type <typnam>	Typename, typname
+%type <typnam>	Typename typname
 %type <coldef>	columnDef
 %type <defelt>	def_elem
-%type <node>	def_arg, columnElem, exprElem, where_clause, 
-		a_expr, AexprConst, having_clause, groupby
+%type <node>	def_arg columnElem exprElem where_clause 
+		a_expr AexprConst having_clause groupby
 %type <value>	NumConst
-%type <attr>	event_object, attr
+%type <attr>	event_object attr
 %type <sortby>	sortby
-%type <ielem>	index_elem, func_index
+%type <ielem>	index_elem func_index
 %type <range>	from_val
 %type <relexp>	relation_expr
 %type <trange>	time_range
-%type <target>	res_target_el, res_target_el2
+%type <target>	res_target_el res_target_el2
 %type <paramno>	ParamNo
 
 %type <ival>	Iconst
 %type <str>	Sconst
-%type <str>	Id, date
+%type <str>	Id date
 
 
 /*
@@ -167,26 +166,26 @@ static Node *makeA_Expr(int op, char *opname, Node *lexpr, Node *rexpr);
  */
 
 /* Keywords */
-%token	ABORT_TRANS, ACL, ADD, AFTER, AGGREGATE, ALL, ALTER, AND, APPEND,
-	ARCHIVE, ARCH_STORE, AS, ASC, BACKWARD, BEFORE, BEGIN_TRANS, BINARY,
-	BY, CAST, CHANGE, CLOSE, CLUSTER, COLUMN, COMMIT, COPY, CREATE, CURRENT,
-	CURSOR, DATABASE, DECLARE, DELETE, DELIMITERS, DESC, DISTINCT, DO,
-	DROP, END_TRANS,
-	EXTEND, FETCH, FOR, FORWARD, FROM, FUNCTION, GRANT, GROUP, 
-	HAVING, HEAVY, IN, INDEX, INHERITS, INSERT, INSTEAD, INTO, 
-	ISNULL, LANGUAGE, LIGHT, LISTEN, LOAD, MERGE, MOVE, NEW, 
-	NONE, NOT, NOTHING, NOTIFY, NOTNULL, 
-        ON, OPERATOR, OPTION, OR, ORDER, 
-        PNULL, PRIVILEGES, PUBLIC, PURGE, P_TYPE, 
-        RENAME, REPLACE, RETRIEVE, RETURNS, REVOKE, ROLLBACK, RULE, 
-        SELECT, SET, SETOF, STDIN, STDOUT, STORE, 
-	TABLE, TO, TRANSACTION, UPDATE, USING, VACUUM, VALUES
-	VERSION, VIEW, WHERE, WITH, WORK
-%token	EXECUTE, RECIPE, EXPLAIN, LIKE 
+%token	ABORT_TRANS ACL ADD AFTER AGGREGATE ALL ALTER AND APPEND
+	ARCHIVE ARCH_STORE AS ASC BACKWARD BEFORE BEGIN_TRANS BINARY
+	BY CAST CHANGE CLOSE CLUSTER COLUMN COMMIT COPY CREATE CURRENT
+	CURSOR DATABASE DECLARE DELETE DELIMITERS DESC DISTINCT DO
+	DROP END_TRANS
+	EXTEND FETCH FOR FORWARD FROM FUNCTION GRANT GROUP 
+	HAVING HEAVY IN INDEX INHERITS INSERT INSTEAD INTO 
+	ISNULL LANGUAGE LIGHT LISTEN LOAD MERGE MOVE NEW 
+	NONE NOT NOTHING NOTIFY NOTNULL 
+        ON OPERATOR OPTION OR ORDER 
+        PNULL PRIVILEGES PUBLIC PURGE P_TYPE 
+        RENAME REPLACE RETRIEVE RETURNS REVOKE ROLLBACK RULE 
+        SELECT SET SETOF STDIN STDOUT STORE 
+	TABLE TO TRANSACTION UPDATE USING VACUUM VALUES
+	VERSION VIEW WHERE WITH WORK
+%token	EXECUTE RECIPE EXPLAIN LIKE 
 
 /* Special keywords, not in the query language - see the "lex" file */
-%token <str>	IDENT, SCONST, Op 
-%token <ival>	ICONST, PARAM
+%token <str>	IDENT SCONST Op 
+%token <ival>	ICONST PARAM
 %token <dval>	FCONST
 
 /* these are not real. they are here so that they gets generated as #define's*/

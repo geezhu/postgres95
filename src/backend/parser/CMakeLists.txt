@@ -1,5 +1,47 @@
 #This is the main CMAKE for build bin.
-AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR} TGT_parser_SRC)
+
+execute_process(
+        COMMAND bison -d -o y.tab.c gram.y
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+execute_process(
+        COMMAND mv y.tab.c gram.c
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+execute_process(
+        COMMAND mv y.tab.h parse.h
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+
+execute_process(
+        COMMAND flex scan.l
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+execute_process(
+        COMMAND mv lex.yy.c scan.c
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+execute_process(
+        COMMAND mv ${CMAKE_CURRENT_SOURCE_DIR}/parse.h  ${CMAKE_SOURCE_DIR}/include/parser/parse.h
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+set(TGT_parser_SRC
+        ${CMAKE_CURRENT_SOURCE_DIR}/analyze.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/catalog_utils.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/dbcommands.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/keywords.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/parse_query.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/parser.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/scansup.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/scan.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/gram.c
+        )
 
 set(TGT_parser_INC
         ${CMAKE_SOURCE_DIR}/include
