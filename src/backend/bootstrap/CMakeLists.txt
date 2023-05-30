@@ -16,7 +16,6 @@ execute_process(
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-
 execute_process(
     COMMAND flex bootscanner.l
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}

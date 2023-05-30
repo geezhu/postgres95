@@ -1,3 +1,11 @@
+execute_process(
+    COMMAND sh Gen_fmgrtab.sh ${CMAKE_SOURCE_DIR}/include/catalog/pg_proc.h
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+execute_process(
+    COMMAND mv fmgr.h ${CMAKE_SOURCE_DIR}/include/fmgr.h
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
 set(CMAKE_MODULE_PATH
         ${CMAKE_CURRENT_SOURCE_DIR}/adt
         ${CMAKE_CURRENT_SOURCE_DIR}/cache

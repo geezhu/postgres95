@@ -7,6 +7,7 @@ set(CMAKE_MODULE_PATH
         ${CMAKE_SOURCE_DIR}/cmake_modules
         )
 include(build_function)
+include(build_options)
 add_subdirectory(${CMAKE_SOURCE_DIR}/src)
 
 
