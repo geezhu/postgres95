@@ -43,3 +43,49 @@ add_subdirectory(utils)
 if ("${TIOGA}" STREQUAL "ON")
     add_subdirectory(tioga)
 endif ()
+
+set(postgres_objects
+        $<TARGET_OBJECTS:postgres_storage_file>
+        $<TARGET_OBJECTS:postgres_access_common>
+        $<TARGET_OBJECTS:postgres_access_hash>
+        $<TARGET_OBJECTS:postgres_access_heap>
+        $<TARGET_OBJECTS:postgres_access_index>
+        $<TARGET_OBJECTS:postgres_access_nbtree>
+        $<TARGET_OBJECTS:postgres_access_rtree>
+        $<TARGET_OBJECTS:postgres_access_transam>
+        $<TARGET_OBJECTS:postgres_backend_bootstrap>
+        $<TARGET_OBJECTS:postgres_backend_catalog>
+        $<TARGET_OBJECTS:postgres_backend_commands>
+        $<TARGET_OBJECTS:postgres_backend_executor>
+        $<TARGET_OBJECTS:postgres_backend_lib>
+        $<TARGET_OBJECTS:postgres_backend_libpq>
+        $<TARGET_OBJECTS:postgres_backend_main>
+        $<TARGET_OBJECTS:postgres_backend_nodes>
+        $<TARGET_OBJECTS:postgres_backend_parser>
+        $<TARGET_OBJECTS:postgres_backend_postmaster>
+        $<TARGET_OBJECTS:postgres_backend_regex>
+        $<TARGET_OBJECTS:postgres_backend_rewrite>
+        $<TARGET_OBJECTS:postgres_backend_tcop>
+        $<TARGET_OBJECTS:postgres_optimizer_path>
+        $<TARGET_OBJECTS:postgres_optimizer_plan>
+        $<TARGET_OBJECTS:postgres_optimizer_prep>
+        $<TARGET_OBJECTS:postgres_optimizer_util>
+        $<TARGET_OBJECTS:postgres_storage_buffer>
+        $<TARGET_OBJECTS:postgres_storage_ipc>
+        $<TARGET_OBJECTS:postgres_storage_large_object>
+        $<TARGET_OBJECTS:postgres_storage_lmgr>
+        $<TARGET_OBJECTS:postgres_storage_page>
+        $<TARGET_OBJECTS:postgres_storage_smgr>
+        $<TARGET_OBJECTS:postgres_utils_adt>
+        $<TARGET_OBJECTS:postgres_utils_cache>
+        $<TARGET_OBJECTS:postgres_utils_error>
+        $<TARGET_OBJECTS:postgres_utils_fmgr>
+        $<TARGET_OBJECTS:postgres_utils_hash>
+        $<TARGET_OBJECTS:postgres_utils_init>
+        $<TARGET_OBJECTS:postgres_utils_mmgr>
+        $<TARGET_OBJECTS:postgres_utils_sort>
+        $<TARGET_OBJECTS:postgres_utils_time>
+        )
+set(postgres_LINK_LIBS -lm)
+add_executable(postgres ${postgres_objects})
+target_link_libraries(postgres ${postgres_LINK_LIBS})

@@ -6,6 +6,10 @@ execute_process(
     COMMAND mv fmgr.h ${CMAKE_SOURCE_DIR}/include/fmgr.h
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
+execute_process(
+        COMMAND mv fmgrtab.c ${CMAKE_CURRENT_SOURCE_DIR}/fmgr
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
 set(CMAKE_MODULE_PATH
         ${CMAKE_CURRENT_SOURCE_DIR}/adt
         ${CMAKE_CURRENT_SOURCE_DIR}/cache

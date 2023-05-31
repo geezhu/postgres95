@@ -99,7 +99,7 @@ set(NAMEDATALEN	32)
 # OIDNAMELEN should be set to NAMEDATALEN + sizeof(Oid)
 set(OIDNAMELEN	36)
 #list(APPEND CFLAGS -DNAMEDATALEN=${NAMEDATALEN} -DOIDNAMELEN=${OIDNAMELEN})
-list(APPEND MACRO_OPTIONS -DNAMEDATALEN=${NAMEDATALEN} -DOIDNAMELEN=${OIDNAMELEN})
+list(APPEND MACRO_OPTIONS -DNAMEDATALEN=${NAMEDATALEN} -DOIDNAMELEN=${OIDNAMELEN} -DPORTNAME_${PORTNAME})
 ##############################################################################
 #
 # FEATURES 
@@ -259,8 +259,7 @@ endif ()
 list(APPEND CFLAGS -DPORTNAME_${PORTNAME})
 
 # Globally pass the default TCP port for postmaster(1).
-list(APPEND CFLAGS -DPOSTPORT='"5432"')
-
+list(APPEND MACRO_OPTIONS -DPOSTPORT="5432")
 # include flags from mk/port/postgres.mk.$(PORTNAME)
 list(APPEND CFLAGS ${CFLAGS_BE})
 list(APPEND LDADD ${LDADD_BE})

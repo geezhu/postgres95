@@ -6,5 +6,5 @@
 /include/parser/parse.h
 /src/backend/catalog/global1.bki
 /src/backend/catalog/local1_template1.bki
-/src/backend/utils/fmgrtab.c
 /include/fmgr.h
+/src/backend/utils/fmgr/fmgrtab.c

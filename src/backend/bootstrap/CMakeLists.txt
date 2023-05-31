@@ -48,4 +48,4 @@ set(TGT_bootstrap_INC
 set(bootstrap_DEF_OPTIONS ${MACRO_OPTIONS})
 set(bootstrap_COMPILE_OPTIONS ${OPTIMIZE_OPTIONS} ${OS_OPTIONS} ${PROTECT_OPTIONS} ${WARNING_OPTIONS} ${BIN_SECURE_OPTIONS} ${CHECK_OPTIONS} -fPIC -fvisibility=hidden)
 set(bootstrap_LINK_OPTIONS ${BIN_LINK_OPTIONS})
-add_static_libtarget(ts_common_backend_bootstrap TGT_bootstrap_SRC TGT_bootstrap_INC "${bootstrap_DEF_OPTIONS}" "${bootstrap_COMPILE_OPTIONS}" "${bootstrap_LINK_OPTIONS}")
+add_static_objtarget(postgres_backend_bootstrap TGT_bootstrap_SRC TGT_bootstrap_INC "${bootstrap_DEF_OPTIONS}" "${bootstrap_COMPILE_OPTIONS}" "${bootstrap_LINK_OPTIONS}")
