@@ -6,7 +6,7 @@ if ("${ALLOW_PG_GROUP}" STREQUAL "ON")
 endif ()
 
 option(TIOGA "TIOGA" OFF)
-
+set(MACRO_OPTIONS "")
 ##############################################################################
 #
 # CONFIGURATION SECTION
@@ -98,8 +98,8 @@ set(NAMEDATALEN	32)
 
 # OIDNAMELEN should be set to NAMEDATALEN + sizeof(Oid)
 set(OIDNAMELEN	36)
-list(APPEND CFLAGS -DNAMEDATALEN=${NAMEDATALEN} -DOIDNAMELEN=${OIDNAMELEN})
-
+#list(APPEND CFLAGS -DNAMEDATALEN=${NAMEDATALEN} -DOIDNAMELEN=${OIDNAMELEN})
+list(APPEND MACRO_OPTIONS -DNAMEDATALEN=${NAMEDATALEN} -DOIDNAMELEN=${OIDNAMELEN})
 ##############################################################################
 #
 # FEATURES 
@@ -247,6 +247,7 @@ else()
 # also lose a lot of useful error-checking.
 #
     list(APPEND CFLAGS -DNO_ASSERT_CHECKING)
+    list(APPEND MACRO_OPTIONS -DNO_ASSERT_CHECKING)
 endif ()
 
 if (DEFINED PROFILE)
@@ -278,3 +279,4 @@ list(APPEND LDFLAGS ${LDFLAGS_BE})
 # Low numbers are not recommended as they will tend to cause
 # false aborts if many transactions are long-lived.
 list(APPEND CFLAGS -DDEADLOCK_TIMEOUT=60)
+list(APPEND MACRO_OPTIONS -DDEADLOCK_TIMEOUT=60)
