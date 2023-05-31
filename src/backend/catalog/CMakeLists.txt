@@ -22,6 +22,7 @@ execute_process(
 
 set(TGT_catalog_INC
         ${CMAKE_SOURCE_DIR}/include
+        ${CMAKE_SOURCE_DIR}/include/port/${PORTNAME}
         )
 
 set(catalog_DEF_OPTIONS ${MACRO_OPTIONS})

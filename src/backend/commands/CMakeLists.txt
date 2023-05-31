@@ -3,6 +3,7 @@ AUX_SOURCE_DIRECTORY(${CMAKE_CURRENT_SOURCE_DIR} TGT_commands_SRC)
 
 set(TGT_commands_INC
         ${CMAKE_SOURCE_DIR}/include
+        ${CMAKE_SOURCE_DIR}/include/port/${PORTNAME}
         )
 
 set(commands_DEF_OPTIONS ${MACRO_OPTIONS})

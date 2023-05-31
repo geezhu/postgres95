@@ -34,7 +34,7 @@
 #include "commands/explain.h"
 
 #include "nodes/parsenodes.h"
-#include "parse.h"
+#include "parser/parse.h"
 #include "utils/elog.h"
 #include "utils/builtins.h"
 #include "utils/acl.h"

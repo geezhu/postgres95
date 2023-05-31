@@ -29,7 +29,7 @@
 #include "nodes/parsenodes.h"
 #include "parser/keywords.h"
 #include "parser/scansup.h"
-#include "parse.h"
+#include "parser/parse.h"
 #include "utils/elog.h"
 #include "utils/palloc.h"
 

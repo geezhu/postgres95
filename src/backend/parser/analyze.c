@@ -19,7 +19,7 @@
 #include "nodes/primnodes.h"
 #include "nodes/parsenodes.h"
 #include "nodes/relation.h"
-#include "parse.h"		/* for AND, OR, etc. */
+#include "parser/parse.h"		/* for AND, OR, etc. */
 #include "catalog/pg_type.h"	/* for INT4OID, etc. */
 #include "utils/elog.h"
 #include "utils/builtins.h"	/* namecmp(), textout() */

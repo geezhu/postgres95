@@ -17,7 +17,7 @@
 #include "access/xact.h"
 #include "parser/scansup.h"
 
-#include "bootstrap_tokens.h"
+#include "bootstrap/bootstrap_tokens.h"
 
 /* some versions of lex define this as a macro */
 #if defined(yywrap)

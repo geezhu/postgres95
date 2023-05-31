@@ -17,7 +17,7 @@
 
 #include "nodes/pg_list.h"
 #include "nodes/parsenodes.h"
-#include "parse.h"
+#include "parser/parse.h"
 #include "utils/elog.h"
 #include "parser/keywords.h"
 #include "parser/dbcommands.h"		/* createdb, destroydb stop_vacuum */

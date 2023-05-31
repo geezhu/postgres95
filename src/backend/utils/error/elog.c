@@ -49,7 +49,7 @@ elog(int lev, char *fmt, ... )
     register char	*bp, *cp;
     extern	int	errno, sys_nerr;
 #if !defined(PORTNAME_BSD44_derived) && !defined(PORTNAME_bsdi)
-    extern	char	*sys_errlist[];
+    extern	const char	*const sys_errlist[];
 #endif /* !PORTNAME_BSD44_derived */
 #ifndef PG_STANDALONE
     extern	FILE	*Pfout;

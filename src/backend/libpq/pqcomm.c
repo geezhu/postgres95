@@ -137,7 +137,7 @@ pq_getport()
     char *envport = getenv("PGPORT");
     
     if (envport)
-	return(atoi(envport));
+	    return(atoi(envport));
     return(atoi(POSTPORT));
 }
 

@@ -45,6 +45,7 @@ set(TGT_parser_SRC
 
 set(TGT_parser_INC
         ${CMAKE_SOURCE_DIR}/include
+        ${CMAKE_SOURCE_DIR}/include/port/${PORTNAME}
         )
 
 set(parser_DEF_OPTIONS ${MACRO_OPTIONS})
