@@ -26,8 +26,8 @@
 #include <strings.h>
 
 extern "C" {
-#include "libpq-fe.h"
-#include "fe-auth.h"
+#include "libpq/libpq-fe.h"
+#include "libpq/fe-auth.h"
 }
 
 // ****************************************************************

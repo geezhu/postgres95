@@ -19,8 +19,7 @@
 #include "libpq/pqsignal.h"
 
 pqsigfunc
-pqsignal(int signo, pqsigfunc func)
-{
+pqsignal(int signo, pqsigfunc func) {
 #if defined(USE_POSIX_SIGNALS)
     struct sigaction act, oact;
     
@@ -28,10 +27,10 @@ pqsignal(int signo, pqsigfunc func)
     sigemptyset(&act.sa_mask);
     act.sa_flags = 0;
     if (signo != SIGALRM) {
-	act.sa_flags |= SA_RESTART;
+    act.sa_flags |= SA_RESTART;
     }
     if (sigaction(signo, &act, &oact) < 0)
-	return(SIG_ERR);
+    return(SIG_ERR);
     return(oact.sa_handler);
 #else /* !USE_POSIX_SIGNALS */
     exit(1); /* this should never be reached, pqsignal should only

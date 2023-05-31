@@ -32,7 +32,7 @@ extern char *readline(char *);	/* in rlstubs.c */
 #include "history.h"
 #else
 #include <readline/readline.h>
-#include <history.h>
+#include <readline/history.h>
 #endif
 #endif
 

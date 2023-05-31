@@ -29,4 +29,4 @@ extern pqsigfunc pqsignal(int signo, pqsigfunc func);
 #define	signal(signo, handler)	pqsignal(signo, (pqsigfunc)(handler))
 #endif /* USE_POSIX_SIGNALS */
 
-#endif	/* PQSIGNAL_H */
+#endif    /* PQSIGNAL_H */

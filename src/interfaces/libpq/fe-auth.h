@@ -11,7 +11,7 @@
  *-------------------------------------------------------------------------
  */
 #ifndef FE_AUTH_H
-#define	FE_AUTH_H
+#define    FE_AUTH_H
 
 /*----------------------------------------------------------------
  * Common routines and definitions
@@ -19,20 +19,21 @@
  */
 
 /* what we call "no authentication system" */
-#define	UNAUTHNAME		"unauth"
+#define    UNAUTHNAME        "unauth"
 
 /* what a frontend uses by default */
 #if !defined(KRB4) && !defined(KRB5)
-#define	DEFAULT_CLIENT_AUTHSVC	UNAUTHNAME
+#define    DEFAULT_CLIENT_AUTHSVC    UNAUTHNAME
 #else /* KRB4 || KRB5 */
 #define	DEFAULT_CLIENT_AUTHSVC	"kerberos"
 #endif /* KRB4 || KRB5 */
 
-extern int fe_sendauth(MsgType msgtype, Port *port, char *hostname, char* PQerromsg);
-extern void fe_setauthsvc(char *name, char* PQerrormsg);
+extern int fe_sendauth(MsgType msgtype, Port *port, char *hostname, char *PQerromsg);
 
-#define	PG_KRB4_VERSION	"PGVER4.1"	/* at most KRB_SENDAUTH_VLEN chars */
-#define	PG_KRB5_VERSION	"PGVER5.1"
+extern void fe_setauthsvc(char *name, char *PQerrormsg);
+
+#define    PG_KRB4_VERSION    "PGVER4.1"    /* at most KRB_SENDAUTH_VLEN chars */
+#define    PG_KRB5_VERSION    "PGVER5.1"
 
 #endif /* FE_AUTH_H */
 

@@ -15,7 +15,7 @@
  *
  *-------------------------------------------------------------------------
  */
-#include "libpq++.H"
+#include "/libpq++.H"
 
 extern "C" {
 #include "libpq/libpq-fs.h"

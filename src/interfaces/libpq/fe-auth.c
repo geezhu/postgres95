@@ -26,7 +26,7 @@
  */
 #include <stdio.h>
 #include <string.h>
-#include <sys/param.h>	/* for MAX{HOSTNAME,PATH}LEN, NOFILE */
+#include <sys/param.h>    /* for MAX{HOSTNAME,PATH}LEN, NOFILE */
 #include <unistd.h>
 #include <sys/types.h>
 #include <pwd.h>
@@ -41,9 +41,9 @@
  */
 
 struct authsvc {
-    char	name[16];	/* service nickname (for command line) */
-    MsgType	msgtype;	/* startup packet header type */
-    int		allowed;	/* initially allowed (before command line
+    char name[16];    /* service nickname (for command line) */
+    MsgType msgtype;    /* startup packet header type */
+    int allowed;    /* initially allowed (before command line
 				 * option parsing)?
 				 */
 };
@@ -60,20 +60,20 @@ struct authsvc {
  */
 static struct authsvc authsvcs[] = {
 #ifdef KRB4
-    { "krb4",     STARTUP_KRB4_MSG, 1 },
-    { "kerberos", STARTUP_KRB4_MSG, 1 },
+        { "krb4",     STARTUP_KRB4_MSG, 1 },
+        { "kerberos", STARTUP_KRB4_MSG, 1 },
 #endif /* KRB4 */
 #ifdef KRB5
-    { "krb5",     STARTUP_KRB5_MSG, 1 },
-    { "kerberos", STARTUP_KRB5_MSG, 1 },
+        { "krb5",     STARTUP_KRB5_MSG, 1 },
+        { "kerberos", STARTUP_KRB5_MSG, 1 },
 #endif /* KRB5 */
-    { UNAUTHNAME, STARTUP_MSG,
+        {UNAUTHNAME, STARTUP_MSG,
 #if defined(KRB4) || defined(KRB5)
-	  0
+                0
 #else /* !(KRB4 || KRB5) */
-	  1
+         1
 #endif /* !(KRB4 || KRB5) */
-    }
+        }
 };
 
 static n_authsvcs = sizeof(authsvcs) / sizeof(struct authsvc);
@@ -102,7 +102,7 @@ static void pg_krb4_init()
     static		init_done = 0;
     
     if (init_done)
-	return;
+    return;
     init_done = 1;
     
     /*
@@ -110,10 +110,10 @@ static void pg_krb4_init()
      * name: <usual-ticket-file-name>@<PGREALM-value>
      */
     if (realm = getenv("PGREALM")) {
-	char	tktbuf[MAXPATHLEN];
-	
-	(void) sprintf(tktbuf, "%s@%s", tkt_string(), realm);
-	krb_set_tkt_string(tktbuf);
+    char	tktbuf[MAXPATHLEN];
+    
+    (void) sprintf(tktbuf, "%s@%s", tkt_string(), realm);
+    krb_set_tkt_string(tktbuf);
     }
 }
 
@@ -132,17 +132,17 @@ pg_krb4_authname(char* PQerrormsg)
     static char name[SNAME_SZ+1] = "";
     
     if (name[0])
-	return(name);
+    return(name);
     
     pg_krb4_init();
     
     name[SNAME_SZ] = '\0';
     status = krb_get_tf_fullname(tkt_string(), name, instance, realm);
     if (status != KSUCCESS) {
-	(void) sprintf(PQerrormsg,
-		       "pg_krb4_authname: krb_get_tf_fullname: %s\n",
-		       krb_err_txt[status]);
-	return((char *) NULL);
+    (void) sprintf(PQerrormsg,
+               "pg_krb4_authname: krb_get_tf_fullname: %s\n",
+               krb_err_txt[status]);
+    return((char *) NULL);
     }
     return(name);
 }
@@ -163,9 +163,9 @@ pg_krb4_authname(char* PQerrormsg)
  */
 static int
 pg_krb4_sendauth(char* PQerrormsg, int sock,
-		 struct sockaddr_in *laddr,
-		 struct sockaddr_in *raddr,
-		 char *hostname)
+         struct sockaddr_in *laddr,
+         struct sockaddr_in *raddr,
+         char *hostname)
 {
     long		krbopts = 0;	/* one-way authentication */
     KTEXT_ST	clttkt;
@@ -174,31 +174,31 @@ pg_krb4_sendauth(char* PQerrormsg, int sock,
     char		*realm = getenv("PGREALM"); /* NULL == current realm */
     
     if (!hostname || !(*hostname)) {
-	if (gethostname(hostbuf, MAXHOSTNAMELEN) < 0)
-	    strcpy(hostbuf, "localhost");
-	hostname = hostbuf;
+    if (gethostname(hostbuf, MAXHOSTNAMELEN) < 0)
+        strcpy(hostbuf, "localhost");
+    hostname = hostbuf;
     }
     
     pg_krb4_init();
     
     status = krb_sendauth(krbopts,
-			  sock,
-			  &clttkt,
-			  PG_KRB_SRVNAM,
-			  hostname,
-			  realm,
-			  (u_long) 0,
-			  (MSG_DAT *) NULL,
-			  (CREDENTIALS *) NULL,
-			  (Key_schedule *) NULL,
-			  laddr,
-			  raddr,
-			  PG_KRB4_VERSION);
+              sock,
+              &clttkt,
+              PG_KRB_SRVNAM,
+              hostname,
+              realm,
+              (u_long) 0,
+              (MSG_DAT *) NULL,
+              (CREDENTIALS *) NULL,
+              (Key_schedule *) NULL,
+              laddr,
+              raddr,
+              PG_KRB4_VERSION);
     if (status != KSUCCESS) {
-	(void) sprintf(PQerrormsg,
-		       "pg_krb4_sendauth: kerberos error: %s\n",
-		       krb_err_txt[status]);
-	return(STATUS_ERROR);
+    (void) sprintf(PQerrormsg,
+               "pg_krb4_sendauth: kerberos error: %s\n",
+               krb_err_txt[status]);
+    return(STATUS_ERROR);
     }
     return(STATUS_OK);
 }
@@ -232,7 +232,7 @@ pg_an_to_ln(char *aname)
     char	*p;
     
     if ((p = strchr(aname, '/')) || (p = strchr(aname, '@')))
-	*p = '\0';
+    *p = '\0';
     return(aname);
 }
 
@@ -254,29 +254,29 @@ krb5_ccache pg_krb5_init()
     static krb5_ccache	ccache = (krb5_ccache) NULL;
     
     if (ccache)
-	return(ccache);
+    return(ccache);
     
     /*
      * If the user set PGREALM, then we use a ticket file with a special
      * name: <usual-ticket-file-name>@<PGREALM-value>
      */
     if (!(defname = krb5_cc_default_name())) {
-	(void) sprintf(PQerrormsg,
-		       "pg_krb5_init: krb5_cc_default_name failed\n");
-	return((krb5_ccache) NULL);
+    (void) sprintf(PQerrormsg,
+               "pg_krb5_init: krb5_cc_default_name failed\n");
+    return((krb5_ccache) NULL);
     }
     (void) strcpy(tktbuf, defname);
     if (realm = getenv("PGREALM")) {
-	(void) strcat(tktbuf, "@");
-	(void) strcat(tktbuf, realm);
+    (void) strcat(tktbuf, "@");
+    (void) strcat(tktbuf, realm);
     }
     
     if (code = krb5_cc_resolve(tktbuf, &ccache)) {
-	(void) sprintf(PQerrormsg,
-		       "pg_krb5_init: Kerberos error %d in krb5_cc_resolve\n",
-		       code);
-	com_err("pg_krb5_init", code, "in krb5_cc_resolve");
-	return((krb5_ccache) NULL);
+    (void) sprintf(PQerrormsg,
+               "pg_krb5_init: Kerberos error %d in krb5_cc_resolve\n",
+               code);
+    com_err("pg_krb5_init", code, "in krb5_cc_resolve");
+    return((krb5_ccache) NULL);
     }
     return(ccache);
 }
@@ -296,24 +296,24 @@ pg_krb5_authname(char* PQerrormsg)
     static char	*authname = (char *) NULL;
     
     if (authname)
-	return(authname);
+    return(authname);
     
     ccache = pg_krb5_init();	/* don't free this */
     
     if (code = krb5_cc_get_principal(ccache, &principal)) {
-	(void) sprintf(PQerrormsg,
-		       "pg_krb5_authname: Kerberos error %d in krb5_cc_get_principal\n",
-		       code);
-	com_err("pg_krb5_authname", code, "in krb5_cc_get_principal");
-	return((char *) NULL);
+    (void) sprintf(PQerrormsg,
+               "pg_krb5_authname: Kerberos error %d in krb5_cc_get_principal\n",
+               code);
+    com_err("pg_krb5_authname", code, "in krb5_cc_get_principal");
+    return((char *) NULL);
     }
     if (code = krb5_unparse_name(principal, &authname)) {
-	(void) sprintf(PQerrormsg,
-		       "pg_krb5_authname: Kerberos error %d in krb5_unparse_name\n",
-		       code);
-	com_err("pg_krb5_authname", code, "in krb5_unparse_name");
-	krb5_free_principal(principal);
-	return((char *) NULL);
+    (void) sprintf(PQerrormsg,
+               "pg_krb5_authname: Kerberos error %d in krb5_unparse_name\n",
+               code);
+    com_err("pg_krb5_authname", code, "in krb5_unparse_name");
+    krb5_free_principal(principal);
+    return((char *) NULL);
     }
     krb5_free_principal(principal);
     return(pg_an_to_ln(authname));
@@ -336,12 +336,12 @@ pg_krb5_authname(char* PQerrormsg)
  */
 static int
 pg_krb5_sendauth(char* PQerrormsg,int sock,
-		 struct sockaddr_in *laddr,
-		 struct sockaddr_in *raddr,
-		 char *hostname)
+         struct sockaddr_in *laddr,
+         struct sockaddr_in *raddr,
+         char *hostname)
 {
     char			servbuf[MAXHOSTNAMELEN + 1 +
-					sizeof(PG_KRB_SRVNAM)];
+                    sizeof(PG_KRB_SRVNAM)];
     char			*hostp;
     char			*realm;
     krb5_error_code		code;
@@ -356,11 +356,11 @@ pg_krb5_sendauth(char* PQerrormsg,int sock,
      * file.
      */
     if (code = krb5_cc_get_principal(ccache, &client)) {
-	(void) sprintf(PQerrormsg,
-		       "pg_krb5_sendauth: Kerberos error %d in krb5_cc_get_principal\n",
-		       code);
-	com_err("pg_krb5_sendauth", code, "in krb5_cc_get_principal");
-	return(STATUS_ERROR);
+    (void) sprintf(PQerrormsg,
+               "pg_krb5_sendauth: Kerberos error %d in krb5_cc_get_principal\n",
+               code);
+    com_err("pg_krb5_sendauth", code, "in krb5_cc_get_principal");
+    return(STATUS_ERROR);
     }
     
     /*
@@ -369,24 +369,24 @@ pg_krb5_sendauth(char* PQerrormsg,int sock,
     (void) strcpy(servbuf, PG_KRB_SRVNAM);
     *(hostp = servbuf + (sizeof(PG_KRB_SRVNAM) - 1)) = '/';
     if (hostname || *hostname) {
-	(void) strncpy(++hostp, hostname, MAXHOSTNAMELEN);
+    (void) strncpy(++hostp, hostname, MAXHOSTNAMELEN);
     } else {
-	if (gethostname(++hostp, MAXHOSTNAMELEN) < 0)
-	    (void) strcpy(hostp, "localhost");
+    if (gethostname(++hostp, MAXHOSTNAMELEN) < 0)
+        (void) strcpy(hostp, "localhost");
     }
     if (hostp = strchr(hostp, '.'))
-	*hostp = '\0';
+    *hostp = '\0';
     if (realm = getenv("PGREALM")) {
-	(void) strcat(servbuf, "@");
-	(void) strcat(servbuf, realm);
+    (void) strcat(servbuf, "@");
+    (void) strcat(servbuf, realm);
     }
     if (code = krb5_parse_name(servbuf, &server)) {
-	(void) sprintf(PQerrormsg,
-		       "pg_krb5_sendauth: Kerberos error %d in krb5_parse_name\n",
-		       code);
-	com_err("pg_krb5_sendauth", code, "in krb5_parse_name");
-	krb5_free_principal(client);
-	return(STATUS_ERROR);
+    (void) sprintf(PQerrormsg,
+               "pg_krb5_sendauth: Kerberos error %d in krb5_parse_name\n",
+               code);
+    com_err("pg_krb5_sendauth", code, "in krb5_parse_name");
+    krb5_free_principal(client);
+    return(STATUS_ERROR);
     }
     
     /*
@@ -394,29 +394,29 @@ pg_krb5_sendauth(char* PQerrormsg,int sock,
      * and any error messages.
      */
     if (code = krb5_sendauth((krb5_pointer) &sock,
-			     PG_KRB5_VERSION,
-			     client,
-			     server,
-			     (krb5_flags) 0,
-			     (krb5_checksum *) NULL,
-			     (krb5_creds *) NULL,
-			     ccache,
-			     (krb5_int32 *) NULL,
-			     (krb5_keyblock **) NULL,
-			     &error,
-			     (krb5_ap_rep_enc_part **) NULL)) {
-	if ((code == KRB5_SENDAUTH_REJECTED) && error) {
-	    (void) sprintf(PQerrormsg,
-			   "pg_krb5_sendauth: authentication rejected: \"%*s\"\n",
-			   error->text.length, error->text.data);
-	    fputs(PQerrormsg, stderr);
-	    pqdebug("%s", PQerrormsg);
-	} else {
-	    (void) sprintf(PQerrormsg,
-			   "pg_krb5_sendauth: Kerberos error %d in krb5_sendauth\n",
-			   code);
-	    com_err("pg_krb5_sendauth", code, "in krb5_sendauth");
-	}
+                 PG_KRB5_VERSION,
+                 client,
+                 server,
+                 (krb5_flags) 0,
+                 (krb5_checksum *) NULL,
+                 (krb5_creds *) NULL,
+                 ccache,
+                 (krb5_int32 *) NULL,
+                 (krb5_keyblock **) NULL,
+                 &error,
+                 (krb5_ap_rep_enc_part **) NULL)) {
+    if ((code == KRB5_SENDAUTH_REJECTED) && error) {
+        (void) sprintf(PQerrormsg,
+               "pg_krb5_sendauth: authentication rejected: \"%*s\"\n",
+               error->text.length, error->text.data);
+        fputs(PQerrormsg, stderr);
+        pqdebug("%s", PQerrormsg);
+    } else {
+        (void) sprintf(PQerrormsg,
+               "pg_krb5_sendauth: Kerberos error %d in krb5_sendauth\n",
+               code);
+        com_err("pg_krb5_sendauth", code, "in krb5_sendauth");
+    }
     }
     krb5_free_principal(client);
     krb5_free_principal(server);
@@ -430,38 +430,37 @@ pg_krb5_sendauth(char* PQerrormsg,int sock,
  * fe_sendauth -- client demux routine for outgoing authentication information
  */
 int
-fe_sendauth(MsgType msgtype, Port *port, char *hostname, char* PQerrormsg)
-{
+fe_sendauth(MsgType msgtype, Port *port, char *hostname, char *PQerrormsg) {
     switch (msgtype) {
 #ifdef KRB4
-    case STARTUP_KRB4_MSG:
-	if (pg_krb4_sendauth(PQerrormsg, port->sock, &port->laddr, 
-			     &port->raddr,
-			     hostname) != STATUS_OK) {
-	    (void) sprintf(PQerrormsg,
-			   "fe_sendauth: krb4 authentication failed\n");
-/*	    fputs(PQerrormsg, stderr); */
-	    return(STATUS_ERROR);
-	}
-	break;
+        case STARTUP_KRB4_MSG:
+        if (pg_krb4_sendauth(PQerrormsg, port->sock, &port->laddr, 
+                     &port->raddr,
+                     hostname) != STATUS_OK) {
+            (void) sprintf(PQerrormsg,
+                   "fe_sendauth: krb4 authentication failed\n");
+    /*	    fputs(PQerrormsg, stderr); */
+            return(STATUS_ERROR);
+        }
+        break;
 #endif
 #ifdef KRB5
-    case STARTUP_KRB5_MSG:
-	if (pg_krb5_sendauth(PQerrormsg,port->sock, &port->laddr, 
-			     &port->raddr,
-			     hostname) != STATUS_OK) {
-	    (void) sprintf(PQerrormsg,
-			   "fe_sendauth: krb5 authentication failed\n");
-	    return(STATUS_ERROR);
-	}
-	break;
+        case STARTUP_KRB5_MSG:
+        if (pg_krb5_sendauth(PQerrormsg,port->sock, &port->laddr, 
+                     &port->raddr,
+                     hostname) != STATUS_OK) {
+            (void) sprintf(PQerrormsg,
+                   "fe_sendauth: krb5 authentication failed\n");
+            return(STATUS_ERROR);
+        }
+        break;
 #endif
-    case STARTUP_MSG:
-	break;
-    default:
-	break;
+        case STARTUP_MSG:
+            break;
+        default:
+            break;
     }
-    return(STATUS_OK);
+    return (STATUS_OK);
 }
 
 /*
@@ -474,29 +473,27 @@ fe_sendauth(MsgType msgtype, Port *port, char *hostname, char* PQerrormsg)
 static pg_authsvc = -1;
 
 void
-fe_setauthsvc(char *name, char* PQerrormsg)
-{
+fe_setauthsvc(char *name, char *PQerrormsg) {
     int i;
-    
+
     for (i = 0; i < n_authsvcs; ++i)
-	if (!strcmp(name, authsvcs[i].name)) {
-	    pg_authsvc = i;
-	    break;
-	}
+        if (!strcmp(name, authsvcs[i].name)) {
+            pg_authsvc = i;
+            break;
+        }
     if (i == n_authsvcs) {
-	(void) sprintf(PQerrormsg,
-		       "fe_setauthsvc: invalid name: %s, ignoring...\n",
-		       name);
+        (void) sprintf(PQerrormsg,
+                       "fe_setauthsvc: invalid name: %s, ignoring...\n",
+                       name);
     }
     return;
 }
 
 MsgType
-fe_getauthsvc(char* PQerrormsg)
-{
+fe_getauthsvc(char *PQerrormsg) {
     if (pg_authsvc < 0 || pg_authsvc >= n_authsvcs)
-	fe_setauthsvc(DEFAULT_CLIENT_AUTHSVC,PQerrormsg);
-    return(authsvcs[pg_authsvc].msgtype);
+        fe_setauthsvc(DEFAULT_CLIENT_AUTHSVC, PQerrormsg);
+    return (authsvcs[pg_authsvc].msgtype);
 }
 
 /*
@@ -504,41 +501,39 @@ fe_getauthsvc(char* PQerrormsg)
  *		     name the user has authenticated to the system
  * if there is an error, return the error message in PQerrormsg
  */
-char*
-fe_getauthname(char* PQerrormsg)
-{
+char *
+fe_getauthname(char *PQerrormsg) {
     char *name = (char *) NULL;
     MsgType authsvc;
-    
+
     authsvc = fe_getauthsvc(PQerrormsg);
     switch ((int) authsvc) {
 #ifdef KRB4
-    case STARTUP_KRB4_MSG:
-	name = pg_krb4_authname(PQerrormsg);
-	break;
+        case STARTUP_KRB4_MSG:
+        name = pg_krb4_authname(PQerrormsg);
+        break;
 #endif
 #ifdef KRB5
-    case STARTUP_KRB5_MSG:
-	name = pg_krb5_authname(PQerrormsg);
-	break;
+        case STARTUP_KRB5_MSG:
+        name = pg_krb5_authname(PQerrormsg);
+        break;
 #endif
-    case STARTUP_MSG:
-	{
-	    struct passwd *pw = getpwuid(getuid());
-	    if (pw &&
-		pw->pw_name &&
-		(name = (char *) malloc(strlen(pw->pw_name) + 1))) {
-		(void) strcpy(name, pw->pw_name);
-	    }
-	}
-	break;
-    default:
-	(void) sprintf(PQerrormsg,
-		       "fe_getauthname: invalid authentication system: %d\n",
-		       authsvc);
-	break;
+        case STARTUP_MSG: {
+            struct passwd *pw = getpwuid(getuid());
+            if (pw &&
+                pw->pw_name &&
+                (name = (char *) malloc(strlen(pw->pw_name) + 1))) {
+                (void) strcpy(name, pw->pw_name);
+            }
+        }
+            break;
+        default:
+            (void) sprintf(PQerrormsg,
+                           "fe_getauthname: invalid authentication system: %d\n",
+                           authsvc);
+            break;
     }
-    return(name);
+    return (name);
 }
 
 

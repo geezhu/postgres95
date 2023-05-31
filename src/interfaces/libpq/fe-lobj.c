@@ -17,7 +17,7 @@
 #include <sys/types.h>
 #include "postgres.h"
 #include "libpq-fe.h"
-#include "obj/fmgr.h" 
+#include "fmgr.h"
 #include "libpq/libpq-fs.h"
 
 #ifndef MAXPATHLEN
@@ -34,8 +34,7 @@
  * return -1 upon failure.
  */
 int
-lo_open(PGconn* conn, Oid lobjId, int mode)
-{
+lo_open(PGconn *conn, Oid lobjId, int mode) {
     int fd;
     int result_len;
     PQArgBlock argv[2];
@@ -48,18 +47,18 @@ lo_open(PGconn* conn, Oid lobjId, int mode)
     argv[1].isint = 1;
     argv[1].len = 4;
     argv[1].u.integer = mode;
-    
-    res = PQfn(conn, F_LO_OPEN,&fd,&result_len,1,argv,2); 
-    if (PQresultStatus(res) == PGRES_COMMAND_OK) {
-	PQclear(res);
 
-	/* have to do this to reset offset in shared fd cache */
-	/* but only if fd is valid */
-	if (fd >= 0 && lo_lseek(conn, fd, 0L, SEEK_SET) < 0)
-	    return -1;
-	return fd;
+    res = PQfn(conn, F_LO_OPEN, &fd, &result_len, 1, argv, 2);
+    if (PQresultStatus(res) == PGRES_COMMAND_OK) {
+        PQclear(res);
+
+        /* have to do this to reset offset in shared fd cache */
+        /* but only if fd is valid */
+        if (fd >= 0 && lo_lseek(conn, fd, 0L, SEEK_SET) < 0)
+            return -1;
+        return fd;
     } else
-	return -1;
+        return -1;
 }
 
 /*
@@ -70,8 +69,7 @@ lo_open(PGconn* conn, Oid lobjId, int mode)
  * returns -1 upon failure.
  */
 int
-lo_close(PGconn *conn, int fd)
-{
+lo_close(PGconn *conn, int fd) {
     PQArgBlock argv[1];
     PGresult *res;
     int retval;
@@ -80,12 +78,12 @@ lo_close(PGconn *conn, int fd)
     argv[0].isint = 1;
     argv[0].len = 4;
     argv[0].u.integer = fd;
-    res = PQfn(conn, F_LO_CLOSE,&retval,&result_len,1,argv,1);
+    res = PQfn(conn, F_LO_CLOSE, &retval, &result_len, 1, argv, 1);
     if (PQresultStatus(res) == PGRES_COMMAND_OK) {
-	PQclear(res);
-	return retval;
+        PQclear(res);
+        return retval;
     } else
-	return -1;
+        return -1;
 }
 
 /*
@@ -97,8 +95,7 @@ lo_close(PGconn *conn, int fd)
  */
 
 int
-lo_read(PGconn *conn, int fd, char *buf, int len)
-{
+lo_read(PGconn *conn, int fd, char *buf, int len) {
     PQArgBlock argv[2];
     PGresult *res;
     int result_len;
@@ -111,12 +108,12 @@ lo_read(PGconn *conn, int fd, char *buf, int len)
     argv[1].len = 4;
     argv[1].u.integer = len;
 
-    res = PQfn(conn, F_LOREAD,(int*)buf,&result_len,0,argv,2);
+    res = PQfn(conn, F_LOREAD, (int *) buf, &result_len, 0, argv, 2);
     if (PQresultStatus(res) == PGRES_COMMAND_OK) {
-	PQclear(res);
-	return result_len;
+        PQclear(res);
+        return result_len;
     } else
-	return -1;
+        return -1;
 }
 
 /*
@@ -125,15 +122,14 @@ lo_read(PGconn *conn, int fd, char *buf, int len)
  *
  */
 int
-lo_write(PGconn *conn, int fd, char *buf, int len)
-{
+lo_write(PGconn *conn, int fd, char *buf, int len) {
     PQArgBlock argv[2];
     PGresult *res;
     int result_len;
     int retval;
 
     if (len <= 0)
-	return 0;
+        return 0;
 
     argv[0].isint = 1;
     argv[0].len = 4;
@@ -141,14 +137,14 @@ lo_write(PGconn *conn, int fd, char *buf, int len)
 
     argv[1].isint = 0;
     argv[1].len = len;
-    argv[1].u.ptr = (int*)buf;
+    argv[1].u.ptr = (int *) buf;
 
-    res = PQfn(conn, F_LOWRITE,&retval,&result_len,1,argv,2);
+    res = PQfn(conn, F_LOWRITE, &retval, &result_len, 1, argv, 2);
     if (PQresultStatus(res) == PGRES_COMMAND_OK) {
-	PQclear(res);
-	return retval;
+        PQclear(res);
+        return retval;
     } else
-	return -1;
+        return -1;
 }
 
 /*
@@ -159,17 +155,16 @@ lo_write(PGconn *conn, int fd, char *buf, int len)
  */
 
 int
-lo_lseek(PGconn *conn, int fd, int offset, int whence)
-{
+lo_lseek(PGconn *conn, int fd, int offset, int whence) {
     PQArgBlock argv[3];
     PGresult *res;
-    int retval; 
+    int retval;
     int result_len;
-    
+
     argv[0].isint = 1;
     argv[0].len = 4;
     argv[0].u.integer = fd;
-    
+
     argv[1].isint = 1;
     argv[1].len = 4;
     argv[1].u.integer = offset;
@@ -178,12 +173,12 @@ lo_lseek(PGconn *conn, int fd, int offset, int whence)
     argv[2].len = 4;
     argv[2].u.integer = whence;
 
-    res = PQfn(conn, F_LO_LSEEK,&retval,&result_len,1,argv,3);
+    res = PQfn(conn, F_LO_LSEEK, &retval, &result_len, 1, argv, 3);
     if (PQresultStatus(res) == PGRES_COMMAND_OK) {
-	PQclear(res);
-	return retval;
+        PQclear(res);
+        return retval;
     } else
-	return -1;
+        return -1;
 }
 
 /*
@@ -196,8 +191,7 @@ lo_lseek(PGconn *conn, int fd, int offset, int whence)
  */
 
 Oid
-lo_creat(PGconn *conn, int mode)
-{
+lo_creat(PGconn *conn, int mode) {
     PQArgBlock argv[1];
     PGresult *res;
     int retval;
@@ -206,12 +200,12 @@ lo_creat(PGconn *conn, int mode)
     argv[0].isint = 1;
     argv[0].len = 4;
     argv[0].u.integer = mode;
-    res  = PQfn(conn, F_LO_CREAT,&retval,&result_len,1,argv,1);
+    res = PQfn(conn, F_LO_CREAT, &retval, &result_len, 1, argv, 1);
     if (PQresultStatus(res) == PGRES_COMMAND_OK) {
-	PQclear(res);
-	return (Oid)retval;
+        PQclear(res);
+        return (Oid) retval;
     } else
-	return InvalidOid;
+        return InvalidOid;
 }
 
 
@@ -222,8 +216,7 @@ lo_creat(PGconn *conn, int mode)
  */
 
 int
-lo_tell(PGconn *conn, int fd)
-{
+lo_tell(PGconn *conn, int fd) {
     int retval;
     PQArgBlock argv[1];
     PGresult *res;
@@ -233,12 +226,12 @@ lo_tell(PGconn *conn, int fd)
     argv[0].len = 4;
     argv[0].u.integer = fd;
 
-    res = PQfn(conn, F_LO_TELL,&retval,&result_len,1,argv,1);
+    res = PQfn(conn, F_LO_TELL, &retval, &result_len, 1, argv, 1);
     if (PQresultStatus(res) == PGRES_COMMAND_OK) {
-	PQclear(res);
-	return retval;
+        PQclear(res);
+        return retval;
     } else
-	return -1;
+        return -1;
 }
 
 /*
@@ -248,8 +241,7 @@ lo_tell(PGconn *conn, int fd)
  */
 
 int
-lo_unlink(PGconn *conn, Oid lobjId)
-{
+lo_unlink(PGconn *conn, Oid lobjId) {
     PQArgBlock argv[1];
     PGresult *res;
     int result_len;
@@ -259,12 +251,12 @@ lo_unlink(PGconn *conn, Oid lobjId)
     argv[0].len = 4;
     argv[0].u.integer = lobjId;
 
-    res = PQfn(conn, F_LO_UNLINK,&retval,&result_len,1,argv,1);
+    res = PQfn(conn, F_LO_UNLINK, &retval, &result_len, 1, argv, 1);
     if (PQresultStatus(res) == PGRES_COMMAND_OK) {
-	PQclear(res);
-	return retval;
+        PQclear(res);
+        return retval;
     } else
-	return -1;
+        return -1;
 }
 
 /*
@@ -276,50 +268,49 @@ lo_unlink(PGconn *conn, Oid lobjId)
  */
 
 Oid
-lo_import(PGconn *conn, char* filename)
-{
+lo_import(PGconn *conn, char *filename) {
     int fd;
     int nbytes, tmp;
     char buf[LO_BUFSIZE];
     Oid lobjOid;
     int lobj;
-    
+
     /*
      * open the file to be read in
      */
     fd = open(filename, O_RDONLY, 0666);
-    if (fd < 0)  {   /* error */
-	sprintf(conn->errorMessage,
-		"lo_import: can't open unix file\"%s\"\n", filename);
-	return InvalidOid;
+    if (fd < 0) {   /* error */
+        sprintf(conn->errorMessage,
+                "lo_import: can't open unix file\"%s\"\n", filename);
+        return InvalidOid;
     }
 
     /*
      * create an inversion "object"
      */
-    lobjOid = lo_creat(conn, INV_READ|INV_WRITE);
+    lobjOid = lo_creat(conn, INV_READ | INV_WRITE);
     if (lobjOid == InvalidOid) {
-	sprintf(conn->errorMessage,
-	        "lo_import: can't create inv object for \"%s\"", filename);
-	return InvalidOid;
+        sprintf(conn->errorMessage,
+                "lo_import: can't create inv object for \"%s\"", filename);
+        return InvalidOid;
     }
 
     lobj = lo_open(conn, lobjOid, INV_WRITE);
     if (lobj == -1) {
-	sprintf(conn->errorMessage,
-		"lo_import: could not open inv object oid %d",lobjOid);
-	return InvalidOid;
+        sprintf(conn->errorMessage,
+                "lo_import: could not open inv object oid %d", lobjOid);
+        return InvalidOid;
     }
     /*
      * read in from the Unix file and write to the inversion file
      */
     while ((nbytes = read(fd, buf, LO_BUFSIZE)) > 0) {
-	tmp = lo_write(conn,lobj, buf, nbytes);
+        tmp = lo_write(conn, lobj, buf, nbytes);
         if (tmp < nbytes) {
-	    sprintf(conn->errorMessage,
-		    "lo_import: error while reading \"%s\"",filename);
-	    return InvalidOid;
-	}
+            sprintf(conn->errorMessage,
+                    "lo_import: error while reading \"%s\"", filename);
+            return InvalidOid;
+        }
     }
 
     (void) close(fd);
@@ -334,8 +325,7 @@ lo_import(PGconn *conn, char* filename)
  * returns -1 upon failure, 1 otherwise
  */
 int
-lo_export(PGconn *conn, Oid lobjId, char *filename)
-{
+lo_export(PGconn *conn, Oid lobjId, char *filename) {
     int fd;
     int nbytes, tmp;
     char buf[LO_BUFSIZE];
@@ -346,35 +336,35 @@ lo_export(PGconn *conn, Oid lobjId, char *filename)
      */
     lobj = lo_open(conn, lobjId, INV_READ);
     if (lobj == -1) {
-	sprintf(conn->errorMessage,
-		"lo_export: can't open inv object %d",lobjId);
-	return -1;
+        sprintf(conn->errorMessage,
+                "lo_export: can't open inv object %d", lobjId);
+        return -1;
     }
 
     /*
      * open the file to be written to
      */
-    fd = open(filename, O_CREAT|O_WRONLY, 0666);
-    if (fd < 0)  {   /* error */
-	sprintf(conn->errorMessage,
-		"lo_export: can't open unix file\"%s\"",filename);
-	return 0;
+    fd = open(filename, O_CREAT | O_WRONLY, 0666);
+    if (fd < 0) {   /* error */
+        sprintf(conn->errorMessage,
+                "lo_export: can't open unix file\"%s\"", filename);
+        return 0;
     }
 
     /*
      * read in from the Unix file and write to the inversion file
      */
     while ((nbytes = lo_read(conn, lobj, buf, LO_BUFSIZE)) > 0) {
-	tmp = write(fd, buf, nbytes);
+        tmp = write(fd, buf, nbytes);
         if (tmp < nbytes) {
-	    sprintf(conn->errorMessage,
-		    "lo_export: error while writing \"%s\"",
-		    filename);
-	    return -1;
-	}
+            sprintf(conn->errorMessage,
+                    "lo_export: error while writing \"%s\"",
+                    filename);
+            return -1;
+        }
     }
 
-    (void) lo_close(conn,lobj);
+    (void) lo_close(conn, lobj);
     (void) close(fd);
 
     return 1;
