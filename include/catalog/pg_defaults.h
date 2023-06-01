@@ -31,12 +31,10 @@
  *	typedef struct FormData_pg_defaults
  * ----------------
  */
-CATALOG(pg_defaults)
-BOOTSTRAP {
-NameData defname;
-NameData defvalue;
-}
-FormData_pg_defaults;
+CATALOG(pg_defaults) BOOTSTRAP {
+    NameData defname;
+    NameData defvalue;
+} FormData_pg_defaults;
 
 /* ----------------
  *	Form_pg_defaults corresponds to a pointer to a tuple with

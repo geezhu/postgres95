@@ -13,36 +13,36 @@
 
 /* The *Info data structures run-time C structures used to store
    system catalog information */
-
+   
 typedef struct _typeInfo {
-    char *oid;
-    char *typowner;
-    char *typname;
-    char *typlen;
-    char *typprtlen;
-    char *typinput;
-    char *typoutput;
-    char *typreceive;
-    char *typsend;
-    char *typelem;
-    char *typdelim;
-    char *typdefault;
-    char *typrelid;
+    char* oid;
+    char* typowner;
+    char* typname;
+    char* typlen;
+    char* typprtlen;
+    char* typinput;
+    char* typoutput;
+    char* typreceive;
+    char* typsend;
+    char* typelem;
+    char* typdelim;
+    char* typdefault;
+    char* typrelid;
     int passedbyvalue;
     int isArray;
 } TypeInfo;
 
 typedef struct _funcInfo {
-    char *oid;
-    char *proname;
-    char *proowner;
+    char* oid;
+    char* proname;
+    char* proowner;
     int lang;  /* 1 if C, else SQL */
     int nargs;
-    char *argtypes[8];  /* should be derived from obj/fmgr.h instead of hardwired*/
-    char *prorettype;
+    char* argtypes[8];  /* should be derived from obj/fmgr.h instead of hardwired*/
+    char* prorettype;
     int retset; /* 1 if the function returns a set, 0 otherwise */
-    char *prosrc;
-    char *probin;
+    char* prosrc;
+    char* probin;
     int dumped; /* 1 if already dumped */
 } FuncInfo;
 
@@ -65,7 +65,7 @@ typedef struct _tableInfo {
 			       this is needed because the SQL tables will
 			       not have the same order of attributes as
 			       the POSTQUEL tables */
-
+           
 } TableInfo;
 
 typedef struct _inhInfo {
@@ -121,8 +121,8 @@ extern int g_last_builtin_oid; /* value of the last builtin oid */
 extern FILE *g_fout;     /* the script file */
 
 /* placeholders for comment starting and ending delimiters */
-extern char g_comment_start[10];
-extern char g_comment_end[10];
+extern char g_comment_start[10]; 
+extern char g_comment_end[10]; 
 
 extern char g_opaque_type[10]; /* name for the opaque type */
 
@@ -135,83 +135,56 @@ extern char g_opaque_type[10]; /* name for the opaque type */
  *  common utility functions 
 */
 
-extern TableInfo *dumpSchema(FILE *fout, int *numTablesPtr);
+extern TableInfo* dumpSchema(FILE* fout, int *numTablesPtr);
 
-extern char *findTypeByOid(TypeInfo *tinfo, int numTypes, char *oid);
-
-extern char *findOprByOid(OprInfo *oprinfo, int numOprs, char *oid);
-
-extern int findFuncByName(FuncInfo *finfo, int numFuncs, char *name);
-
-extern char **findParentsByOid(TableInfo *tbinfo, int numTables,
-                               InhInfo *inhinfo, int numInherits,
-                               char *oid,
-                               int *numParents);
-
+extern char* findTypeByOid(TypeInfo* tinfo, int numTypes, char* oid);
+extern char* findOprByOid(OprInfo *oprinfo, int numOprs, char *oid);
+extern int findFuncByName(FuncInfo* finfo, int numFuncs, char* name);
+extern char** findParentsByOid(TableInfo* tbinfo, int numTables,
+			      InhInfo* inhinfo, int numInherits,
+			      char *oid, 
+			      int *numParents);
 extern int findTableByName(TableInfo *tbinfo, int numTables, char *relname);
-
 extern int findTableByOid(TableInfo *tbinfo, int numTables, char *oid);
-
-extern void flagInhAttrs(TableInfo *tbinfo, int numTables,
-                         InhInfo *inhinfo, int numInherits);
+extern void flagInhAttrs(TableInfo* tbinfo, int numTables,
+			   InhInfo* inhinfo, int numInherits);
 
 extern void check_conn_and_db();
-
-extern char *dupstr(char *s);
-
-extern int strInArray(char *pattern, char **arr, int arr_size);
-
-extern void parseArgTypes(char **argtypes, char *str);
-
-extern int isArchiveName(char *);
+extern char* dupstr(char *s);
+extern int strInArray(char* pattern, char** arr, int arr_size);
+extern void parseArgTypes(char **argtypes, char* str);
+extern int isArchiveName(char*);
 
 /*
  * version specific routines 
  */
-extern TypeInfo *getTypes(int *numTypes);
-
-extern FuncInfo *getFuncs(int *numFuncs);
-
-extern AggInfo *getAggregates(int *numAggregates);
-
-extern OprInfo *getOperators(int *numOperators);
-
-extern TableInfo *getTables(int *numTables);
-
-extern InhInfo *getInherits(int *numInherits);
-
-extern void getTableAttrs(TableInfo *tbinfo, int numTables);
-
-extern IndInfo *getIndices(int *numIndices);
-
-extern void dumpTypes(FILE *fout, FuncInfo *finfo, int numFuncs,
-                      TypeInfo *tinfo, int numTypes);
-
-extern void dumpFuncs(FILE *fout, FuncInfo *finfo, int numFuncs,
-                      TypeInfo *tinfo, int numTypes);
-
-extern void dumpAggs(FILE *fout, AggInfo *agginfo, int numAggregates,
-                     TypeInfo *tinfo, int numTypes);
-
-extern void dumpOprs(FILE *fout, OprInfo *agginfo, int numOperators,
-                     TypeInfo *tinfo, int numTypes);
-
-extern void dumpOneFunc(FILE *fout, FuncInfo *finfo, int i,
-                        TypeInfo *tinfo, int numTypes);
-
-extern void dumpTables(FILE *fout, TableInfo *tbinfo, int numTables,
-                       InhInfo *inhinfo, int numInherits,
-                       TypeInfo *tinfo, int numTypes);
-
-extern void dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
-                        TableInfo *tbinfo, int numTables);
+extern TypeInfo* getTypes(int *numTypes);
+extern FuncInfo* getFuncs(int *numFuncs);
+extern AggInfo* getAggregates(int *numAggregates);
+extern OprInfo* getOperators(int *numOperators);
+extern TableInfo* getTables(int *numTables);
+extern InhInfo* getInherits(int *numInherits);
+extern void getTableAttrs(TableInfo* tbinfo, int numTables);
+extern IndInfo* getIndices(int *numIndices);
+extern void dumpTypes(FILE* fout, FuncInfo* finfo, int numFuncs,
+		      TypeInfo* tinfo, int numTypes);
+extern void dumpFuncs(FILE* fout, FuncInfo* finfo, int numFuncs,
+		      TypeInfo *tinfo, int numTypes);
+extern void dumpAggs(FILE* fout, AggInfo* agginfo, int numAggregates,
+		     TypeInfo *tinfo, int numTypes);
+extern void dumpOprs(FILE* fout, OprInfo* agginfo, int numOperators,
+		     TypeInfo *tinfo, int numTypes);
+extern void dumpOneFunc(FILE* fout, FuncInfo* finfo, int i,
+			TypeInfo *tinfo, int numTypes);
+extern void dumpTables(FILE* fout, TableInfo* tbinfo, int numTables,
+		       InhInfo *inhinfo, int numInherits,
+		       TypeInfo *tinfo, int numTypes);
+extern void dumpIndices(FILE* fout, IndInfo* indinfo, int numIndices,
+			TableInfo* tbinfo, int numTables);
 
 extern void dumpClasses(TableInfo *tbinfo, int numTables, FILE *fout);
-
 extern void dumpTuples(char *portalname, FILE *fout, int *attrmap);
-
-extern char *checkForQuote(char *s);
-
+extern char* checkForQuote(char* s);
 extern int findLastBuiltinOid();
 
 

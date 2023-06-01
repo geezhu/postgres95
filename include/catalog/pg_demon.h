@@ -31,14 +31,12 @@
  *	typedef struct FormData_pg_demon
  * ----------------
  */
-CATALOG(pg_demon)
-BOOTSTRAP {
-Oid demserid;
-NameData demname;
-Oid demowner;
-regproc demcode;
-}
-FormData_pg_demon;
+CATALOG(pg_demon) BOOTSTRAP {
+    Oid demserid;
+    NameData demname;
+    Oid demowner;
+    regproc demcode;
+} FormData_pg_demon;
 
 /* ----------------
  *	Form_pg_demon corresponds to a pointer to a tuple with

@@ -32,12 +32,11 @@
  * ----------------
  */
 CATALOG(pg_inheritproc) {
-        NameData    inhproname;
-        Oid    inhargrel;
-        Oid    inhdefrel;
-        Oid    inhproc;
-}
-FormData_pg_inheritproc;
+    NameData inhproname;
+    Oid inhargrel;
+    Oid inhdefrel;
+    Oid inhproc;
+} FormData_pg_inheritproc;
 
 /* ----------------
  *	Form_pg_inheritproc corresponds to a pointer to a tuple with

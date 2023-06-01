@@ -36,19 +36,13 @@ SELECT 't'::bool = 'f'::bool AS false;
 SELECT 't'::bool <> 'f'::bool AS true;
 
 
-CREATE TABLE BOOLTBL1
-(
-    f1 bool
-);
+CREATE TABLE BOOLTBL1 (f1 bool);
 
-INSERT INTO BOOLTBL1 (f1)
-VALUES ('t'::bool);
+INSERT INTO BOOLTBL1 (f1) VALUES ('t'::bool);
 
-INSERT INTO BOOLTBL1 (f1)
-VALUES ('True'::bool);
+INSERT INTO BOOLTBL1 (f1) VALUES ('True'::bool);
 
-INSERT INTO BOOLTBL1 (f1)
-VALUES ('true'::bool);
+INSERT INTO BOOLTBL1 (f1) VALUES ('true'::bool);
 
 
 -- BOOLTBL1 should be full of true's at this point 
@@ -56,67 +50,56 @@ SELECT '' AS t_3, BOOLTBL1.*;
 
 
 SELECT '' AS t_3, BOOLTBL1.*
-FROM BOOLTBL1
-WHERE f1 = 'true'::bool;
+   FROM BOOLTBL1
+   WHERE f1 = 'true'::bool;
 
 
-SELECT '' AS t_3, BOOLTBL1.*
-FROM BOOLTBL1
-WHERE f1 <> 'false'::bool;
+SELECT '' AS t_3, BOOLTBL1.* 
+   FROM BOOLTBL1
+   WHERE f1 <> 'false'::bool;
 
 SELECT '' AS zero, BOOLTBL1.*
-FROM BOOLTBL1
-WHERE booleq('false'::bool, f1);
+   FROM BOOLTBL1
+   WHERE booleq('false'::bool, f1);
 
-INSERT INTO BOOLTBL1 (f1)
-VALUES ('f'::bool);
+INSERT INTO BOOLTBL1 (f1) VALUES ('f'::bool);
 
-SELECT '' AS f_1, BOOLTBL1.*
-FROM BOOLTBL1
-WHERE f1 = 'false'::bool;
+SELECT '' AS f_1, BOOLTBL1.* 
+   FROM BOOLTBL1
+   WHERE f1 = 'false'::bool;
 
 
-CREATE TABLE BOOLTBL2
-(
-    f1 bool
-);
+CREATE TABLE BOOLTBL2 (f1 bool);
 
-INSERT INTO BOOLTBL2 (f1)
-VALUES ('f'::bool);
+INSERT INTO BOOLTBL2 (f1) VALUES ('f'::bool);
 
-INSERT INTO BOOLTBL2 (f1)
-VALUES ('false'::bool);
+INSERT INTO BOOLTBL2 (f1) VALUES ('false'::bool);
 
-INSERT INTO BOOLTBL2 (f1)
-VALUES ('False'::bool);
+INSERT INTO BOOLTBL2 (f1) VALUES ('False'::bool);
 
 -- this evaluates to a false value 
-INSERT INTO BOOLTBL2 (f1)
-VALUES ('XXX'::bool);
+INSERT INTO BOOLTBL2 (f1) 
+   VALUES ('XXX'::bool);  
 
 
 -- BOOLTBL2 should be full of false's at this point 
 SELECT '' AS f_4, BOOLTBL2.*;
 
 
-SELECT '' AS tf_12,
-       BOOLTBL1.*,
-       BOOLTBL2.* WHERE BOOLTBL2.f1 <> BOOLTBL1.f1;
+SELECT '' AS tf_12, BOOLTBL1.*, BOOLTBL2.*
+   WHERE BOOLTBL2.f1 <> BOOLTBL1.f1;
 
 
-SELECT '' AS tf_12,
-       BOOLTBL1.*,
-       BOOLTBL2.* WHERE boolne(BOOLTBL2.f1,BOOLTBL1.f1);
+SELECT '' AS tf_12, BOOLTBL1.*, BOOLTBL2.*
+   WHERE boolne(BOOLTBL2.f1,BOOLTBL1.f1);
 
 
-SELECT '' AS ff_4,
-       BOOLTBL1.*,
-       BOOLTBL2.* WHERE BOOLTBL2.f1 = BOOLTBL1.f1 and BOOLTBL1.f1 = 'false'::bool;
+SELECT '' AS ff_4, BOOLTBL1.*, BOOLTBL2.*
+   WHERE BOOLTBL2.f1 = BOOLTBL1.f1 and BOOLTBL1.f1 = 'false'::bool;
 
 
-SELECT '' AS tf_12_ff_4,
-       BOOLTBL1.*,
-       BOOLTBL2.* WHERE BOOLTBL2.f1 = BOOLTBL1.f1 or BOOLTBL1.f1 = 'true'::bool;
+SELECT '' AS tf_12_ff_4, BOOLTBL1.*, BOOLTBL2.*
+   WHERE BOOLTBL2.f1 = BOOLTBL1.f1 or BOOLTBL1.f1 = 'true'::bool;
 
 
 -- **** testing built-in time types: abstime, reltime, and tinterval ****
@@ -127,161 +110,132 @@ SELECT '' AS tf_12_ff_4,
 -- DST right for times prior to unix epoch (jan 1 1970).
 --
 
-CREATE TABLE ABSTIME_TBL
-(
-    f1 abstime
-);
+CREATE TABLE ABSTIME_TBL (f1 abstime);
 
-INSERT INTO ABSTIME_TBL (f1)
-VALUES ('Jan 14, 1973 03:14:21');
+INSERT INTO ABSTIME_TBL (f1) VALUES ('Jan 14, 1973 03:14:21');
 
 -- was INSERT INTO ABSTIME_TBL (f1) VALUES ('now'::abstime):
-INSERT INTO ABSTIME_TBL (f1)
-VALUES ('Mon May  1 00:30:30 PDT 1995'::abstime);
+INSERT INTO ABSTIME_TBL (f1) VALUES ('Mon May  1 00:30:30 PDT 1995'::abstime);
 
-INSERT INTO ABSTIME_TBL (f1)
-VALUES ('epoch'::abstime);
+INSERT INTO ABSTIME_TBL (f1) VALUES ('epoch'::abstime);
 
-INSERT INTO ABSTIME_TBL (f1)
-VALUES ('current'::abstime);
+INSERT INTO ABSTIME_TBL (f1) VALUES ('current'::abstime);
 
-INSERT INTO ABSTIME_TBL (f1)
-VALUES ('infinity'::abstime);
+INSERT INTO ABSTIME_TBL (f1) VALUES ('infinity'::abstime);
 
-INSERT INTO ABSTIME_TBL (f1)
-VALUES ('-infinity'::abstime);
+INSERT INTO ABSTIME_TBL (f1) VALUES ('-infinity'::abstime);
 
-INSERT INTO ABSTIME_TBL (f1)
-VALUES ('May 10, 1943 23:59:12');
+INSERT INTO ABSTIME_TBL (f1) VALUES ('May 10, 1943 23:59:12');
 
 
 -- what happens if we specify slightly misformatted abstime? 
-INSERT INTO ABSTIME_TBL (f1)
-VALUES ('Feb 35, 1946 10:00:00');
+INSERT INTO ABSTIME_TBL (f1) VALUES ('Feb 35, 1946 10:00:00');
 
-INSERT INTO ABSTIME_TBL (f1)
-VALUES ('Feb 28, 1984 25:08:10');
+INSERT INTO ABSTIME_TBL (f1) VALUES ('Feb 28, 1984 25:08:10');
 
 
 -- badly formatted abstimes:  these should result in invalid abstimes 
-INSERT INTO ABSTIME_TBL (f1)
-VALUES ('bad date format');
+INSERT INTO ABSTIME_TBL (f1) VALUES ('bad date format');
 
-INSERT INTO ABSTIME_TBL (f1)
-VALUES ('Jun 10, 1843');
+INSERT INTO ABSTIME_TBL (f1) VALUES ('Jun 10, 1843');
 
 
-CREATE TABLE RELTIME_TBL
-(
-    f1 reltime
-);
+CREATE TABLE RELTIME_TBL (f1 reltime);
 
-INSERT INTO RELTIME_TBL (f1)
-VALUES ('@ 1 minute');
+INSERT INTO RELTIME_TBL (f1) VALUES ('@ 1 minute');
 
-INSERT INTO RELTIME_TBL (f1)
-VALUES ('@ 5 hour');
+INSERT INTO RELTIME_TBL (f1) VALUES ('@ 5 hour');
 
-INSERT INTO RELTIME_TBL (f1)
-VALUES ('@ 10 day');
+INSERT INTO RELTIME_TBL (f1) VALUES ('@ 10 day');
 
-INSERT INTO RELTIME_TBL (f1)
-VALUES ('@ 34 year');
+INSERT INTO RELTIME_TBL (f1) VALUES ('@ 34 year');
 
-INSERT INTO RELTIME_TBL (f1)
-VALUES ('@ 3 months');
+INSERT INTO RELTIME_TBL (f1) VALUES ('@ 3 months');
 
-INSERT INTO RELTIME_TBL (f1)
-VALUES ('@ 14 seconds ago');
+INSERT INTO RELTIME_TBL (f1) VALUES ('@ 14 seconds ago');
 
 
 -- badly formatted reltimes:   
-INSERT INTO RELTIME_TBL (f1)
-VALUES ('badly formatted reltime');
+INSERT INTO RELTIME_TBL (f1) VALUES ('badly formatted reltime');
 
-INSERT INTO RELTIME_TBL (f1)
-VALUES ('@ 30 eons ago');
+INSERT INTO RELTIME_TBL (f1) VALUES ('@ 30 eons ago');
 
 
-CREATE TABLE TINTERVAL_TBL
-(
-    f1 tinterval
-);
+CREATE TABLE TINTERVAL_TBL (f1  tinterval);
 
 INSERT INTO TINTERVAL_TBL (f1)
-VALUES ('["-infinity" "infinity"]');
+   VALUES ('["-infinity" "infinity"]');
 
 INSERT INTO TINTERVAL_TBL (f1)
-VALUES ('["May 10, 1943 23:59:12" "Jan 14, 1973 03:14:21"]');
+   VALUES ('["May 10, 1943 23:59:12" "Jan 14, 1973 03:14:21"]');
 
 INSERT INTO TINTERVAL_TBL (f1)
-VALUES ('["Sep 4, 1983 23:59:12" "Oct 4, 1983 23:59:12"]');
+   VALUES ('["Sep 4, 1983 23:59:12" "Oct 4, 1983 23:59:12"]');
 
 INSERT INTO TINTERVAL_TBL (f1)
-VALUES ('["epoch" "Mon May  1 00:30:30 PDT 1995"]');
+   VALUES ('["epoch" "Mon May  1 00:30:30 PDT 1995"]');
 
 INSERT INTO TINTERVAL_TBL (f1)
-VALUES ('["Feb 15 1990 12:15:03" "current"]');
+   VALUES ('["Feb 15 1990 12:15:03" "current"]');
 
 
 -- badly formatted tintervals 
 INSERT INTO TINTERVAL_TBL (f1)
-VALUES ('["bad time specifications" ""]');
+   VALUES ('["bad time specifications" ""]');
 
 INSERT INTO TINTERVAL_TBL (f1)
-VALUES ('["" "infinity"]');
+   VALUES ('["" "infinity"]');
 
 
 -- test abstime operators 
 
 SELECT '' AS eleven, ABSTIME_TBL.*;
 
-SELECT '' AS eight,
-       ABSTIME_TBL.* WHERE ABSTIME_TBL.f1 < 'Jun 30, 2001'::abstime;
+SELECT '' AS eight, ABSTIME_TBL.*
+   WHERE ABSTIME_TBL.f1 < 'Jun 30, 2001'::abstime;
 
-SELECT '' AS eight,
-       ABSTIME_TBL.* WHERE ABSTIME_TBL.f1 > '-infinity'::abstime;
+SELECT '' AS eight, ABSTIME_TBL.*
+   WHERE ABSTIME_TBL.f1 > '-infinity'::abstime;
 
-SELECT '' AS eight,
-       ABSTIME_TBL.* WHERE 'May 10, 1943 23:59:12'::abstime <> ABSTIME_TBL.f1;
+SELECT '' AS eight, ABSTIME_TBL.*
+   WHERE 'May 10, 1943 23:59:12'::abstime <> ABSTIME_TBL.f1;
 
-SELECT '' AS one,
-       ABSTIME_TBL.* WHERE 'current'::abstime = ABSTIME_TBL.f1;
+SELECT '' AS one, ABSTIME_TBL.*
+   WHERE 'current'::abstime = ABSTIME_TBL.f1;
 
-SELECT '' AS five,
-       ABSTIME_TBL.* WHERE 'epoch'::abstime >= ABSTIME_TBL.f1;
+SELECT '' AS five, ABSTIME_TBL.*
+   WHERE 'epoch'::abstime >= ABSTIME_TBL.f1;
 
-SELECT '' AS six,
-       ABSTIME_TBL.* WHERE ABSTIME_TBL.f1 <= 'Jan 14, 1973 03:14:21'::abstime;
+SELECT '' AS six, ABSTIME_TBL.*
+   WHERE ABSTIME_TBL.f1 <= 'Jan 14, 1973 03:14:21'::abstime;
 
-SELECT '' AS six,
-       ABSTIME_TBL.* WHERE ABSTIME_TBL.f1 <?>
+SELECT '' AS six, ABSTIME_TBL.*
+  WHERE ABSTIME_TBL.f1 <?>
 	'["Apr 1 1945 00:00:00" "Dec 30 1999 23:00:00"]'::tinterval;
 
 
 -- these four queries should return the same answer 
 -- the "infinity" and "-infinity" tuples in ABSTIME_TBL cannot be added and 
 -- therefore, should not show up in the results. 
-SELECT '' AS five,
-       ABSTIME_TBL.* WHERE  (ABSTIME_TBL.f1 + '@ 3 year'::reltime)     -- +3 years 
-	< 'Jan 14 14:00:00 1977'::abstime;
+SELECT '' AS five, ABSTIME_TBL.*
+  WHERE  (ABSTIME_TBL.f1 + '@ 3 year'::reltime)     -- +3 years 
+	< 'Jan 14 14:00:00 1977'::abstime; 
 
-SELECT '' AS five,
-       ABSTIME_TBL.* WHERE  (ABSTIME_TBL.f1 + '@ 3 year ago'::reltime) -- -3 years 
+SELECT '' AS five, ABSTIME_TBL.*
+   WHERE  (ABSTIME_TBL.f1 + '@ 3 year ago'::reltime) -- -3 years 
 	< 'Jan 14 14:00:00 1971'::abstime;
 
-SELECT '' AS five,
-       ABSTIME_TBL.* WHERE  (ABSTIME_TBL.f1 - '@ 3 year'::reltime)     -- -(+3) years 
-	< 'Jan 14 14:00:00 1971'::abstime;
+SELECT '' AS five, ABSTIME_TBL.*
+   WHERE  (ABSTIME_TBL.f1 - '@ 3 year'::reltime)     -- -(+3) years 
+	< 'Jan 14 14:00:00 1971'::abstime; 
 
-SELECT '' AS five,
-       ABSTIME_TBL.* WHERE  (ABSTIME_TBL.f1 - '@ 3 year ago'::reltime) -- -(-3) years 
+SELECT '' AS five, ABSTIME_TBL.*
+   WHERE  (ABSTIME_TBL.f1 - '@ 3 year ago'::reltime) -- -(-3) years 
 	< 'Jan 14 14:00:00 1977'::abstime;
 
 
-SELECT '' AS twenty,
-       ABSTIME_TBL.*,
-       RELTIME_TBL.* WHERE (ABSTIME_TBL.f1 + RELTIME_TBL.f1)
+SELECT '' AS twenty, ABSTIME_TBL.*, RELTIME_TBL.*
+   WHERE (ABSTIME_TBL.f1 + RELTIME_TBL.f1)
 	< 'Jan 14 14:00:00 1971'::abstime;
 
 
@@ -289,28 +243,27 @@ SELECT '' AS twenty,
 
 SELECT '' AS eight, RELTIME_TBL.*;
 
-SELECT '' AS five,
-       RELTIME_TBL.* WHERE RELTIME_TBL.f1 <> '@ 10 days'::reltime;
+SELECT '' AS five, RELTIME_TBL.*
+   WHERE RELTIME_TBL.f1 <> '@ 10 days'::reltime;
 
-SELECT '' AS three,
-       RELTIME_TBL.* WHERE RELTIME_TBL.f1 <= '@ 5 hours'::reltime;
+SELECT '' AS three, RELTIME_TBL.*
+   WHERE RELTIME_TBL.f1 <= '@ 5 hours'::reltime;
 
-SELECT '' AS three,
-       RELTIME_TBL.* WHERE RELTIME_TBL.f1 < '@ 1 day'::reltime;
+SELECT '' AS three, RELTIME_TBL.*
+   WHERE RELTIME_TBL.f1 < '@ 1 day'::reltime;
 
-SELECT '' AS one,
-       RELTIME_TBL.* WHERE RELTIME_TBL.f1 = '@ 34 years'::reltime;
+SELECT '' AS one, RELTIME_TBL.*
+   WHERE RELTIME_TBL.f1 = '@ 34 years'::reltime;
 
-SELECT '' AS two,
-       RELTIME_TBL.* WHERE RELTIME_TBL.f1 >= '@ 1 month'::reltime;
+SELECT '' AS two, RELTIME_TBL.*
+   WHERE RELTIME_TBL.f1 >= '@ 1 month'::reltime;
 
-SELECT '' AS five,
-       RELTIME_TBL.* WHERE RELTIME_TBL.f1 > '@ 3 seconds ago'::reltime;
+SELECT '' AS five, RELTIME_TBL.*
+   WHERE RELTIME_TBL.f1 > '@ 3 seconds ago'::reltime;
 
 SELECT '' AS fifteen, r1.*, r2.*
-FROM RELTIME_TBL r1,
-     RELTIME_TBL r2
-WHERE r1.f1 > r2.f1;
+   FROM RELTIME_TBL r1, RELTIME_TBL r2
+   WHERE r1.f1 > r2.f1;
 
 
 -- test tinterval operators 
@@ -319,62 +272,60 @@ SELECT '' AS seven, TINTERVAL_TBL.*;
 
 -- length == 
 SELECT '' AS one, t.*
-FROM TINTERVAL_TBL t
-WHERE t.f1 #= '@ 1 months';
+   FROM TINTERVAL_TBL t
+   WHERE t.f1 #= '@ 1 months';
 
 -- length <> 
 SELECT '' AS three, t.*
-FROM TINTERVAL_TBL t
-WHERE t.f1 #<> '@ 1 months';
+   FROM TINTERVAL_TBL t
+   WHERE t.f1 #<> '@ 1 months';
 
 -- length < 
 SELECT '' AS zero, t.*
-FROM TINTERVAL_TBL t
-WHERE t.f1 #< '@ 1 month';
+   FROM TINTERVAL_TBL t
+   WHERE t.f1 #< '@ 1 month';
 
 -- length <= 
 SELECT '' AS one, t.*
-FROM TINTERVAL_TBL t
-WHERE t.f1 #<= '@ 1 month';
+   FROM TINTERVAL_TBL t
+   WHERE t.f1 #<= '@ 1 month';
 
 -- length > 
 SELECT '' AS three, t.*
-FROM TINTERVAL_TBL t
-WHERE t.f1 #> '@ 1 year';
+   FROM TINTERVAL_TBL t
+   WHERE t.f1 #> '@ 1 year';
 
 -- length >= 
 SELECT '' AS three, t.*
-FROM TINTERVAL_TBL t
-WHERE t.f1 #>= '@ 3 years';
+   FROM TINTERVAL_TBL t
+   WHERE t.f1 #>= '@ 3 years';
 
 -- overlaps 
 SELECT '' AS three, t1.*
-FROM TINTERVAL_TBL t1
-WHERE t1.f1 &&
+   FROM TINTERVAL_TBL t1
+   WHERE t1.f1 &&
 	'["Aug 15 14:23:19 1983" "Sep 16 14:23:19 1983"]'::tinterval;
 
 SELECT '' AS five, t1.*, t2.*
-FROM TINTERVAL_TBL t1,
-     TINTERVAL_TBL t2
-WHERE t1.f1 && t2.f1 and
+   FROM TINTERVAL_TBL t1, TINTERVAL_TBL t2
+   WHERE t1.f1 && t2.f1 and
 	 t1.f1 = t2.f1;
 
 SELECT '' AS fourteen, t1.*, t2.*
-FROM TINTERVAL_TBL t1,
-     TINTERVAL_TBL t2
-WHERE t1.f1 && t2.f1 and 
+   FROM TINTERVAL_TBL t1, TINTERVAL_TBL t2
+   WHERE t1.f1 && t2.f1 and 
 	not t1.f1 = t2.f1;
 
 -- contains 
 SELECT '' AS five, t1.*
-FROM TINTERVAL_TBL t1
-WHERE not t1.f1 <<
+   FROM TINTERVAL_TBL t1
+   WHERE not t1.f1 <<
 	'["Aug 15 14:23:19 1980" "Sep 16 14:23:19 1990"]'::tinterval;
 
 -- make time interval 
 SELECT '' AS three, t1.*
-FROM TINTERVAL_TBL t1
-WHERE t1.f1 && 
+   FROM TINTERVAL_TBL t1
+   WHERE t1.f1 && 
 	('Aug 15 14:23:19 1983'::abstime <#> 
 	 'Sep 16 14:23:19 1983'::abstime);
 
@@ -398,112 +349,102 @@ WHERE t1.f1 &&
 -- boxes are specified by two points, given by four floats x1,y1,x2,y2
 
 
-CREATE TABLE BOX_TBL
-(
-    f1 box
-);
+CREATE TABLE BOX_TBL (f1 box);
 
-INSERT INTO BOX_TBL (f1)
-VALUES ('(2.0,2.0,0.0,0.0)');
+INSERT INTO BOX_TBL (f1) VALUES ('(2.0,2.0,0.0,0.0)');
 
-INSERT INTO BOX_TBL (f1)
-VALUES ('(1.0,1.0,3.0,3.0)');
+INSERT INTO BOX_TBL (f1) VALUES ('(1.0,1.0,3.0,3.0)');
 
 -- degenerate cases where the box is a line or a point 
 -- note that lines and points boxes all have zero area 
-INSERT INTO BOX_TBL (f1)
-VALUES ('(2.5, 2.5, 2.5,3.5)');
+INSERT INTO BOX_TBL (f1) VALUES ('(2.5, 2.5, 2.5,3.5)');
 
-INSERT INTO BOX_TBL (f1)
-VALUES ('(3.0, 3.0,3.0,3.0)');
+INSERT INTO BOX_TBL (f1) VALUES ('(3.0, 3.0,3.0,3.0)');
 
 -- badly formatted box inputs 
-INSERT INTO BOX_TBL (f1)
-VALUES ('(2.3, 4.5)');
+INSERT INTO BOX_TBL (f1) VALUES ('(2.3, 4.5)');
 
-INSERT INTO BOX_TBL (f1)
-VALUES ('asdfasdf(ad');
+INSERT INTO BOX_TBL (f1) VALUES ('asdfasdf(ad');
 
 
 SELECT '' AS four, BOX_TBL.*;
 
 SELECT '' AS four, b.*, box_area(b.f1) as barea
-FROM BOX_TBL b;
+   FROM BOX_TBL b;
 
 -- overlap 
 SELECT '' AS three, b.f1
-FROM BOX_TBL b
-WHERE b.f1 && '(2.5,2.5,1.0,1.0)'::box;
+   FROM BOX_TBL b  
+   WHERE b.f1 && '(2.5,2.5,1.0,1.0)'::box;
 
 -- left-or-overlap (x only) 
 SELECT '' AS two, b1.*
-FROM BOX_TBL b1
-WHERE b1.f1 &< '(2.0,2.0,2.5,2.5)'::box;
+   FROM BOX_TBL b1
+   WHERE b1.f1 &< '(2.0,2.0,2.5,2.5)'::box;
 
 -- right-or-overlap (x only) 
 SELECT '' AS two, b1.*
-FROM BOX_TBL b1
-WHERE b1.f1 &> '(2.0,2.0,2.5,2.5)'::box;
+   FROM BOX_TBL b1
+   WHERE b1.f1 &> '(2.0,2.0,2.5,2.5)'::box;
 
 -- left of 
 SELECT '' AS two, b.f1
-FROM BOX_TBL b
-WHERE b.f1 << '(3.0,3.0,5.0,5.0)'::box;
+   FROM BOX_TBL b
+   WHERE b.f1 << '(3.0,3.0,5.0,5.0)'::box;
 
 -- area <= 
 SELECT '' AS four, b.f1
-FROM BOX_TBL b
-WHERE b.f1 <= '(3.0,3.0,5.0,5.0)'::box;
+   FROM BOX_TBL b
+   WHERE b.f1 <= '(3.0,3.0,5.0,5.0)'::box;
 
 -- area < 
 SELECT '' AS two, b.f1
-FROM BOX_TBL b
-WHERE b.f1 < '(3.0,3.0,5.0,5.0)'::box;
+   FROM BOX_TBL b
+   WHERE b.f1 < '(3.0,3.0,5.0,5.0)'::box;
 
 -- area = 
 SELECT '' AS two, b.f1
-FROM BOX_TBL b
-WHERE b.f1 = '(3.0,3.0,5.0,5.0)'::box;
+   FROM BOX_TBL b
+   WHERE b.f1 = '(3.0,3.0,5.0,5.0)'::box;
 
 -- area > 
 SELECT '' AS two, b.f1
-FROM BOX_TBL b -- zero area 
-WHERE b.f1 > '(3.5,3.0,4.5,3.0)'::box;
+   FROM BOX_TBL b				-- zero area 
+   WHERE b.f1 > '(3.5,3.0,4.5,3.0)'::box;	
 
 -- area >= 
 SELECT '' AS four, b.f1
-FROM BOX_TBL b -- zero area 
-WHERE b.f1 >= '(3.5,3.0,4.5,3.0)'::box;
+   FROM BOX_TBL b				-- zero area 
+   WHERE b.f1 >= '(3.5,3.0,4.5,3.0)'::box;
 
 -- right of 
 SELECT '' AS two, b.f1
-FROM BOX_TBL b
-WHERE '(3.0,3.0,5.0,5.0)'::box >> b.f1;
+   FROM BOX_TBL b
+   WHERE '(3.0,3.0,5.0,5.0)'::box >> b.f1;
 
 -- contained in 
 SELECT '' AS three, b.f1
-FROM BOX_TBL b
-WHERE b.f1 @ '(0,0,3,3)'::box;
+   FROM BOX_TBL b
+   WHERE b.f1 @ '(0,0,3,3)'::box;
 
 -- contains 
 SELECT '' AS three, b.f1
-FROM BOX_TBL b
-WHERE '(0,0,3,3)'::box ~ b.f1;
+   FROM BOX_TBL b
+   WHERE '(0,0,3,3)'::box ~ b.f1;
 
 -- box equality 
 SELECT '' AS one, b.f1
-FROM BOX_TBL b
-WHERE '(1,1,3,3)'::box ~= b.f1;
+   FROM BOX_TBL b
+   WHERE '(1,1,3,3)'::box ~= b.f1;
 
 -- center of box, left unary operator 
 SELECT '' AS four, @@(b1.f1) AS p
-FROM BOX_TBL b1;
+   FROM BOX_TBL b1;
 
 -- wholly-contained 
 SELECT '' AS one, b1.*, b2.*
-FROM BOX_TBL b1,
-     BOX_TBL b2
-WHERE b1.f1 ~ b2.f1 and not b1.f1 ~= b2.f1;
+   FROM BOX_TBL b1, BOX_TBL b2 
+   WHERE b1.f1 ~ b2.f1 and not b1.f1 ~= b2.f1;
 
 
 --  ****************** test built-in type char **************
@@ -511,61 +452,51 @@ WHERE b1.f1 ~ b2.f1 and not b1.f1 ~= b2.f1;
 -- all inputs are SILENTLY truncated at 1 character
 --
 
-CREATE TABLE CHAR_TBL
-(
-    f1 char
-);
+CREATE TABLE CHAR_TBL(f1 char);
 
-INSERT INTO CHAR_TBL (f1)
-VALUES ('a');
+INSERT INTO CHAR_TBL (f1) VALUES ('a');
 
-INSERT INTO CHAR_TBL (f1)
-VALUES ('A');
+INSERT INTO CHAR_TBL (f1) VALUES ('A');
 
 -- any of the following three input formats are acceptable 
-INSERT INTO CHAR_TBL (f1)
-VALUES ('1');
+INSERT INTO CHAR_TBL (f1) VALUES ('1');
 
-INSERT INTO CHAR_TBL (f1)
-VALUES (2);
+INSERT INTO CHAR_TBL (f1) VALUES (2);
 
-INSERT INTO CHAR_TBL (f1)
-VALUES ('3');
+INSERT INTO CHAR_TBL (f1) VALUES ('3');
 
 -- zero-length char 
-INSERT INTO CHAR_TBL (f1)
-VALUES ('');
+INSERT INTO CHAR_TBL (f1) VALUES ('');
 
 -- try char's of greater than 1 length 
-INSERT INTO CHAR_TBL (f1)
-VALUES ('cd');
+INSERT INTO CHAR_TBL (f1) VALUES ('cd');
 
 
 SELECT '' AS seven, CHAR_TBL.*;
 
 SELECT '' AS six, c.*
-FROM CHAR_TBL c
-WHERE c.f1 <> 'a';
+   FROM CHAR_TBL c
+   WHERE c.f1 <> 'a';
 
 SELECT '' AS one, c.*
-FROM CHAR_TBL c
-WHERE c.f1 = 'a';
+   FROM CHAR_TBL c
+   WHERE c.f1 = 'a';
 
 SELECT '' AS five, c.*
-FROM CHAR_TBL c
-WHERE c.f1 < 'a';
+   FROM CHAR_TBL c
+   WHERE c.f1 < 'a';
 
 SELECT '' AS six, c.*
-FROM CHAR_TBL c
-WHERE c.f1 <= 'a';
+   FROM CHAR_TBL c
+   WHERE c.f1 <= 'a';
 
 SELECT '' AS one, c.*
-FROM CHAR_TBL c
-WHERE c.f1 > 'a';
+   FROM CHAR_TBL c
+   WHERE c.f1 > 'a';
 
 SELECT '' AS two, c.*
-FROM CHAR_TBL c
-WHERE c.f1 >= 'a';
+   FROM CHAR_TBL c
+   WHERE c.f1 >= 'a';
 
 
 --  **************** testing built-in type char2 **************
@@ -573,74 +504,44 @@ WHERE c.f1 >= 'a';
 -- all inputs are silently truncated at 2 characters
 --
 
-CREATE TABLE CHAR2_TBL
-(
-    f1 char2
-);
+CREATE TABLE CHAR2_TBL(f1 char2);
 
-INSERT INTO CHAR2_TBL (f1)
-VALUES ('AB');
+INSERT INTO CHAR2_TBL (f1) VALUES ('AB');
 
-INSERT INTO CHAR2_TBL (f1)
-VALUES ('ab');
+INSERT INTO CHAR2_TBL (f1) VALUES ('ab');
 
-INSERT INTO CHAR2_TBL (f1)
-VALUES ('ZY');
+INSERT INTO CHAR2_TBL (f1) VALUES ('ZY');
 
-INSERT INTO CHAR2_TBL (f1)
-VALUES ('34');
+INSERT INTO CHAR2_TBL (f1) VALUES ('34');
 
-INSERT INTO CHAR2_TBL (f1)
-VALUES ('d');
+INSERT INTO CHAR2_TBL (f1) VALUES ('d');
 
-INSERT INTO CHAR2_TBL (f1)
-VALUES ('');
+INSERT INTO CHAR2_TBL (f1) VALUES ('');
 
-INSERT INTO CHAR2_TBL (f1)
-VALUES ('12345');
+INSERT INTO CHAR2_TBL (f1) VALUES ('12345');
 
 
 SELECT '' AS seven, CHAR2_TBL.*;
 
-SELECT '' AS six, c.f1
-FROM CHAR2_TBL c
-WHERE c.f1 <> 'AB';
+SELECT '' AS six, c.f1 FROM CHAR2_TBL c WHERE c.f1 <> 'AB';
 
-SELECT '' AS one, c.f1
-FROM CHAR2_TBL c
-WHERE c.f1 = 'AB';
+SELECT '' AS one, c.f1 FROM CHAR2_TBL c WHERE c.f1 = 'AB';
 
-SELECT '' AS three, c.f1
-FROM CHAR2_TBL c
-WHERE c.f1 < 'AB';
+SELECT '' AS three, c.f1 FROM CHAR2_TBL c WHERE c.f1 < 'AB';
 
-SELECT '' AS four, c.f1
-FROM CHAR2_TBL c
-WHERE c.f1 <= 'AB';
+SELECT '' AS four, c.f1 FROM CHAR2_TBL c WHERE c.f1 <= 'AB';
 
-SELECT '' AS three, c.f1
-FROM CHAR2_TBL c
-WHERE c.f1 > 'AB';
+SELECT '' AS three, c.f1 FROM CHAR2_TBL c WHERE c.f1 > 'AB';
 
-SELECT '' AS four, c.f1
-FROM CHAR2_TBL c
-WHERE c.f1 >= 'AB';
+SELECT '' AS four, c.f1 FROM CHAR2_TBL c WHERE c.f1 >= 'AB';
 
-SELECT '' AS seven, c.f1
-FROM CHAR2_TBL c
-WHERE c.f1 ~ '.*';
+SELECT '' AS seven, c.f1 FROM CHAR2_TBL c WHERE c.f1 ~ '.*';
 
-SELECT '' AS zero, c.f1
-FROM CHAR2_TBL c
-WHERE c.f1 !~ '.*';
+SELECT '' AS zero, c.f1 FROM CHAR2_TBL c WHERE c.f1 !~ '.*';
 
-SELECT '' AS one, c.f1
-FROM CHAR2_TBL c
-WHERE c.f1 ~ '34';
+SELECT '' AS one, c.f1 FROM CHAR2_TBL c WHERE c.f1 ~ '34';
 
-SELECT '' AS one, c.f1
-FROM CHAR2_TBL c
-WHERE c.f1 ~ '3.*';
+SELECT '' AS one, c.f1 FROM CHAR2_TBL c WHERE c.f1 ~ '3.*';
 
 
 
@@ -649,70 +550,42 @@ WHERE c.f1 ~ '3.*';
 -- all inputs are silently truncated at 4 characters
 --
 
-CREATE TABLE CHAR4_TBL
-(
-    f1 char4
-);
+CREATE TABLE CHAR4_TBL (f1  char4);
 
-INSERT INTO CHAR4_TBL(f1)
-VALUES ('ABCD');
+INSERT INTO CHAR4_TBL(f1) VALUES ('ABCD');
 
-INSERT INTO CHAR4_TBL(f1)
-VALUES ('abcd');
+INSERT INTO CHAR4_TBL(f1) VALUES ('abcd');
 
-INSERT INTO CHAR4_TBL(f1)
-VALUES ('ZYWZ');
+INSERT INTO CHAR4_TBL(f1) VALUES ('ZYWZ');
 
-INSERT INTO CHAR4_TBL(f1)
-VALUES ('343f');
+INSERT INTO CHAR4_TBL(f1) VALUES ('343f');
 
-INSERT INTO CHAR4_TBL(f1)
-VALUES ('d34a');
+INSERT INTO CHAR4_TBL(f1) VALUES ('d34a');
 
-INSERT INTO CHAR4_TBL(f1)
-VALUES ('');
+INSERT INTO CHAR4_TBL(f1) VALUES ('');
 
-INSERT INTO CHAR4_TBL(f1)
-VALUES ('12345678');
+INSERT INTO CHAR4_TBL(f1) VALUES ('12345678');
 
 
 SELECT '' AS seven, CHAR4_TBL.*;
 
-SELECT '' AS six, c.f1
-FROM CHAR4_TBL c
-WHERE c.f1 <> 'ABCD';
+SELECT '' AS six, c.f1 FROM CHAR4_TBL c WHERE c.f1 <> 'ABCD';
 
-SELECT '' AS one, c.f1
-FROM CHAR4_TBL c
-WHERE c.f1 = 'ABCD';
+SELECT '' AS one, c.f1 FROM CHAR4_TBL c WHERE c.f1 = 'ABCD';
 
-SELECT '' AS three, c.f1
-FROM CHAR4_TBL c
-WHERE c.f1 < 'ABCD';
+SELECT '' AS three, c.f1 FROM CHAR4_TBL c WHERE c.f1 < 'ABCD';
 
-SELECT '' AS four, c.f1
-FROM CHAR4_TBL c
-WHERE c.f1 <= 'ABCD';
+SELECT '' AS four, c.f1 FROM CHAR4_TBL c WHERE c.f1 <= 'ABCD';
 
-SELECT '' AS three, c.f1
-FROM CHAR4_TBL c
-WHERE c.f1 > 'ABCD';
+SELECT '' AS three, c.f1 FROM CHAR4_TBL c WHERE c.f1 > 'ABCD';
 
-SELECT '' AS four, c.f1
-FROM CHAR4_TBL c
-WHERE c.f1 >= 'ABCD';
+SELECT '' AS four, c.f1 FROM CHAR4_TBL c WHERE c.f1 >= 'ABCD';
 
-SELECT '' AS seven, c.f1
-FROM CHAR4_TBL c
-WHERE c.f1 ~ '.*';
+SELECT '' AS seven, c.f1 FROM CHAR4_TBL c WHERE c.f1 ~ '.*';
 
-SELECT '' AS zero, c.f1
-FROM CHAR4_TBL c
-WHERE c.f1 !~ '.*';
+SELECT '' AS zero, c.f1 FROM CHAR4_TBL c WHERE c.f1 !~ '.*';
 
-SELECT '' AS three, c.f1
-FROM CHAR4_TBL c
-WHERE c.f1 ~ '.*34.*';
+SELECT '' AS three, c.f1 FROM CHAR4_TBL c WHERE c.f1 ~ '.*34.*';
 
 
 --  **************** testing built-in type char8 **************
@@ -720,74 +593,44 @@ WHERE c.f1 ~ '.*34.*';
 -- all inputs are silently truncated at 8 characters
 --
 
-CREATE TABLE CHAR8_TBL
-(
-    f1 char8
-);
+CREATE TABLE CHAR8_TBL(f1 char8);
 
-INSERT INTO CHAR8_TBL(f1)
-VALUES ('ABCDEFGH');
+INSERT INTO CHAR8_TBL(f1) VALUES ('ABCDEFGH');
 
-INSERT INTO CHAR8_TBL(f1)
-VALUES ('abcdefgh');
+INSERT INTO CHAR8_TBL(f1) VALUES ('abcdefgh');
 
-INSERT INTO CHAR8_TBL(f1)
-VALUES ('ZYWZ410-');
+INSERT INTO CHAR8_TBL(f1) VALUES ('ZYWZ410-');
 
-INSERT INTO CHAR8_TBL(f1)
-VALUES ('343f%2a');
+INSERT INTO CHAR8_TBL(f1) VALUES ('343f%2a');
 
-INSERT INTO CHAR8_TBL(f1)
-VALUES ('d34aas');
+INSERT INTO CHAR8_TBL(f1) VALUES ('d34aas');
 
-INSERT INTO CHAR8_TBL(f1)
-VALUES ('');
+INSERT INTO CHAR8_TBL(f1) VALUES ('');
 
-INSERT INTO CHAR8_TBL(f1)
-VALUES ('1234567890');
+INSERT INTO CHAR8_TBL(f1) VALUES ('1234567890');
 
 
 SELECT '' AS seven, CHAR8_TBL.*;
 
-SELECT '' AS six, c.f1
-FROM CHAR8_TBL c
-WHERE c.f1 <> 'ABCDEFGH';
+SELECT '' AS six, c.f1 FROM CHAR8_TBL c WHERE c.f1 <> 'ABCDEFGH';
 
-SELECT '' AS one, c.f1
-FROM CHAR8_TBL c
-WHERE c.f1 = 'ABCDEFGH';
+SELECT '' AS one, c.f1 FROM CHAR8_TBL c WHERE c.f1 = 'ABCDEFGH';
 
-SELECT '' AS three, c.f1
-FROM CHAR8_TBL c
-WHERE c.f1 < 'ABCDEFGH';
+SELECT '' AS three, c.f1 FROM CHAR8_TBL c WHERE c.f1 < 'ABCDEFGH';
 
-SELECT '' AS four, c.f1
-FROM CHAR8_TBL c
-WHERE c.f1 <= 'ABCDEFGH';
+SELECT '' AS four, c.f1 FROM CHAR8_TBL c WHERE c.f1 <= 'ABCDEFGH';
 
-SELECT '' AS three, c.f1
-FROM CHAR8_TBL c
-WHERE c.f1 > 'ABCDEFGH';
+SELECT '' AS three, c.f1 FROM CHAR8_TBL c WHERE c.f1 > 'ABCDEFGH';
 
-SELECT '' AS four, c.f1
-FROM CHAR8_TBL c
-WHERE c.f1 >= 'ABCDEFGH';
+SELECT '' AS four, c.f1 FROM CHAR8_TBL c WHERE c.f1 >= 'ABCDEFGH';
 
-SELECT '' AS seven, c.f1
-FROM CHAR8_TBL c
-WHERE c.f1 ~ '.*';
+SELECT '' AS seven, c.f1 FROM CHAR8_TBL c WHERE c.f1 ~ '.*';
 
-SELECT '' AS zero, c.f1
-FROM CHAR8_TBL c
-WHERE c.f1 !~ '.*';
+SELECT '' AS zero, c.f1 FROM CHAR8_TBL c WHERE c.f1 !~ '.*';
 
-SELECT '' AS four, c.f1
-FROM CHAR8_TBL c
-WHERE c.f1 ~ '[0-9]';
+SELECT '' AS four, c.f1 FROM CHAR8_TBL c WHERE c.f1 ~ '[0-9]';
 
-SELECT '' AS three, c.f1
-FROM CHAR8_TBL c
-WHERE c.f1 ~ '.*34.*';
+SELECT '' AS three, c.f1 FROM CHAR8_TBL c WHERE c.f1 ~ '.*34.*';
 
 
 
@@ -796,309 +639,211 @@ WHERE c.f1 ~ '.*34.*';
 -- all inputs are silently truncated at 16 characters
 --
 
-CREATE TABLE CHAR16_TBL
-(
-    f1 char16
-);
+CREATE TABLE CHAR16_TBL(f1 char16);
 
-INSERT INTO CHAR16_TBL(f1)
-VALUES ('ABCDEFGHIJKLMNOP');
+INSERT INTO CHAR16_TBL(f1) VALUES ('ABCDEFGHIJKLMNOP');
 
-INSERT INTO CHAR16_TBL(f1)
-VALUES ('abcdefghijklmnop');
+INSERT INTO CHAR16_TBL(f1) VALUES ('abcdefghijklmnop');
 
-INSERT INTO CHAR16_TBL(f1)
-VALUES ('asdfghjkl;');
+INSERT INTO CHAR16_TBL(f1) VALUES ('asdfghjkl;');
 
-INSERT INTO CHAR16_TBL(f1)
-VALUES ('343f%2a');
+INSERT INTO CHAR16_TBL(f1) VALUES ('343f%2a');
 
-INSERT INTO CHAR16_TBL(f1)
-VALUES ('d34aaasdf');
+INSERT INTO CHAR16_TBL(f1) VALUES ('d34aaasdf');
 
-INSERT INTO CHAR16_TBL(f1)
-VALUES ('');
+INSERT INTO CHAR16_TBL(f1) VALUES ('');
 
-INSERT INTO CHAR16_TBL(f1)
-VALUES ('1234567890ABCDEFGHIJKLMNOPQRSTUV');
+INSERT INTO CHAR16_TBL(f1) VALUES ('1234567890ABCDEFGHIJKLMNOPQRSTUV');
 
 
 SELECT '' AS seven, CHAR16_TBL.*;
 
-SELECT '' AS six, c.f1
-FROM CHAR16_TBL c
-WHERE c.f1 <> 'ABCDEFGHIJKLMNOP';
+SELECT '' AS six, c.f1 FROM CHAR16_TBL c WHERE c.f1 <> 'ABCDEFGHIJKLMNOP';
 
-SELECT '' AS one, c.f1
-FROM CHAR16_TBL c
-WHERE c.f1 = 'ABCDEFGHIJKLMNOP';
+SELECT '' AS one, c.f1 FROM CHAR16_TBL c WHERE c.f1 = 'ABCDEFGHIJKLMNOP';
 
-SELECT '' AS three, c.f1
-FROM CHAR16_TBL c
-WHERE c.f1 < 'ABCDEFGHIJKLMNOP';
+SELECT '' AS three, c.f1 FROM CHAR16_TBL c WHERE c.f1 < 'ABCDEFGHIJKLMNOP';
 
-SELECT '' AS four, c.f1
-FROM CHAR16_TBL c
-WHERE c.f1 <= 'ABCDEFGHIJKLMNOP';
+SELECT '' AS four, c.f1 FROM CHAR16_TBL c WHERE c.f1 <= 'ABCDEFGHIJKLMNOP';
 
-SELECT '' AS three, c.f1
-FROM CHAR16_TBL c
-WHERE c.f1 > 'ABCDEFGHIJKLMNOP';
+SELECT '' AS three, c.f1 FROM CHAR16_TBL c WHERE c.f1 > 'ABCDEFGHIJKLMNOP';
 
-SELECT '' AS four, c.f1
-FROM CHAR16_TBL c
-WHERE c.f1 >= 'ABCDEFGHIJKLMNOP';
+SELECT '' AS four, c.f1 FROM CHAR16_TBL c WHERE c.f1 >= 'ABCDEFGHIJKLMNOP';
 
-SELECT '' AS seven, c.f1
-FROM CHAR16_TBL c
-WHERE c.f1 ~ '.*';
+SELECT '' AS seven, c.f1 FROM CHAR16_TBL c WHERE c.f1 ~ '.*';
 
-SELECT '' AS zero, c.f1
-FROM CHAR16_TBL c
-WHERE c.f1 !~ '.*';
+SELECT '' AS zero, c.f1 FROM CHAR16_TBL c WHERE c.f1 !~ '.*';
 
-SELECT '' AS three, c.f1
-FROM CHAR16_TBL c
-WHERE c.f1 ~ '[0-9]';
+SELECT '' AS three, c.f1 FROM CHAR16_TBL c WHERE c.f1 ~ '[0-9]';
 
-SELECT '' AS two, c.f1
-FROM CHAR16_TBL c
-WHERE c.f1 ~ '.*asdf.*';
+SELECT '' AS two, c.f1 FROM CHAR16_TBL c WHERE c.f1 ~ '.*asdf.*';
 
 
 --  *************testing built-in type float4 ****************
 
-CREATE TABLE FLOAT4_TBL
-(
-    f1 float4
-);
+CREATE TABLE FLOAT4_TBL (f1  float4);
 
-INSERT INTO FLOAT4_TBL(f1)
-VALUES ('0.0');
+INSERT INTO FLOAT4_TBL(f1) VALUES ('0.0');
 
-INSERT INTO FLOAT4_TBL(f1)
-VALUES ('1004.30');
+INSERT INTO FLOAT4_TBL(f1) VALUES ('1004.30');
 
-INSERT INTO FLOAT4_TBL(f1)
-VALUES ('-34.84');
+INSERT INTO FLOAT4_TBL(f1) VALUES ('-34.84');
 
-INSERT INTO FLOAT4_TBL(f1)
-VALUES ('1.2345678901234e+20');
+INSERT INTO FLOAT4_TBL(f1) VALUES ('1.2345678901234e+20');
 
-INSERT INTO FLOAT4_TBL(f1)
-VALUES ('1.2345678901234e-20');
+INSERT INTO FLOAT4_TBL(f1) VALUES ('1.2345678901234e-20');
 
 -- test for over and under flow 
-INSERT INTO FLOAT4_TBL(f1)
-VALUES ('10e40');
+INSERT INTO FLOAT4_TBL(f1) VALUES ('10e40');
 
-INSERT INTO FLOAT4_TBL(f1)
-VALUES ('-10e40');
+INSERT INTO FLOAT4_TBL(f1) VALUES ('-10e40');
 
-INSERT INTO FLOAT4_TBL(f1)
-VALUES ('10e-40');
+INSERT INTO FLOAT4_TBL(f1) VALUES ('10e-40');
 
-INSERT INTO FLOAT4_TBL(f1)
-VALUES ('-10e-40');
+INSERT INTO FLOAT4_TBL(f1) VALUES ('-10e-40');
 
 
 SELECT '' AS five, FLOAT4_TBL.*;
 
-SELECT '' AS four, f.*
-FROM FLOAT4_TBL f
-WHERE f.f1 <> '1004.3';
+SELECT '' AS four, f.* FROM FLOAT4_TBL f WHERE f.f1 <> '1004.3';
 
-SELECT '' AS one, f.*
-FROM FLOAT4_TBL f
-WHERE f.f1 = '1004.3';
+SELECT '' AS one, f.* FROM FLOAT4_TBL f WHERE f.f1 = '1004.3';
 
-SELECT '' AS three, f.*
-FROM FLOAT4_TBL f
-WHERE '1004.3' > f.f1;
+SELECT '' AS three, f.* FROM FLOAT4_TBL f WHERE '1004.3' > f.f1;
 
-SELECT '' AS three, f.*
-FROM FLOAT4_TBL f
-WHERE f.f1 < '1004.3';
+SELECT '' AS three, f.* FROM FLOAT4_TBL f WHERE  f.f1 < '1004.3';
 
-SELECT '' AS four, f.*
-FROM FLOAT4_TBL f
-WHERE '1004.3' >= f.f1;
+SELECT '' AS four, f.* FROM FLOAT4_TBL f WHERE '1004.3' >= f.f1;
 
-SELECT '' AS four, f.*
-FROM FLOAT4_TBL f
-WHERE f.f1 <= '1004.3';
+SELECT '' AS four, f.* FROM FLOAT4_TBL f WHERE  f.f1 <= '1004.3';
 
-SELECT '' AS three, f.f1, f.f1 * '-10' AS x
-FROM FLOAT4_TBL f
-WHERE f.f1 > '0.0';
+SELECT '' AS three, f.f1, f.f1 * '-10' AS x FROM FLOAT4_TBL f
+   WHERE f.f1 > '0.0';
 
-SELECT '' AS three, f.f1, f.f1 + '-10' AS x
-FROM FLOAT4_TBL f
-WHERE f.f1 > '0.0'
+SELECT '' AS three, f.f1, f.f1 + '-10' AS x FROM FLOAT4_TBL f
+   WHERE f.f1 > '0.0'
 
-SELECT '' AS three, f.f1, f.f1 / '-10' AS x
-FROM FLOAT4_TBL f
-WHERE f.f1 > '0.0';
+SELECT '' AS three, f.f1, f.f1 / '-10' AS x FROM FLOAT4_TBL f
+   WHERE f.f1 > '0.0';
 
-SELECT '' AS three, f.f1, f.f1 - '-10' AS x
-FROM FLOAT4_TBL f
-WHERE f.f1 > '0.0';
+SELECT '' AS three, f.f1, f.f1 - '-10' AS x FROM FLOAT4_TBL f
+   WHERE f.f1 > '0.0';
 
 -- test divide by zero
-SELECT '' AS bad, f.f1 / '0.0'
-from FLOAT4_TBL f;
+SELECT '' AS bad, f.f1 / '0.0' from FLOAT4_TBL f;
 
 SELECT '' AS five, FLOAT4_TBL.*;
 
 -- test the unary float4abs operator 
-SELECT '' AS five, f.f1, @f.f1 AS abs_f1
-FROM FLOAT4_TBL f;
+SELECT '' AS five, f.f1, @f.f1 AS abs_f1 FROM FLOAT4_TBL f;
 
 UPDATE FLOAT4_TBL
-SET f1 = FLOAT4_TBL.f1 * '-1'
-WHERE FLOAT4_TBL.f1 > '0.0';
+   SET f1 = FLOAT4_TBL.f1 * '-1'
+   WHERE FLOAT4_TBL.f1 > '0.0';
 
 SELECT '' AS five, FLOAT4_TBL.*;
 
 
 --  *************testing built-in type float8 ****************
 
-CREATE TABLE FLOAT8_TBL
-(
-    f1 float8
-);
+CREATE TABLE FLOAT8_TBL(f1 float8);
 
-INSERT INTO FLOAT8_TBL(f1)
-VALUES ('0.0');
+INSERT INTO FLOAT8_TBL(f1) VALUES ('0.0');
 
-INSERT INTO FLOAT8_TBL(f1)
-VALUES ('1004.30');
+INSERT INTO FLOAT8_TBL(f1) VALUES ('1004.30');
 
-INSERT INTO FLOAT8_TBL(f1)
-VALUES ('-34.84');
+INSERT INTO FLOAT8_TBL(f1) VALUES ('-34.84');
 
-INSERT INTO FLOAT8_TBL(f1)
-VALUES ('1.2345678901234e+200');
+INSERT INTO FLOAT8_TBL(f1) VALUES ('1.2345678901234e+200');
 
-INSERT INTO FLOAT8_TBL(f1)
-VALUES ('1.2345678901234e-200');
+INSERT INTO FLOAT8_TBL(f1) VALUES ('1.2345678901234e-200');
 
 -- test for over and under flow 
-INSERT INTO FLOAT8_TBL(f1)
-VALUES ('10e400');
+INSERT INTO FLOAT8_TBL(f1) VALUES ('10e400');
 
-INSERT INTO FLOAT8_TBL(f1)
-VALUES ('-10e400');
+INSERT INTO FLOAT8_TBL(f1) VALUES ('-10e400');
 
-INSERT INTO FLOAT8_TBL(f1)
-VALUES ('10e-400');
+INSERT INTO FLOAT8_TBL(f1) VALUES ('10e-400');
 
-INSERT INTO FLOAT8_TBL(f1)
-VALUES ('-10e-400');
+INSERT INTO FLOAT8_TBL(f1) VALUES ('-10e-400');
 
 
 SELECT '' AS five, FLOAT8_TBL.*;
 
-SELECT '' AS four, f.*
-FROM FLOAT8_TBL f
-WHERE f.f1 <> '1004.3';
+SELECT '' AS four, f.* FROM FLOAT8_TBL f WHERE f.f1 <> '1004.3';
 
-SELECT '' AS one, f.*
-FROM FLOAT8_TBL f
-WHERE f.f1 = '1004.3';
+SELECT '' AS one, f.* FROM FLOAT8_TBL f WHERE f.f1 = '1004.3';
 
-SELECT '' AS three, f.*
-FROM FLOAT8_TBL f
-WHERE '1004.3' > f.f1;
+SELECT '' AS three, f.* FROM FLOAT8_TBL f WHERE '1004.3' > f.f1;
 
-SELECT '' AS three, f.*
-FROM FLOAT8_TBL f
-WHERE f.f1 < '1004.3';
+SELECT '' AS three, f.* FROM FLOAT8_TBL f WHERE  f.f1 < '1004.3';
 
-SELECT '' AS four, f.*
-FROM FLOAT8_TBL f
-WHERE '1004.3' >= f.f1;
+SELECT '' AS four, f.* FROM FLOAT8_TBL f WHERE '1004.3' >= f.f1;
 
-SELECT '' AS four, f.*
-FROM FLOAT8_TBL f
-WHERE f.f1 <= '1004.3';
+SELECT '' AS four, f.* FROM FLOAT8_TBL f WHERE  f.f1 <= '1004.3';
 
-SELECT '' AS three, f.f1, f.f1 * '-10' AS x
-FROM FLOAT8_TBL f
-WHERE f.f1 > '0.0';
+SELECT '' AS three, f.f1, f.f1 * '-10' AS x 
+   FROM FLOAT8_TBL f
+   WHERE f.f1 > '0.0';
 
 SELECT '' AS three, f.f1, f.f1 + '-10' AS x
-FROM FLOAT8_TBL f
-WHERE f.f1 > '0.0';
+   FROM FLOAT8_TBL f
+   WHERE f.f1 > '0.0';
 
 SELECT '' AS three, f.f1, f.f1 / '-10' AS x
-FROM FLOAT8_TBL f
-WHERE f.f1 > '0.0';
+   FROM FLOAT8_TBL f
+   WHERE f.f1 > '0.0';
 
 SELECT '' AS three, f.f1, f.f1 - '-10' AS x
-FROM FLOAT8_TBL f
-WHERE f.f1 > '0.0';
+   FROM FLOAT8_TBL f
+   WHERE f.f1 > '0.0';
 
 SELECT '' AS one, f.f1 ^ '2.0' AS square_f1
-FROM FLOAT8_TBL f
-where f.f1 = '1004.3';
+   FROM FLOAT8_TBL f where f.f1 = '1004.3';
 
 -- absolute value 
-SELECT '' AS five, f.f1, @f.f1 AS abs_f1
-FROM FLOAT8_TBL f;
+SELECT '' AS five, f.f1, @f.f1 AS abs_f1 
+   FROM FLOAT8_TBL f;
 
 -- truncate 
 SELECT '' AS five, f.f1, %f.f1 AS trunc_f1
-FROM FLOAT8_TBL f;
+   FROM FLOAT8_TBL f;
 
 -- round 
 SELECT '' AS five, f.f1, f.f1 % AS round_f1
-FROM FLOAT8_TBL f;
+   FROM FLOAT8_TBL f;
 
 -- square root 
 SELECT '' AS three, f.f1, |/f.f1 AS sqrt_f1
-FROM FLOAT8_TBL f
-WHERE f.f1 > '0.0';
+   FROM FLOAT8_TBL f
+   WHERE f.f1 > '0.0';
 
 -- take exp of ln(f.f1) 
-SELECT '' AS three, f.f1, : (;
-f
-.
-f1
-) AS exp_ln_f1
+SELECT '' AS three, f.f1, : ( ; f.f1) AS exp_ln_f1
    FROM FLOAT8_TBL f
    WHERE f.f1 > '0.0';
 
 -- cube root 
-SELECT '' AS five, f.f1, ||/f.f1 AS cbrt_f1
-FROM FLOAT8_TBL f;
+SELECT '' AS five, f.f1, ||/f.f1 AS cbrt_f1 FROM FLOAT8_TBL f;
 
 
 SELECT '' AS five, FLOAT8_TBL.*;
 
 UPDATE FLOAT8_TBL
-SET f1 = FLOAT8_TBL.f1 * '-1'
-WHERE FLOAT8_TBL.f1 > '0.0';
+   SET f1 = FLOAT8_TBL.f1 * '-1'
+   WHERE FLOAT8_TBL.f1 > '0.0';
 
-SELECT '' AS bad, f.f1 * '1e200'
-from FLOAT8_TBL f;
+SELECT '' AS bad, f.f1 * '1e200' from FLOAT8_TBL f;
 
-SELECT '' AS bad, f.f1 ^ '1e200'
-from FLOAT8_TBL f;
+SELECT '' AS bad, f.f1 ^ '1e200' from FLOAT8_TBL f;
 
-SELECT '' AS bad,;
-    (f.f1)
-    from FLOAT8_TBL f where f.f1 = '0.0';
+SELECT '' AS bad, ; (f.f1) from FLOAT8_TBL f where f.f1 = '0.0' ;
 
-SELECT '' AS bad,;
-    (f.f1)
-    from FLOAT8_TBL f where f.f1 < '0.0';
+SELECT '' AS bad, ; (f.f1) from FLOAT8_TBL f where f.f1 < '0.0' ;
 
-SELECT '' AS bad, : (f.f1)
-from FLOAT8_TBL f;
+SELECT '' AS bad, : (f.f1) from FLOAT8_TBL f;
 
-SELECT '' AS bad, f.f1 / '0.0'
-from FLOAT8_TBL f;
+SELECT '' AS bad, f.f1 / '0.0' from FLOAT8_TBL f;
 
 SELECT '' AS five, FLOAT8_TBL.*;
 
@@ -1109,121 +854,74 @@ SELECT '' AS five, FLOAT8_TBL.*;
 -- Some of these answers are consequently numerically incorrect.
 --
 
-CREATE TABLE INT2_TBL
-(
-    f1 int2
-);
+CREATE TABLE INT2_TBL(f1 int2);
 
-INSERT INTO INT2_TBL(f1)
-VALUES ('0');
+INSERT INTO INT2_TBL(f1) VALUES ('0');
 
-INSERT INTO INT2_TBL(f1)
-VALUES ('1234');
+INSERT INTO INT2_TBL(f1) VALUES ('1234');
 
-INSERT INTO INT2_TBL(f1)
-VALUES ('-1234');
+INSERT INTO INT2_TBL(f1) VALUES ('-1234');
 
-INSERT INTO INT2_TBL(f1)
-VALUES ('34.5');
+INSERT INTO INT2_TBL(f1) VALUES ('34.5');
 
 -- largest and smallest values 
-INSERT INTO INT2_TBL(f1)
-VALUES ('32767');
+INSERT INTO INT2_TBL(f1) VALUES ('32767');
 
-INSERT INTO INT2_TBL(f1)
-VALUES ('-32767');
+INSERT INTO INT2_TBL(f1) VALUES ('-32767');
 
 -- bad input values -- should give warnings 
-INSERT INTO INT2_TBL(f1)
-VALUES ('100000');
+INSERT INTO INT2_TBL(f1) VALUES ('100000');
 
-INSERT INTO INT2_TBL(f1)
-VALUES ('asdf');
+INSERT INTO INT2_TBL(f1) VALUES ('asdf');
 
 
 SELECT '' AS five, INT2_TBL.*;
 
-SELECT '' AS four, i.*
-FROM INT2_TBL i
-WHERE i.f1 <> '0'::int2;
+SELECT '' AS four, i.* FROM INT2_TBL i WHERE i.f1 <> '0'::int2;
 
-SELECT '' AS four, i.*
-FROM INT2_TBL i
-WHERE i.f1 <> '0'::int4;
+SELECT '' AS four, i.* FROM INT2_TBL i WHERE i.f1 <> '0'::int4;
 
-SELECT '' AS one, i.*
-FROM INT2_TBL i
-WHERE i.f1 = '0'::int2;
+SELECT '' AS one, i.* FROM INT2_TBL i WHERE i.f1 = '0'::int2;
 
-SELECT '' AS one, i.*
-FROM INT2_TBL i
-WHERE i.f1 = '0'::int4;
+SELECT '' AS one, i.* FROM INT2_TBL i WHERE i.f1 = '0'::int4;
 
-SELECT '' AS two, i.*
-FROM INT2_TBL i
-WHERE i.f1 < '0'::int2;
+SELECT '' AS two, i.* FROM INT2_TBL i WHERE i.f1 < '0'::int2;
 
-SELECT '' AS two, i.*
-FROM INT2_TBL i
-WHERE i.f1 < '0'::int4;
+SELECT '' AS two, i.* FROM INT2_TBL i WHERE i.f1 < '0'::int4;
 
-SELECT '' AS three, i.*
-FROM INT2_TBL i
-WHERE i.f1 <= '0'::int2;
+SELECT '' AS three, i.* FROM INT2_TBL i WHERE i.f1 <= '0'::int2;
 
-SELECT '' AS three, i.*
-FROM INT2_TBL i
-WHERE i.f1 <= '0'::int4;
+SELECT '' AS three, i.* FROM INT2_TBL i WHERE i.f1 <= '0'::int4;
 
-SELECT '' AS two, i.*
-FROM INT2_TBL i
-WHERE i.f1 > '0'::int2;
+SELECT '' AS two, i.* FROM INT2_TBL i WHERE i.f1 > '0'::int2;
 
-SELECT '' AS two, i.*
-FROM INT2_TBL i
-WHERE i.f1 > '0'::int4;
+SELECT '' AS two, i.* FROM INT2_TBL i WHERE i.f1 > '0'::int4;
 
-SELECT '' AS three, i.*
-FROM INT2_TBL i
-WHERE i.f1 >= '0'::int2;
+SELECT '' AS three, i.* FROM INT2_TBL i WHERE i.f1 >= '0'::int2;
 
-SELECT '' AS three, i.*
-FROM INT2_TBL i
-WHERE i.f1 >= '0'::int4;
+SELECT '' AS three, i.* FROM INT2_TBL i WHERE i.f1 >= '0'::int4;
 
 -- positive odds 
-SELECT '' AS one, i.*
-FROM INT2_TBL i
-WHERE (i.f1 % '2'::int2) = '1'::int2;
+SELECT '' AS one, i.* FROM INT2_TBL i WHERE (i.f1 % '2'::int2) = '1'::int2;
 
 -- any evens 
-SELECT '' AS three, i.*
-FROM INT2_TBL i
-WHERE (i.f1 % '2'::int4) = '0'::int2;
+SELECT '' AS three, i.* FROM INT2_TBL i WHERE (i.f1 % '2'::int4) = '0'::int2;
 
-SELECT '' AS five, i.f1, i.f1 * '2'::int2 AS x
-FROM INT2_TBL i;
+SELECT '' AS five, i.f1, i.f1 * '2'::int2 AS x FROM INT2_TBL i;
 
-SELECT '' AS five, i.f1, i.f1 * '2'::int4 AS x
-FROM INT2_TBL i;
+SELECT '' AS five, i.f1, i.f1 * '2'::int4 AS x FROM INT2_TBL i;
 
-SELECT '' AS five, i.f1, i.f1 + '2'::int2 AS x
-FROM INT2_TBL i;
+SELECT '' AS five, i.f1, i.f1 + '2'::int2 AS x FROM INT2_TBL i;
 
-SELECT '' AS five, i.f1, i.f1 + '2'::int4 AS x
-FROM INT2_TBL i;
+SELECT '' AS five, i.f1, i.f1 + '2'::int4 AS x FROM INT2_TBL i;
 
-SELECT '' AS five, i.f1, i.f1 - '2'::int2 AS x
-FROM INT2_TBL i;
+SELECT '' AS five, i.f1, i.f1 - '2'::int2 AS x FROM INT2_TBL i;
 
-SELECT '' AS five, i.f1, i.f1 - '2'::int4 AS x
-FROM INT2_TBL i;
+SELECT '' AS five, i.f1, i.f1 - '2'::int4 AS x FROM INT2_TBL i;
 
-SELECT '' AS five, i.f1, i.f1 / '2'::int2 AS x
-FROM INT2_TBL i;
+SELECT '' AS five, i.f1, i.f1 / '2'::int2 AS x FROM INT2_TBL i;
 
-SELECT '' AS five, i.f1, i.f1 / '2'::int4 AS x
-FROM INT2_TBL i;
+SELECT '' AS five, i.f1, i.f1 / '2'::int4 AS x FROM INT2_TBL i;
 
 
 
@@ -1233,121 +931,74 @@ FROM INT2_TBL i;
 -- Some of these answers are consequently numerically incorrect.
 --
 
-CREATE TABLE INT4_TBL
-(
-    f1 int4
-);
+CREATE TABLE INT4_TBL(f1 int4);
 
-INSERT INTO INT4_TBL(f1)
-VALUES ('0');
+INSERT INTO INT4_TBL(f1) VALUES ('0');
 
-INSERT INTO INT4_TBL(f1)
-VALUES ('123456');
+INSERT INTO INT4_TBL(f1) VALUES ('123456');
 
-INSERT INTO INT4_TBL(f1)
-VALUES ('-123456');
+INSERT INTO INT4_TBL(f1) VALUES ('-123456');
 
-INSERT INTO INT4_TBL(f1)
-VALUES ('34.5');
+INSERT INTO INT4_TBL(f1) VALUES ('34.5');
 
 -- largest and smallest values 
-INSERT INTO INT4_TBL(f1)
-VALUES ('2147483647');
+INSERT INTO INT4_TBL(f1) VALUES ('2147483647');
 
-INSERT INTO INT4_TBL(f1)
-VALUES ('-2147483647');
+INSERT INTO INT4_TBL(f1) VALUES ('-2147483647');
 
 -- bad input values -- should give warnings 
-INSERT INTO INT4_TBL(f1)
-VALUES ('1000000000000');
+INSERT INTO INT4_TBL(f1) VALUES ('1000000000000');
 
-INSERT INTO INT4_TBL(f1)
-VALUES ('asdf');
+INSERT INTO INT4_TBL(f1) VALUES ('asdf');
 
 
 SELECT '' AS five, INT4_TBL.*;
 
-SELECT '' AS four, i.*
-FROM INT4_TBL i
-WHERE i.f1 <> '0'::int2;
+SELECT '' AS four, i.* FROM INT4_TBL i WHERE i.f1 <> '0'::int2;
 
-SELECT '' AS four, i.*
-FROM INT4_TBL i
-WHERE i.f1 <> '0'::int4;
+SELECT '' AS four, i.* FROM INT4_TBL i WHERE i.f1 <> '0'::int4;
 
-SELECT '' AS one, i.*
-FROM INT4_TBL i
-WHERE i.f1 = '0'::int2;
+SELECT '' AS one, i.* FROM INT4_TBL i WHERE i.f1 = '0'::int2;
 
-SELECT '' AS one, i.*
-FROM INT4_TBL i
-WHERE i.f1 = '0'::int4;
+SELECT '' AS one, i.* FROM INT4_TBL i WHERE i.f1 = '0'::int4;
 
-SELECT '' AS two, i.*
-FROM INT4_TBL i
-WHERE i.f1 < '0'::int2;
+SELECT '' AS two, i.* FROM INT4_TBL i WHERE i.f1 < '0'::int2;
 
-SELECT '' AS two, i.*
-FROM INT4_TBL i
-WHERE i.f1 < '0'::int4;
+SELECT '' AS two, i.* FROM INT4_TBL i WHERE i.f1 < '0'::int4;
 
-SELECT '' AS three, i.*
-FROM INT4_TBL i
-WHERE i.f1 <= '0'::int2;
+SELECT '' AS three, i.* FROM INT4_TBL i WHERE i.f1 <= '0'::int2;
 
-SELECT '' AS three, i.*
-FROM INT4_TBL i
-WHERE i.f1 <= '0'::int4;
+SELECT '' AS three, i.* FROM INT4_TBL i WHERE i.f1 <= '0'::int4;
 
-SELECT '' AS two, i.*
-FROM INT4_TBL i
-WHERE i.f1 > '0'::int2;
+SELECT '' AS two, i.* FROM INT4_TBL i WHERE i.f1 > '0'::int2;
 
-SELECT '' AS two, i.*
-FROM INT4_TBL i
-WHERE i.f1 > '0'::int4;
+SELECT '' AS two, i.* FROM INT4_TBL i WHERE i.f1 > '0'::int4;
 
-SELECT '' AS three, i.*
-FROM INT4_TBL i
-WHERE i.f1 >= '0'::int2;
+SELECT '' AS three, i.* FROM INT4_TBL i WHERE i.f1 >= '0'::int2;
 
-SELECT '' AS three, i.*
-FROM INT4_TBL i
-WHERE i.f1 >= '0'::int4;
+SELECT '' AS three, i.* FROM INT4_TBL i WHERE i.f1 >= '0'::int4;
 
 -- positive odds 
-SELECT '' AS one, i.*
-FROM INT4_TBL i
-WHERE (i.f1 % '2'::int2) = '1'::int2;
+SELECT '' AS one, i.* FROM INT4_TBL i WHERE (i.f1 % '2'::int2) = '1'::int2;
 
 -- any evens 
-SELECT '' AS three, i.*
-FROM INT4_TBL i
-WHERE (i.f1 % '2'::int4) = '0'::int2;
+SELECT '' AS three, i.* FROM INT4_TBL i WHERE (i.f1 % '2'::int4) = '0'::int2;
 
-SELECT '' AS five, i.f1, i.f1 * '2'::int2 AS x
-FROM INT4_TBL i;
+SELECT '' AS five, i.f1, i.f1 * '2'::int2 AS x FROM INT4_TBL i;
 
-SELECT '' AS five, i.f1, i.f1 * '2'::int4 AS x
-FROM INT4_TBL i;
+SELECT '' AS five, i.f1, i.f1 * '2'::int4 AS x FROM INT4_TBL i;
 
-SELECT '' AS five, i.f1, i.f1 + '2'::int2 AS x
-FROM INT4_TBL i;
+SELECT '' AS five, i.f1, i.f1 + '2'::int2 AS x FROM INT4_TBL i;
 
-SELECT '' AS five, i.f1, i.f1 + '2'::int4 AS x
-FROM INT4_TBL i;
+SELECT '' AS five, i.f1, i.f1 + '2'::int4 AS x FROM INT4_TBL i;
 
-SELECT '' AS five, i.f1, i.f1 - '2'::int2 AS x
-FROM INT4_TBL i;
+SELECT '' AS five, i.f1, i.f1 - '2'::int2 AS x FROM INT4_TBL i;
 
-SELECT '' AS five, i.f1, i.f1 - '2'::int4 AS x
-FROM INT4_TBL i;
+SELECT '' AS five, i.f1, i.f1 - '2'::int4 AS x FROM INT4_TBL i;
 
-SELECT '' AS five, i.f1, i.f1 / '2'::int2 AS x
-FROM INT4_TBL i;
+SELECT '' AS five, i.f1, i.f1 / '2'::int2 AS x FROM INT4_TBL i;
 
-SELECT '' AS five, i.f1, i.f1 / '2'::int4 AS x
-FROM INT4_TBL i;
+SELECT '' AS five, i.f1, i.f1 / '2'::int4 AS x FROM INT4_TBL i;
 
 
 --
@@ -1378,355 +1029,240 @@ SELECT |/'64'::float8 AS eight;
 SELECT ||/'27'::float8 AS three;
 
 
+
 -- *************testing built-in type oid ****************
-CREATE TABLE OID_TBL
-(
-    f1 oid
-);
+CREATE TABLE OID_TBL(f1 oid);
 
-INSERT INTO OID_TBL(f1)
-VALUES ('1234');
+INSERT INTO OID_TBL(f1) VALUES ('1234');
 
-INSERT INTO OID_TBL(f1)
-VALUES ('1235');
+INSERT INTO OID_TBL(f1) VALUES ('1235');
 
-INSERT INTO OID_TBL(f1)
-VALUES ('987');
+INSERT INTO OID_TBL(f1) VALUES ('987');
 
-INSERT INTO OID_TBL(f1)
-VALUES ('-1040');
+INSERT INTO OID_TBL(f1) VALUES ('-1040');
 
-INSERT INTO OID_TBL(f1)
-VALUES ('');
+INSERT INTO OID_TBL(f1) VALUES ('');
 
 -- bad inputs 
-INSERT INTO OID_TBL(f1)
-VALUES ('asdfasd');
+INSERT INTO OID_TBL(f1) VALUES ('asdfasd');
 
 SELECT '' AS five, OID_TBL.*;
 
 
-SELECT '' AS one, o.*
-FROM OID_TBL o
-WHERE o.f1 = '1234'::oid;
+SELECT '' AS one, o.* FROM OID_TBL o WHERE o.f1 = '1234'::oid;
 
-SELECT '' AS four, o.*
-FROM OID_TBL o
-WHERE o.f1 <> '1234';
+SELECT '' AS four, o.* FROM OID_TBL o WHERE o.f1 <> '1234';
 
-SELECT '' AS four, o.*
-FROM OID_TBL o
-WHERE o.f1 <= '1234';
+SELECT '' AS four, o.* FROM OID_TBL o WHERE o.f1 <= '1234';
 
-SELECT '' AS three, o.*
-FROM OID_TBL o
-WHERE o.f1 < '1234';
+SELECT '' AS three, o.* FROM OID_TBL o WHERE o.f1 < '1234';
 
-SELECT '' AS two, o.*
-FROM OID_TBL o
-WHERE o.f1 >= '1234';
+SELECT '' AS two, o.* FROM OID_TBL o WHERE o.f1 >= '1234';
 
-SELECT '' AS one, o.*
-FROM OID_TBL o
-WHERE o.f1 > '1234';
+SELECT '' AS one, o.* FROM OID_TBL o WHERE o.f1 > '1234';
 
 
 -- *************testing built-in type oidname ****************
 -- oidname is a an adt for multiple key indices involving oid and name
 -- probably will not be used directly by most users 
 
-CREATE TABLE OIDNAME_TBL
-(
-    f1 oidname
-);
+CREATE TABLE OIDNAME_TBL(f1 oidname);
 
-INSERT INTO OIDNAME_TBL(f1)
-VALUES ('1234,abcd');
+INSERT INTO OIDNAME_TBL(f1) VALUES ('1234,abcd');
 
-INSERT INTO OIDNAME_TBL(f1)
-VALUES ('1235,efgh');
+INSERT INTO OIDNAME_TBL(f1) VALUES ('1235,efgh');
 
-INSERT INTO OIDNAME_TBL(f1)
-VALUES ('987,XXXX');
+INSERT INTO OIDNAME_TBL(f1) VALUES ('987,XXXX');
 
 -- no char16 component 
-INSERT INTO OIDNAME_TBL(f1)
-VALUES ('123456');
+INSERT INTO OIDNAME_TBL(f1) VALUES ('123456');
 
 -- char16 component too long 
-INSERT INTO OIDNAME_TBL(f1)
-VALUES ('123456,abcdefghijklmnopqrsutvwyz');
+INSERT INTO OIDNAME_TBL(f1) VALUES ('123456,abcdefghijklmnopqrsutvwyz');
 
 -- bad inputs 
-INSERT INTO OIDNAME_TBL(f1)
-VALUES ('');
+INSERT INTO OIDNAME_TBL(f1) VALUES ('');
 
-INSERT INTO OIDNAME_TBL(f1)
-VALUES ('asdfasd');
+INSERT INTO OIDNAME_TBL(f1) VALUES ('asdfasd');
 
 
 SELECT '' AS four, OIDNAME_TBL.*;
 
-SELECT '' AS one, o.*
-FROM OIDNAME_TBL o
-WHERE o.f1 = '1234,abcd';
+SELECT '' AS one, o.* FROM OIDNAME_TBL o WHERE o.f1 = '1234,abcd';
 
-SELECT '' AS three, o.*
-FROM OIDNAME_TBL o
-WHERE o.f1 <> '1234,abcd';
+SELECT '' AS three, o.* FROM OIDNAME_TBL o WHERE o.f1 <> '1234,abcd';
 
-SELECT '' AS two, o.*
-FROM OIDNAME_TBL o
-WHERE o.f1 <= '1234,abcd';
+SELECT '' AS two, o.* FROM OIDNAME_TBL o WHERE o.f1 <= '1234,abcd';
 
-SELECT '' AS one, o.*
-FROM OIDNAME_TBL o
-WHERE o.f1 < '1234,abcd';
+SELECT '' AS one, o.* FROM OIDNAME_TBL o WHERE o.f1 < '1234,abcd';
 
-SELECT '' AS three, o.*
-FROM OIDNAME_TBL o
-WHERE o.f1 >= '1234,abcd';
+SELECT '' AS three, o.* FROM OIDNAME_TBL o WHERE o.f1 >= '1234,abcd';
 
-SELECT '' AS two, o.*
-FROM OIDNAME_TBL o
-WHERE o.f1 > '1234,abcd';
+SELECT '' AS two, o.* FROM OIDNAME_TBL o WHERE o.f1 > '1234,abcd';
 
 
 -- *************testing built-in type oidint2 ****************
 -- oidint2 is a an adt for multiple key indices involving oid and int2 
 -- probably will not be used directly by most users 
 
-CREATE TABLE OIDINT2_TBL
-(
-    f1 oidint2
-);
+CREATE TABLE OIDINT2_TBL(f1 oidint2);
 
-INSERT INTO OIDINT2_TBL(f1)
-VALUES ('1234/9873');
+INSERT INTO OIDINT2_TBL(f1) VALUES ('1234/9873');
 
-INSERT INTO OIDINT2_TBL(f1)
-VALUES ('1235/9873');
+INSERT INTO OIDINT2_TBL(f1) VALUES ('1235/9873');
 
-INSERT INTO OIDINT2_TBL(f1)
-VALUES ('987/-1234');
+INSERT INTO OIDINT2_TBL(f1) VALUES ('987/-1234');
 
 -- no int2 component 
 --
 -- this is defined as good in the code -- I don't know what will break
 -- if we disallow it.
 --
-INSERT INTO OIDINT2_TBL(f1)
-VALUES ('123456');
+INSERT INTO OIDINT2_TBL(f1) VALUES ('123456');
 
 -- int2 component too large 
-INSERT INTO OIDINT2_TBL(f1)
-VALUES ('123456/123456');
+INSERT INTO OIDINT2_TBL(f1) VALUES ('123456/123456');
 
 --
 -- this is defined as good in the code -- I don't know what will break
 -- if we disallow it.
 --
-INSERT INTO OIDINT2_TBL(f1)
-VALUES ('');
+INSERT INTO OIDINT2_TBL(f1) VALUES ('');
 
 -- bad inputs 
-INSERT INTO OIDINT2_TBL(f1)
-VALUES ('asdfasd');
+INSERT INTO OIDINT2_TBL(f1) VALUES ('asdfasd');
 
 
 SELECT '' AS five, OIDINT2_TBL.*;
 
-SELECT '' AS one, o.*
-FROM OIDINT2_TBL o
-WHERE o.f1 = '1235/9873';
+SELECT '' AS one, o.* FROM OIDINT2_TBL o WHERE o.f1 = '1235/9873';
 
-SELECT '' AS four, o.*
-FROM OIDINT2_TBL o
-WHERE o.f1 <> '1235/9873';
+SELECT '' AS four, o.* FROM OIDINT2_TBL o WHERE o.f1 <> '1235/9873';
 
-SELECT '' AS four, o.*
-FROM OIDINT2_TBL o
-WHERE o.f1 <= '1235/9873';
+SELECT '' AS four, o.* FROM OIDINT2_TBL o WHERE o.f1 <= '1235/9873';
 
-SELECT '' AS three, o.*
-FROM OIDINT2_TBL o
-WHERE o.f1 < '1235/9873';
+SELECT '' AS three, o.* FROM OIDINT2_TBL o WHERE o.f1 < '1235/9873';
 
-SELECT '' AS two, o.*
-FROM OIDINT2_TBL o
-WHERE o.f1 >= '1235/9873';
+SELECT '' AS two, o.* FROM OIDINT2_TBL o WHERE o.f1 >= '1235/9873';
 
-SELECT '' AS one, o.*
-FROM OIDINT2_TBL o
-WHERE o.f1 > '1235/9873';
+SELECT '' AS one, o.* FROM OIDINT2_TBL o WHERE o.f1 > '1235/9873';
 
 
 --*************testing built-in type oidint4 ****************
 -- oidint4 is a an adt for multiple key indices involving oid and int4 
 -- probably will not be used directly by most users 
 
-CREATE TABLE OIDINT4_TBL
-(
-    f1 oidint4
-);
+CREATE TABLE OIDINT4_TBL(f1 oidint4);
 
-INSERT INTO OIDINT4_TBL(f1)
-VALUES ('1234/9873');
+INSERT INTO OIDINT4_TBL(f1) VALUES ('1234/9873');
 
-INSERT INTO OIDINT4_TBL(f1)
-VALUES ('1235/9873');
+INSERT INTO OIDINT4_TBL(f1) VALUES ('1235/9873');
 
-INSERT INTO OIDINT4_TBL(f1)
-VALUES ('987/-1234');
+INSERT INTO OIDINT4_TBL(f1) VALUES ('987/-1234');
 
 -- no int4 component 
 --
 -- this is defined as good in the code -- I don't know what will break
 -- if we disallow it.
 --
-INSERT INTO OIDINT4_TBL(f1)
-VALUES ('123456');
+INSERT INTO OIDINT4_TBL(f1) VALUES ('123456');
 
 -- int4 component too large 
-INSERT INTO OIDINT4_TBL(f1)
-VALUES ('123456/1234568901234567890');
+INSERT INTO OIDINT4_TBL(f1) VALUES ('123456/1234568901234567890');
 
 --
 -- this is defined as good in the code -- I don't know what will break
 -- if we disallow it.
 --
-INSERT INTO OIDINT4_TBL(f1)
-VALUES ('');
+INSERT INTO OIDINT4_TBL(f1) VALUES ('');
 
 -- bad inputs 
-INSERT INTO OIDINT4_TBL(f1)
-VALUES ('asdfasd');
+INSERT INTO OIDINT4_TBL(f1) VALUES ('asdfasd');
 
 SELECT '' AS five, OIDINT4_TBL.*;
 
-SELECT '' AS one, o.*
-FROM OIDINT4_TBL o
-WHERE o.f1 = '1235/9873';
+SELECT '' AS one, o.* FROM OIDINT4_TBL o WHERE o.f1 = '1235/9873';
 
-SELECT '' AS four, o.*
-FROM OIDINT4_TBL o
-WHERE o.f1 <> '1235/9873';
+SELECT '' AS four, o.* FROM OIDINT4_TBL o WHERE o.f1 <> '1235/9873';
 
-SELECT '' AS four, o.*
-FROM OIDINT4_TBL o
-WHERE o.f1 <= '1235/9873';
+SELECT '' AS four, o.* FROM OIDINT4_TBL o WHERE o.f1 <= '1235/9873';
 
-SELECT '' AS three, o.*
-FROM OIDINT4_TBL o
-WHERE o.f1 < '1235/9873';
+SELECT '' AS three, o.* FROM OIDINT4_TBL o WHERE o.f1 < '1235/9873';
 
-SELECT '' AS two, o.*
-FROM OIDINT4_TBL o
-WHERE o.f1 >= '1235/9873';
+SELECT '' AS two, o.* FROM OIDINT4_TBL o WHERE o.f1 >= '1235/9873';
 
-SELECT '' AS one, o.*
-FROM OIDINT4_TBL o
-WHERE o.f1 > '1235/9873';
+SELECT '' AS one, o.* FROM OIDINT4_TBL o WHERE o.f1 > '1235/9873';
 
 
 --  ************testing built-in type point ****************
 
-CREATE TABLE POINT_TBL
-(
-    f1 point
-);
+CREATE TABLE POINT_TBL(f1 point);
 
-INSERT INTO POINT_TBL(f1)
-VALUES ('(0.0,0.0)');
+INSERT INTO POINT_TBL(f1) VALUES ('(0.0,0.0)');
 
-INSERT INTO POINT_TBL(f1)
-VALUES ('(-10.0,0.0)');
+INSERT INTO POINT_TBL(f1) VALUES ('(-10.0,0.0)');
 
-INSERT INTO POINT_TBL(f1)
-VALUES ('(-3.0,4.0)');
+INSERT INTO POINT_TBL(f1) VALUES ('(-3.0,4.0)');
 
-INSERT INTO POINT_TBL(f1)
-VALUES ('(5.1, 34.5)');
+INSERT INTO POINT_TBL(f1) VALUES ('(5.1, 34.5)');
 
-INSERT INTO POINT_TBL(f1)
-VALUES ('(-5.0,-12.0)');
+INSERT INTO POINT_TBL(f1) VALUES ('(-5.0,-12.0)');
 
 -- bad format points 
-INSERT INTO POINT_TBL(f1)
-VALUES ('asdfasdf');
+INSERT INTO POINT_TBL(f1) VALUES ('asdfasdf');
 
-INSERT INTO POINT_TBL(f1)
-VALUES ('10.0,10.0');
+INSERT INTO POINT_TBL(f1) VALUES ('10.0,10.0');
 
-INSERT INTO POINT_TBL(f1)
-VALUES ('(10.0 10.0)');
+INSERT INTO POINT_TBL(f1) VALUES ('(10.0 10.0)');
 
-INSERT INTO POINT_TBL(f1)
-VALUES ('(10.0,10.0');
+INSERT INTO POINT_TBL(f1) VALUES ('(10.0,10.0');
 
 
 SELECT '' AS five, POINT_TBL.*;
 
 -- left of 
-SELECT '' AS three, p.*
-FROM POINT_TBL p
-WHERE p.f1 !< '(0.0, 0.0)';
+SELECT '' AS three, p.* FROM POINT_TBL p WHERE p.f1 !< '(0.0, 0.0)';
 
 -- right of 
-SELECT '' AS three, p.*
-FROM POINT_TBL p
-WHERE '(0.0,0.0)' !> p.f1;
+SELECT '' AS three, p.* FROM POINT_TBL p WHERE '(0.0,0.0)' !> p.f1;
 
 -- above 
-SELECT '' AS one, p.*
-FROM POINT_TBL p
-WHERE '(0.0,0.0)' !^ p.f1;
+SELECT '' AS one, p.* FROM POINT_TBL p WHERE '(0.0,0.0)' !^ p.f1;
 
 -- below 
-SELECT '' AS one, p.*
-FROM POINT_TBL p
-WHERE p.f1 !| '(0.0, 0.0)';
+SELECT '' AS one, p.* FROM POINT_TBL p WHERE p.f1 !| '(0.0, 0.0)';
 
 -- equal 
-SELECT '' AS one, p.*
-FROM POINT_TBL p
-WHERE p.f1 =|= '(5.1, 34.5)';
+SELECT '' AS one, p.* FROM POINT_TBL p WHERE p.f1 =|= '(5.1, 34.5)';
 
 -- point in box 
-SELECT '' AS two, p.*
-FROM POINT_TBL p
-WHERE p.f1 ===> '(0,0,100,100)';
+SELECT '' AS two, p.* FROM POINT_TBL p
+   WHERE p.f1 ===> '(0,0,100,100)';
 
-SELECT '' AS three, p.*
-FROM POINT_TBL p
-WHERE not on_pb(p.f1, '(0,0,100,100)'::box);
+SELECT '' AS three, p.* FROM POINT_TBL p
+   WHERE not on_pb(p.f1,'(0,0,100,100)'::box);
 
-SELECT '' AS two, p.*
-FROM POINT_TBL p
-WHERE on_ppath(p.f1, '(0,3,0,0,-10,0,-10,10)'::path);
+SELECT '' AS two, p.* FROM POINT_TBL p
+   WHERE on_ppath(p.f1,'(0,3,0,0,-10,0,-10,10)'::path);
 
-SELECT '' AS five, p.f1, p.f1 <===> '(0,0)' AS dist
-FROM POINT_TBL p;
+SELECT '' AS five, p.f1, p.f1 <===> '(0,0)' AS dist FROM POINT_TBL p;
 
 SELECT '' AS twentyfive, p1.f1, p2.f1, p1.f1 <===> p2.f1 AS dist
-FROM POINT_TBL p1, POINT_TBL p2;
+   FROM POINT_TBL p1, POINT_TBL p2;
 
 SELECT '' AS twenty, p1.f1, p2.f1
-FROM POINT_TBL p1,
-     POINT_TBL p2
-WHERE (p1.f1 <===> p2.f1) > 3;
+   FROM POINT_TBL p1, POINT_TBL p2
+   WHERE (p1.f1 <===> p2.f1) > 3;
 
 SELECT '' AS ten, p1.f1, p2.f1
-FROM POINT_TBL p1,
-     POINT_TBL p2
-WHERE (p1.f1 <===> p2.f1) > 3
-  and p1.f1 !< p2.f1;
+   FROM POINT_TBL p1, POINT_TBL p2
+   WHERE (p1.f1 <===> p2.f1) > 3 and 
+	p1.f1 !< p2.f1;
 
-SELECT '' AS two, p1.f1, p2.f1
-FROM POINT_TBL p1,
-     POINT_TBL p2
-WHERE (p1.f1 <===> p2.f1) > 3
-  and p1.f1 !< p2.f1 and
+SELECT '' AS two, p1.f1, p2.f1 
+   FROM POINT_TBL p1, POINT_TBL p2 
+   WHERE (p1.f1 <===> p2.f1) > 3 and 
+	p1.f1 !< p2.f1 and
 	p1.f1 !^ p2.f1;
 
 
@@ -1745,82 +1281,70 @@ WHERE (p1.f1 <===> p2.f1) > 3
 --	0 1 2 3 4
 --
 
-CREATE TABLE POLYGON_TBL
-(
-    f1 polygon
-);
+CREATE TABLE POLYGON_TBL(f1 polygon);
 
 
-INSERT INTO POLYGON_TBL(f1)
-VALUES ('(2.0,2.0,0.0,0.0,4.0,0.0)');
+INSERT INTO POLYGON_TBL(f1) VALUES ('(2.0,2.0,0.0,0.0,4.0,0.0)');
 
-INSERT INTO POLYGON_TBL(f1)
-VALUES ('(3.0,3.0,1.0,1.0,3.0,0.0)');
+INSERT INTO POLYGON_TBL(f1) VALUES ('(3.0,3.0,1.0,1.0,3.0,0.0)');
 
 -- degenerate polygons 
-INSERT INTO POLYGON_TBL(f1)
-VALUES ('(0.0,0.0)');
+INSERT INTO POLYGON_TBL(f1) VALUES ('(0.0,0.0)');
 
-INSERT INTO POLYGON_TBL(f1)
-VALUES ('(0.0,0.0,1.0,1.0)');
+INSERT INTO POLYGON_TBL(f1) VALUES ('(0.0,0.0,1.0,1.0)');
 -- bad polygon input strings 
-INSERT INTO POLYGON_TBL(f1)
-VALUES ('0.0');
+INSERT INTO POLYGON_TBL(f1) VALUES ('0.0');
 
-INSERT INTO POLYGON_TBL(f1)
-VALUES ('(0.0 0.0');
+INSERT INTO POLYGON_TBL(f1) VALUES ('(0.0 0.0');
 
-INSERT INTO POLYGON_TBL(f1)
-VALUES ('(0,1,2)');
+INSERT INTO POLYGON_TBL(f1) VALUES ('(0,1,2)');
 
-INSERT INTO POLYGON_TBL(f1)
-VALUES ('(0,1,2,3');
+INSERT INTO POLYGON_TBL(f1) VALUES ('(0,1,2,3');
 
-INSERT INTO POLYGON_TBL(f1)
-VALUES ('asdf');
+INSERT INTO POLYGON_TBL(f1) VALUES ('asdf');
 
 
 SELECT '' AS four, POLYGON_TBL.*;
 
 -- overlap 
 SELECT '' AS three, p.*
-FROM POLYGON_TBL p
-WHERE p.f1 && '(3.0,3.0,1.0,1.0,3.0,0.0)';
+   FROM POLYGON_TBL p
+   WHERE p.f1 && '(3.0,3.0,1.0,1.0,3.0,0.0)';
 
 -- left overlap 
-SELECT '' AS four, p.*
-FROM POLYGON_TBL p
-WHERE p.f1 &< '(3.0,3.0,1.0,1.0,3.0,0.0)';
+SELECT '' AS four, p.* 
+   FROM POLYGON_TBL p
+   WHERE p.f1 &< '(3.0,3.0,1.0,1.0,3.0,0.0)';
 
 -- right overlap 
-SELECT '' AS two, p.*
-FROM POLYGON_TBL p
-WHERE p.f1 &> '(3.0,3.0,1.0,1.0,3.0,0.0)';
+SELECT '' AS two, p.* 
+   FROM POLYGON_TBL p
+   WHERE p.f1 &> '(3.0,3.0,1.0,1.0,3.0,0.0)';
 
 -- left of 
 SELECT '' AS one, p.*
-FROM POLYGON_TBL p
-WHERE p.f1 << '(3.0,3.0,1.0,1.0,3.0,0.0)';
+   FROM POLYGON_TBL p
+   WHERE p.f1 << '(3.0,3.0,1.0,1.0,3.0,0.0)';
 
 -- right of 
 SELECT '' AS zero, p.*
-FROM POLYGON_TBL p
-WHERE p.f1 >> '(3.0,3.0,1.0,1.0,3.0,0.0)';
+   FROM POLYGON_TBL p
+   WHERE p.f1 >> '(3.0,3.0,1.0,1.0,3.0,0.0)';
 
 -- contained 
-SELECT '' AS one, p.*
-FROM POLYGON_TBL p
-WHERE p.f1 @ '(3.0,3.0,1.0,1.0,3.0,0.0)';
+SELECT '' AS one, p.* 
+   FROM POLYGON_TBL p
+   WHERE p.f1 @ '(3.0,3.0,1.0,1.0,3.0,0.0)';
 
 -- same 
 SELECT '' AS one, p.*
-FROM POLYGON_TBL p
-WHERE p.f1 ~= '(3.0,3.0,1.0,1.0,3.0,0.0)';
+   FROM POLYGON_TBL p
+   WHERE p.f1 ~= '(3.0,3.0,1.0,1.0,3.0,0.0)';
 
 -- contains 
 SELECT '' AS one, p.*
-FROM POLYGON_TBL p
-WHERE p.f1 ~ '(3.0,3.0,1.0,1.0,3.0,0.0)';
+   FROM POLYGON_TBL p
+   WHERE p.f1 ~ '(3.0,3.0,1.0,1.0,3.0,0.0)';
 
 
 -- *************testing built-in type text  ****************
@@ -1899,48 +1423,48 @@ SELECT onek.* WHERE onek.unique1 < 10;
 --
 -- awk '{if($1<20){print $1,$14;}else{next;}}' onek.data | sort +0nr -1
 --
-SELECT onek.unique1,
-       onek.stringu1 WHERE onek.unique1 < 20
-ORDER BY unique1 using >;
+SELECT onek.unique1, onek.stringu1
+   WHERE onek.unique1 < 20 
+   ORDER BY unique1 using >;
 
 --
 -- awk '{if($1>980){print $1,$14;}else{next;}}' onek.data | sort +1d -2
 --
-SELECT onek.unique1,
-       onek.stringu1 WHERE onek.unique1 > 980
-ORDER BY stringu1 using <;
-
+SELECT onek.unique1, onek.stringu1
+   WHERE onek.unique1 > 980 
+   ORDER BY stringu1 using <;
+	
 --
 -- awk '{if($1>980){print $1,$16;}else{next;}}' onek.data |
 -- sort +1d -2 +0nr -1
 --
-SELECT onek.unique1,
-       onek.string4 WHERE onek.unique1 > 980
-ORDER BY string4 using <, unique1 using >;
-
+SELECT onek.unique1, onek.string4
+   WHERE onek.unique1 > 980 
+   ORDER BY string4 using <, unique1 using >;
+	
 --
 -- awk '{if($1>980){print $1,$16;}else{next;}}' onek.data |
 -- sort +1dr -2 +0n -1
 --
-SELECT onek.unique1,
-       onek.string4 WHERE onek.unique1 > 980
-ORDER BY string4 using >, unique1 using <;
-
+SELECT onek.unique1, onek.string4
+   WHERE onek.unique1 > 980
+   ORDER BY string4 using >, unique1 using <;
+	
 --
 -- awk '{if($1<20){print $1,$16;}else{next;}}' onek.data |
 -- sort +0nr -1 +1d -2
 --
-SELECT onek.unique1,
-       onek.string4 WHERE onek.unique1 < 20
-ORDER BY unique1 using >, string4 using <;
+SELECT onek.unique1, onek.string4
+   WHERE onek.unique1 < 20
+   ORDER BY unique1 using >, string4 using <;
 
 --
 -- awk '{if($1<20){print $1,$16;}else{next;}}' onek.data |
 -- sort +0n -1 +1dr -2
 --
-SELECT onek.unique1,
-       onek.string4 WHERE onek.unique1 < 20
-ORDER BY unique1 using <, string4 using >;
+SELECT onek.unique1, onek.string4
+   WHERE onek.unique1 < 20 
+   ORDER BY unique1 using <, string4 using >;
 
 --
 -- partial btree index
@@ -1953,7 +1477,7 @@ ORDER BY unique1 using <, string4 using >;
 -- awk '{if($1<20){print $1,$14;}else{next;}}' onek.data | sort +0nr -1
 --
 -- SELECT onek2.unique1, onek2.stringu1
-WHERE onek2.unique1 < 20 
+    WHERE onek2.unique1 < 20 
     ORDER BY unique1 using >;
 
 --
@@ -1962,58 +1486,54 @@ WHERE onek2.unique1 < 20
 --SELECT onek2.unique1, onek2.stringu1
 --   WHERE onek2.unique1 > 980
 --   ORDER BY stringu1 using <;
-
+	
 SELECT two, stringu1, ten, string4
-INTO TABLE temp
-FROM onek;
+   INTO TABLE temp
+   FROM onek;
 
 --
 -- awk '{print $3;}' onek.data | sort -n | uniq
 --
-SELECT DISTINCT two
-FROM temp;
+SELECT DISTINCT two FROM temp;
 
 --
 -- awk '{print $5;}' onek.data | sort -n | uniq
 --
-SELECT DISTINCT ten
-FROM temp;
+SELECT DISTINCT ten FROM temp;
 
 --
 -- awk '{print $16;}' onek.data | sort -d | uniq
 --
-SELECT DISTINCT string4
-FROM temp;
+SELECT DISTINCT string4 FROM temp;
 
 --
 -- awk '{print $3,$16,$5;}' onek.data | sort -d | uniq |
 -- sort +0n -1 +1d -2 +2n -3
 --
 SELECT DISTINCT two, string4, ten
-FROM temp
-ORDER BY two using <, string4 using <, ten using <;
+   FROM temp
+   ORDER BY two using <, string4 using <, ten using <;
 
 
 --
 -- test select distinct on
 --
-SELECT DISTINCT
-ON string4 two, string4, ten
-FROM temp
-ORDER BY two using <, string4 using <, ten using <;
+SELECT DISTINCT ON string4 two, string4, ten
+	   FROM temp
+   ORDER BY two using <, string4 using <, ten using <;
 
 
 SELECT *
-INTO TABLE temp1
-FROM temp
-WHERE onek.unique1 < 2;
+   INTO TABLE temp1
+   FROM temp
+   WHERE onek.unique1 < 2;
 
 DROP TABLE temp1;
 
 SELECT *
-INTO TABLE temp1
-FROM temp
-WHERE onek2.unique1 < 2;
+   INTO TABLE temp1
+   FROM temp
+   WHERE onek2.unique1 < 2;
 
 DROP TABLE temp1;
 
@@ -2024,8 +1544,7 @@ DROP TABLE temp1;
 -- awk 'BEGIN{FS="	";}{if(NF!=2){print $4,$5;}else{print;}}' - stud_emp.data
 --
 -- SELECT name, age FROM person*; ??? check if different
-SELECT p.name, p.age
-FROM person* p;
+SELECT p.name, p.age FROM person* p;
 
 --
 -- awk '{print $1,$2;}' person.data |
@@ -2034,9 +1553,7 @@ FROM person* p;
 -- awk 'BEGIN{FS="	";}{if(NF!=1){print $4,$5;}else{print;}}' - stud_emp.data |
 -- sort +1nr -2
 --
-SELECT p.name, p.age
-FROM person* p
-ORDER BY age using >;
+SELECT p.name, p.age FROM person* p ORDER BY age using >;
 
 --
 -- awk '{print $2;}' person.data |
@@ -2045,57 +1562,63 @@ ORDER BY age using >;
 -- awk 'BEGIN{FS="	";}{if(NF!=1){print $5;}else{print;}}' - stud_emp.data |
 -- sort -n -r | uniq
 --
-SELECT DISTINCT p.age
-FROM person* p
-ORDER BY age using >;
+SELECT DISTINCT p.age FROM person* p ORDER BY age using >;
 
 --
 -- hash index
 -- grep 843938989 hash.data
 --
-SELECT hash_i4_heap.* WHERE hash_i4_heap.random = 843938989;
+SELECT hash_i4_heap.* 
+   WHERE hash_i4_heap.random = 843938989;
 
 --
 -- hash index
 -- grep 66766766 hash.data
 --
-SELECT hash_i4_heap.* WHERE hash_i4_heap.random = 66766766;
+SELECT hash_i4_heap.*
+   WHERE hash_i4_heap.random = 66766766;
 
 --
 -- hash index
 -- grep 1505703298 hash.data
 --
-SELECT hash_c16_heap.* WHERE hash_c16_heap.random = '1505703298'::char16;
+SELECT hash_c16_heap.*
+   WHERE hash_c16_heap.random = '1505703298'::char16;
 
 --
 -- hash index
 -- grep 7777777 hash.data
 --
-SELECT hash_c16_heap.* WHERE hash_c16_heap.random = '7777777'::char16;
+SELECT hash_c16_heap.*
+   WHERE hash_c16_heap.random = '7777777'::char16;
 
 --
 -- hash index
 -- grep 1351610853 hash.data
 --
-SELECT hash_txt_heap.* WHERE hash_txt_heap.random = '1351610853'::text;
+SELECT hash_txt_heap.*
+   WHERE hash_txt_heap.random = '1351610853'::text;
 
 --
 -- hash index
 -- grep 111111112222222233333333 hash.data
 --
-SELECT hash_txt_heap.* WHERE hash_txt_heap.random = '111111112222222233333333'::text;
+SELECT hash_txt_heap.*
+   WHERE hash_txt_heap.random = '111111112222222233333333'::text;
 
 --
 -- hash index
 -- grep 444705537 hash.data
 --
-SELECT hash_f8_heap.* WHERE hash_f8_heap.random = '444705537'::float8;
+SELECT hash_f8_heap.*
+   WHERE hash_f8_heap.random = '444705537'::float8;
 
 --
 -- hash index
 -- grep 88888888 hash.data
 --
-SELECT hash_f8_heap.* WHERE hash_f8_heap.random = '88888888'::float8;
+SELECT hash_f8_heap.*
+   WHERE hash_f8_heap.random = '88888888'::float8;
 
 --
 -- hash index
@@ -2118,52 +1641,52 @@ SELECT hash_f8_heap.* WHERE hash_f8_heap.random = '88888888'::float8;
 --
 
 SELECT b.*
-FROM bt_i4_heap b
-WHERE b.seqno < 1;
+   FROM bt_i4_heap b
+   WHERE b.seqno < 1;
 
 SELECT b.*
-FROM bt_i4_heap b
-WHERE b.seqno >= 9999;
+   FROM bt_i4_heap b
+   WHERE b.seqno >= 9999;
 
 SELECT b.*
-FROM bt_i4_heap b
-WHERE b.seqno = 4500;
+   FROM bt_i4_heap b
+   WHERE b.seqno = 4500;
 
 SELECT b.*
-FROM bt_c16_heap b
-WHERE b.seqno < '1'::char16;
+   FROM bt_c16_heap b
+   WHERE b.seqno < '1'::char16;
 
 SELECT b.*
-FROM bt_c16_heap b
-WHERE b.seqno >= '9999'::char16;
+   FROM bt_c16_heap b
+   WHERE b.seqno >= '9999'::char16;
 
 SELECT b.*
-FROM bt_c16_heap b
-WHERE b.seqno = '4500'::char16;
+   FROM bt_c16_heap b
+   WHERE b.seqno = '4500'::char16;
 
 SELECT b.*
-FROM bt_txt_heap b
-WHERE b.seqno < '1'::text;
+   FROM bt_txt_heap b
+   WHERE b.seqno < '1'::text;
 
 SELECT b.*
-FROM bt_txt_heap b
-WHERE b.seqno >= '9999'::text;
+   FROM bt_txt_heap b
+   WHERE b.seqno >= '9999'::text;
 
 SELECT b.*
-FROM bt_txt_heap b
-WHERE b.seqno = '4500'::text;
+   FROM bt_txt_heap b
+   WHERE b.seqno = '4500'::text;
 
 SELECT b.*
-FROM bt_f8_heap b
-WHERE b.seqno < '1'::float8;
+   FROM bt_f8_heap b
+   WHERE b.seqno < '1'::float8;
 
 SELECT b.*
-FROM bt_f8_heap b
-WHERE b.seqno >= '9999'::float8;
+   FROM bt_f8_heap b
+   WHERE b.seqno >= '9999'::float8;
 
 SELECT b.*
-FROM bt_f8_heap b
-WHERE b.seqno = '4500'::float8;
+   FROM bt_f8_heap b
+   WHERE b.seqno = '4500'::float8;
 
 
 
@@ -2174,10 +1697,10 @@ WHERE b.seqno = '4500'::float8;
 -- BTREE
 --
 UPDATE onek
-SET unique1 = onek.unique1 + 1;
+   SET unique1 = onek.unique1 + 1;
 
 UPDATE onek
-SET unique1 = onek.unique1 - 1;
+   SET unique1 = onek.unique1 - 1;
 
 --
 -- BTREE partial
@@ -2196,14 +1719,14 @@ SET unique1 = onek.unique1 - 1;
 -- more closely.  			- jolly (2/22/96)
 -- 
 UPDATE temp
-SET stringu1 = reverse_c16(onek.stringu1)
-WHERE onek.stringu1 = 'JBAAAA'
-  and onek.stringu1 = temp.stringu1;
+   SET stringu1 = reverse_c16(onek.stringu1)
+   WHERE onek.stringu1 = 'JBAAAA' and
+	  onek.stringu1 = temp.stringu1;
 
 UPDATE temp
-SET stringu1 = reverse_c16(onek2.stringu1)
-WHERE onek2.stringu1 = 'JCAAAA'
-  and onek2.stringu1 = temp.stringu1;
+   SET stringu1 = reverse_c16(onek2.stringu1)
+   WHERE onek2.stringu1 = 'JCAAAA' and
+	  onek2.stringu1 = temp.stringu1;
 
 DROP TABLE temp;
 
@@ -2219,71 +1742,71 @@ DROP TABLE temp;
 -- HASH
 --
 UPDATE hash_i4_heap
-SET random = 1
-WHERE hash_i4_heap.seqno = 1492;
+   SET random = 1
+   WHERE hash_i4_heap.seqno = 1492;
 
 SELECT h.seqno AS i1492, h.random AS i1
-FROM hash_i4_heap h
-WHERE h.random = 1;
+   FROM hash_i4_heap h
+   WHERE h.random = 1;
 
-UPDATE hash_i4_heap
-SET seqno = 20000
-WHERE hash_i4_heap.random = 1492795354;
+UPDATE hash_i4_heap 
+   SET seqno = 20000 
+   WHERE hash_i4_heap.random = 1492795354;
 
-SELECT h.seqno AS i20000
-FROM hash_i4_heap h
-WHERE h.random = 1492795354;
+SELECT h.seqno AS i20000 
+   FROM hash_i4_heap h
+   WHERE h.random = 1492795354;
 
-UPDATE hash_c16_heap
-SET random = '0123456789abcdef'::char16
-WHERE hash_c16_heap.seqno = 6543;
+UPDATE hash_c16_heap 
+   SET random = '0123456789abcdef'::char16
+   WHERE hash_c16_heap.seqno = 6543;
 
 SELECT h.seqno AS i6543, h.random AS c0_to_f
-FROM hash_c16_heap h
-WHERE h.random = '0123456789abcdef'::char16;
+   FROM hash_c16_heap h
+   WHERE h.random = '0123456789abcdef'::char16;
 
 UPDATE hash_c16_heap
-SET seqno = 20000
-WHERE hash_c16_heap.random = '76652222'::char16;
+   SET seqno = 20000
+   WHERE hash_c16_heap.random = '76652222'::char16;
 
 --
 -- this is the row we just replaced; index scan should return zero rows 
 --
 SELECT h.seqno AS emptyset
-FROM hash_c16_heap h
-WHERE h.random = '76652222'::char16;
+   FROM hash_c16_heap h
+   WHERE h.random = '76652222'::char16;
 
-UPDATE hash_txt_heap
-SET random = '0123456789abcdefghijklmnop'::text
-WHERE hash_txt_heap.seqno = 4002;
+UPDATE hash_txt_heap 
+   SET random = '0123456789abcdefghijklmnop'::text
+   WHERE hash_txt_heap.seqno = 4002;
 
 SELECT h.seqno AS i4002, h.random AS c0_to_p
-FROM hash_txt_heap h
-WHERE h.random = '0123456789abcdefghijklmnop'::text;
+   FROM hash_txt_heap h
+   WHERE h.random = '0123456789abcdefghijklmnop'::text;
 
 UPDATE hash_txt_heap
-SET seqno = 20000
-WHERE hash_txt_heap.random = '959363399'::text;
+   SET seqno = 20000
+   WHERE hash_txt_heap.random = '959363399'::text;
 
 SELECT h.seqno AS t20000
-FROM hash_txt_heap h
-WHERE h.random = '959363399'::text;
+   FROM hash_txt_heap h
+   WHERE h.random = '959363399'::text;
 
 UPDATE hash_f8_heap
-SET random = '-1234.1234'::float8
-WHERE hash_f8_heap.seqno = 8906;
+   SET random = '-1234.1234'::float8
+   WHERE hash_f8_heap.seqno = 8906;
 
-SELECT h.seqno AS i8096, h.random AS f1234_1234
-FROM hash_f8_heap h
-WHERE h.random = '-1234.1234'::float8;
+SELECT h.seqno AS i8096, h.random AS f1234_1234 
+   FROM hash_f8_heap h
+   WHERE h.random = '-1234.1234'::float8;
 
-UPDATE hash_f8_heap
-SET seqno = 20000
-WHERE hash_f8_heap.random = '488912369'::float8;
+UPDATE hash_f8_heap 
+   SET seqno = 20000
+   WHERE hash_f8_heap.random = '488912369'::float8;
 
 SELECT h.seqno AS f20000
-FROM hash_f8_heap h
-WHERE h.random = '488912369'::float8;
+   FROM hash_f8_heap h
+   WHERE h.random = '488912369'::float8;
 
 -- UPDATE hash_ovfl_heap
 --    SET x = 1000
@@ -2316,33 +1839,25 @@ WHERE h.random = '488912369'::float8;
 --
 COPY onek TO '_OBJWD_/onek.data';
 
-DELETE
-FROM onek;
+DELETE FROM onek;
 
 COPY onek FROM '_OBJWD_/onek.data';
 
-SELECT unique1
-FROM onek
-WHERE unique1 < 2;
+SELECT unique1 FROM onek WHERE unique1 < 2;
 
-DELETE
-FROM onek2;
+DELETE FROM onek2;
 
 COPY onek2 FROM '_OBJWD_/onek.data';
 
-SELECT unique1
-FROM onek2
-WHERE unique1 < 2;
+SELECT unique1 FROM onek2 WHERE unique1 < 2;
 
 COPY BINARY stud_emp TO '_OBJWD_/stud_emp.data';
 
-DELETE
-FROM stud_emp;
+DELETE FROM stud_emp;
 
 COPY BINARY stud_emp FROM '_OBJWD_/stud_emp.data';
 
-SELECT *
-FROM stud_emp;
+SELECT * FROM stud_emp;
 
 -- COPY aggtest FROM stdin;
 -- 56	7.8
@@ -2357,18 +1872,13 @@ FROM stud_emp;
 -- test the random function
 --
 -- count the number of tuples originally
-SELECT count(*)
-FROM onek;
+SELECT count(*) FROM onek;
 
 -- select roughly 1/10 of the tuples
-SELECT count(*)
-FROM onek
-where oidrand(onek.oid, 10);
+SELECT count(*) FROM onek where oidrand(onek.oid, 10);
 
 -- select again, the count should be different
-SELECT count(*)
-FROM onek
-where oidrand(onek.oid, 10);
+SELECT count(*) FROM onek where oidrand(onek.oid, 10);
 
 
 --
@@ -2376,45 +1886,34 @@ where oidrand(onek.oid, 10);
 --
 BEGIN;
 
-SELECT *
-INTO TABLE xacttest
-FROM aggtest;
+SELECT * 
+   INTO TABLE xacttest
+   FROM aggtest;
 
-INSERT INTO xacttest (a, b)
-VALUES (777, 777.777);
+INSERT INTO xacttest (a, b) VALUES (777, 777.777);
 
 END;
 
 -- should retrieve one value--
-SELECT a
-FROM xacttest
-WHERE a > 100;
+SELECT a FROM xacttest WHERE a > 100;
 
 
 BEGIN;
 
-CREATE TABLE disappear
-(
-    a int4
-);
+CREATE TABLE disappear (a int4);
 
-DELETE
-FROM aggtest;
+DELETE FROM aggtest;
 
 -- should be empty
-SELECT *
-FROM aggtest;
+SELECT * FROM aggtest;
 
 ABORT;
 
 -- should not exist 
-SELECT oid
-FROM pg_class
-WHERE relname = 'disappear';
+SELECT oid FROM pg_class WHERE relname = 'disappear';
 
 -- should have members again 
-SELECT *
-FROM aggtest;
+SELECT * FROM aggtest;
 
 
 --
@@ -2422,120 +1921,51 @@ FROM aggtest;
 --
 BEGIN;
 
-DECLARE
-foo1 CURSOR FOR
-SELECT *
-FROM tenk1;
+DECLARE foo1 CURSOR FOR SELECT * FROM tenk1;
 
-DECLARE
-foo2 CURSOR FOR
-SELECT *
-FROM tenk2;
+DECLARE foo2 CURSOR FOR SELECT * FROM tenk2;
 
-DECLARE
-foo3 CURSOR FOR
-SELECT *
-FROM tenk1;
+DECLARE foo3 CURSOR FOR SELECT * FROM tenk1;
 
-DECLARE
-foo4 CURSOR FOR
-SELECT *
-FROM tenk2;
+DECLARE foo4 CURSOR FOR SELECT * FROM tenk2;
 
-DECLARE
-foo5 CURSOR FOR
-SELECT *
-FROM tenk1;
+DECLARE foo5 CURSOR FOR SELECT * FROM tenk1;
 
-DECLARE
-foo6 CURSOR FOR
-SELECT *
-FROM tenk2;
+DECLARE foo6 CURSOR FOR SELECT * FROM tenk2;
 
-DECLARE
-foo7 CURSOR FOR
-SELECT *
-FROM tenk1;
+DECLARE foo7 CURSOR FOR SELECT * FROM tenk1;
 
-DECLARE
-foo8 CURSOR FOR
-SELECT *
-FROM tenk2;
+DECLARE foo8 CURSOR FOR SELECT * FROM tenk2;
 
-DECLARE
-foo9 CURSOR FOR
-SELECT *
-FROM tenk1;
+DECLARE foo9 CURSOR FOR SELECT * FROM tenk1;
 
-DECLARE
-foo10 CURSOR FOR
-SELECT *
-FROM tenk2;
+DECLARE foo10 CURSOR FOR SELECT * FROM tenk2;
 
-DECLARE
-foo11 CURSOR FOR
-SELECT *
-FROM tenk1;
+DECLARE foo11 CURSOR FOR SELECT * FROM tenk1;
 
-DECLARE
-foo12 CURSOR FOR
-SELECT *
-FROM tenk2;
+DECLARE foo12 CURSOR FOR SELECT * FROM tenk2;
 
-DECLARE
-foo13 CURSOR FOR
-SELECT *
-FROM tenk1;
+DECLARE foo13 CURSOR FOR SELECT * FROM tenk1;
 
-DECLARE
-foo14 CURSOR FOR
-SELECT *
-FROM tenk2;
+DECLARE foo14 CURSOR FOR SELECT * FROM tenk2;
 
-DECLARE
-foo15 CURSOR FOR
-SELECT *
-FROM tenk1;
+DECLARE foo15 CURSOR FOR SELECT * FROM tenk1;
 
-DECLARE
-foo16 CURSOR FOR
-SELECT *
-FROM tenk2;
+DECLARE foo16 CURSOR FOR SELECT * FROM tenk2;
 
-DECLARE
-foo17 CURSOR FOR
-SELECT *
-FROM tenk1;
+DECLARE foo17 CURSOR FOR SELECT * FROM tenk1;
 
-DECLARE
-foo18 CURSOR FOR
-SELECT *
-FROM tenk2;
+DECLARE foo18 CURSOR FOR SELECT * FROM tenk2;
 
-DECLARE
-foo19 CURSOR FOR
-SELECT *
-FROM tenk1;
+DECLARE foo19 CURSOR FOR SELECT * FROM tenk1;
 
-DECLARE
-foo20 CURSOR FOR
-SELECT *
-FROM tenk2;
+DECLARE foo20 CURSOR FOR SELECT * FROM tenk2;
 
-DECLARE
-foo21 CURSOR FOR
-SELECT *
-FROM tenk1;
+DECLARE foo21 CURSOR FOR SELECT * FROM tenk1;
 
-DECLARE
-foo22 CURSOR FOR
-SELECT *
-FROM tenk2;
+DECLARE foo22 CURSOR FOR SELECT * FROM tenk2;
 
-DECLARE
-foo23 CURSOR FOR
-SELECT *
-FROM tenk1;
+DECLARE foo23 CURSOR FOR SELECT * FROM tenk1;
 
 FETCH 1 in foo1;
 
@@ -2655,88 +2085,48 @@ CLOSE foo12;
 
 end;
 
-EXTEND
-INDEX onek2_u1_prtl WHERE onek2.unique1 <= 60;
+EXTEND INDEX onek2_u1_prtl WHERE onek2.unique1 <= 60;
 
 BEGIN;
 
-DECLARE
-foo13 CURSOR FOR
-SELECT *
-FROM onek
-WHERE unique1 = 50;
+DECLARE foo13 CURSOR FOR 
+   SELECT * FROM onek WHERE unique1 = 50;
 
-DECLARE
-foo14 CURSOR FOR
-SELECT *
-FROM onek
-WHERE unique1 = 51;
+DECLARE foo14 CURSOR FOR 
+   SELECT * FROM onek WHERE unique1 = 51;
 
-DECLARE
-foo15 CURSOR FOR
-SELECT *
-FROM onek
-WHERE unique1 = 52;
+DECLARE foo15 CURSOR FOR 
+   SELECT * FROM onek WHERE unique1 = 52;
 
-DECLARE
-foo16 CURSOR FOR
-SELECT *
-FROM onek
-WHERE unique1 = 53;
+DECLARE foo16 CURSOR FOR 
+   SELECT * FROM onek WHERE unique1 = 53;
 
-DECLARE
-foo17 CURSOR FOR
-SELECT *
-FROM onek
-WHERE unique1 = 54;
+DECLARE foo17 CURSOR FOR 
+   SELECT * FROM onek WHERE unique1 = 54;
 
-DECLARE
-foo18 CURSOR FOR
-SELECT *
-FROM onek
-WHERE unique1 = 55;
+DECLARE foo18 CURSOR FOR 
+   SELECT * FROM onek WHERE unique1 = 55;
 
-DECLARE
-foo19 CURSOR FOR
-SELECT *
-FROM onek
-WHERE unique1 = 56;
+DECLARE foo19 CURSOR FOR 
+   SELECT * FROM onek WHERE unique1 = 56;
 
-DECLARE
-foo20 CURSOR FOR
-SELECT *
-FROM onek
-WHERE unique1 = 57;
+DECLARE foo20 CURSOR FOR 
+   SELECT * FROM onek WHERE unique1 = 57;
 
-DECLARE
-foo21 CURSOR FOR
-SELECT *
-FROM onek
-WHERE unique1 = 58;
+DECLARE foo21 CURSOR FOR 
+   SELECT * FROM onek WHERE unique1 = 58;
 
-DECLARE
-foo22 CURSOR FOR
-SELECT *
-FROM onek
-WHERE unique1 = 59;
+DECLARE foo22 CURSOR FOR 
+   SELECT * FROM onek WHERE unique1 = 59;
 
-DECLARE
-foo23 CURSOR FOR
-SELECT *
-FROM onek
-WHERE unique1 = 60;
+DECLARE foo23 CURSOR FOR 
+   SELECT * FROM onek WHERE unique1 = 60;
 
-DECLARE
-foo24 CURSOR FOR
-SELECT *
-FROM onek2
-WHERE unique1 = 50;
+DECLARE foo24 CURSOR FOR 
+   SELECT * FROM onek2 WHERE unique1 = 50;
 
-DECLARE
-foo25 CURSOR FOR
-SELECT *
-FROM onek2
-WHERE unique1 = 60;
+DECLARE foo25 CURSOR FOR 
+   SELECT * FROM onek2 WHERE unique1 = 60;
 
 FETCH all in foo13;
 
@@ -2805,222 +2195,158 @@ END;
 -- miss deleting a bunch of index tuples, which caused big problems when
 -- you dereferenced the tids and found garbage..
 --
-PURGE
-hash_f8_heap BEFORE 'now';		-- absolute time
+PURGE hash_f8_heap BEFORE 'now';		-- absolute time
 
-SELECT count(*) AS has_10002
-FROM hash_f8_heap[,] h;
+SELECT count(*) AS has_10002 FROM hash_f8_heap[,] h;
 
-VACUUM
-hash_f8_heap;
+VACUUM hash_f8_heap;
 
-SELECT count(*) AS has_10000
-FROM hash_f8_heap[,] h;
+SELECT count(*) AS has_10000 FROM hash_f8_heap[,] h;
 
-PURGE
-hash_i4_heap AFTER '@ 1 second ago';	-- relative time
+PURGE hash_i4_heap AFTER '@ 1 second ago';	-- relative time
 
-SELECT count(*) AS has_10002
-FROM hash_i4_heap[,] h;
+SELECT count(*) AS has_10002 FROM hash_i4_heap[,] h;
 
-VACUUM
-hash_i4_heap;
+VACUUM hash_i4_heap;
 
-SELECT count(*) AS has_10000
-FROM hash_i4_heap[,] h;
+SELECT count(*) AS has_10000 FROM hash_i4_heap[,] h;
 
 
 --
 -- add attribute
 --
-CREATE TABLE temp
-(
-    initial int4
-);
+CREATE TABLE temp (initial int4);
 
-ALTER TABLE temp
-    ADD COLUMN a int4;
+ALTER TABLE temp ADD COLUMN a int4;
 
-ALTER TABLE temp
-    ADD COLUMN b char16;
+ALTER TABLE temp ADD COLUMN b char16;
 
-ALTER TABLE temp
-    ADD COLUMN c text;
+ALTER TABLE temp ADD COLUMN c text;
 
-ALTER TABLE temp
-    ADD COLUMN d float8;
+ALTER TABLE temp ADD COLUMN d float8;
 
-ALTER TABLE temp
-    ADD COLUMN e float4;
+ALTER TABLE temp ADD COLUMN e float4;
 
-ALTER TABLE temp
-    ADD COLUMN f int2;
+ALTER TABLE temp ADD COLUMN f int2;
 
-ALTER TABLE temp
-    ADD COLUMN g polygon;
+ALTER TABLE temp ADD COLUMN g polygon;
 
-ALTER TABLE temp
-    ADD COLUMN h abstime;
+ALTER TABLE temp ADD COLUMN h abstime;
 
-ALTER TABLE temp
-    ADD COLUMN i char;
+ALTER TABLE temp ADD COLUMN i char;
 
-ALTER TABLE temp
-    ADD COLUMN j abstime[];
+ALTER TABLE temp ADD COLUMN j abstime[];
 
-ALTER TABLE temp
-    ADD COLUMN k dt;
+ALTER TABLE temp ADD COLUMN k dt;
 
-ALTER TABLE temp
-    ADD COLUMN l tid;
+ALTER TABLE temp ADD COLUMN l tid;
 
-ALTER TABLE temp
-    ADD COLUMN m xid;
+ALTER TABLE temp ADD COLUMN m xid;
 
-ALTER TABLE temp
-    ADD COLUMN n oid8;
+ALTER TABLE temp ADD COLUMN n oid8;
 
 --ALTER TABLE temp ADD COLUMN o lock;
-ALTER TABLE temp
-    ADD COLUMN p smgr;
+ALTER TABLE temp ADD COLUMN p smgr;
 
-ALTER TABLE temp
-    ADD COLUMN q point;
+ALTER TABLE temp ADD COLUMN q point;
 
-ALTER TABLE temp
-    ADD COLUMN r lseg;
+ALTER TABLE temp ADD COLUMN r lseg;
 
-ALTER TABLE temp
-    ADD COLUMN s path;
+ALTER TABLE temp ADD COLUMN s path;
 
-ALTER TABLE temp
-    ADD COLUMN t box;
+ALTER TABLE temp ADD COLUMN t box;
 
-ALTER TABLE temp
-    ADD COLUMN u tinterval;
+ALTER TABLE temp ADD COLUMN u tinterval;
 
-ALTER TABLE temp
-    ADD COLUMN v oidint4;
+ALTER TABLE temp ADD COLUMN v oidint4;
 
-ALTER TABLE temp
-    ADD COLUMN w oidname;
+ALTER TABLE temp ADD COLUMN w oidname;
 
-ALTER TABLE temp
-    ADD COLUMN x float8[];
+ALTER TABLE temp ADD COLUMN x float8[];
 
-ALTER TABLE temp
-    ADD COLUMN y float4[];
+ALTER TABLE temp ADD COLUMN y float4[];
 
-ALTER TABLE temp
-    ADD COLUMN z int2[];
+ALTER TABLE temp ADD COLUMN z int2[];
 
 INSERT INTO temp (a, b, c, d, e, f, g, h, i, j, k, l, m, n, p, q, r, s, t, u,
-                  v, w, x, y, z)
-VALUES (4, 'char16', 'text', 4.1, 4.1, 2, '(4.1,4.1,3.1,3.1)',
-        'Mon May  1 00:30:30 PDT 1995', 'c', '{Mon May  1 00:30:30 PDT 1995, Monday Aug 24 14:43:07 1992 PDT, epoch}',
-        314159, '(1,1)', 512,
-        '1 2 3 4 5 6 7 8', 'magnetic disk', '(1.1,1.1)', '(4.1,4.1,3.1,3.1)',
-        '(0,2,4.1,4.1,3.1,3.1)', '(4.1,4.1,3.1,3.1)', '["current" "infinity"]',
-        '1/3', '1,char16', '{1.0,2.0,3.0,4.0}', '{1.0,2.0,3.0,4.0}', '{1,2,3,4}');
+	v, w, x, y, z)
+   VALUES (4, 'char16', 'text', 4.1, 4.1, 2, '(4.1,4.1,3.1,3.1)', 
+        'Mon May  1 00:30:30 PDT 1995', 'c', '{Mon May  1 00:30:30 PDT 1995, Monday Aug 24 14:43:07 1992 PDT, epoch}', 
+	314159, '(1,1)', 512,
+	'1 2 3 4 5 6 7 8', 'magnetic disk', '(1.1,1.1)', '(4.1,4.1,3.1,3.1)',
+	'(0,2,4.1,4.1,3.1,3.1)', '(4.1,4.1,3.1,3.1)', '["current" "infinity"]',
+	'1/3', '1,char16', '{1.0,2.0,3.0,4.0}', '{1.0,2.0,3.0,4.0}', '{1,2,3,4}');
 
-SELECT *
-FROM temp;
+SELECT * FROM temp;
 
 DROP TABLE temp;
 
 -- the wolf bug - schema mods caused inconsistent row descriptors 
-CREATE TABLE temp
-(
-    initial int4
+CREATE TABLE temp (
+	initial 	int4
 ) ARCHIVE = light;
 
-ALTER TABLE temp
-    ADD COLUMN a int4;
+ALTER TABLE temp ADD COLUMN a int4;
 
-ALTER TABLE temp
-    ADD COLUMN b char16;
+ALTER TABLE temp ADD COLUMN b char16;
 
-ALTER TABLE temp
-    ADD COLUMN c text;
+ALTER TABLE temp ADD COLUMN c text;
 
-ALTER TABLE temp
-    ADD COLUMN d float8;
+ALTER TABLE temp ADD COLUMN d float8;
 
-ALTER TABLE temp
-    ADD COLUMN e float4;
+ALTER TABLE temp ADD COLUMN e float4;
 
-ALTER TABLE temp
-    ADD COLUMN f int2;
+ALTER TABLE temp ADD COLUMN f int2;
 
-ALTER TABLE temp
-    ADD COLUMN g polygon;
+ALTER TABLE temp ADD COLUMN g polygon;
 
-ALTER TABLE temp
-    ADD COLUMN h abstime;
+ALTER TABLE temp ADD COLUMN h abstime;
 
-ALTER TABLE temp
-    ADD COLUMN i char;
+ALTER TABLE temp ADD COLUMN i char;
 
-ALTER TABLE temp
-    ADD COLUMN j abstime[];
+ALTER TABLE temp ADD COLUMN j abstime[];
 
-ALTER TABLE temp
-    ADD COLUMN k dt;
+ALTER TABLE temp ADD COLUMN k dt;
 
-ALTER TABLE temp
-    ADD COLUMN l tid;
+ALTER TABLE temp ADD COLUMN l tid;
 
-ALTER TABLE temp
-    ADD COLUMN m xid;
+ALTER TABLE temp ADD COLUMN m xid;
 
-ALTER TABLE temp
-    ADD COLUMN n oid8;
+ALTER TABLE temp ADD COLUMN n oid8;
 
 --ALTER TABLE temp ADD COLUMN o lock;
-ALTER TABLE temp
-    ADD COLUMN p smgr;
+ALTER TABLE temp ADD COLUMN p smgr;
 
-ALTER TABLE temp
-    ADD COLUMN q point;
+ALTER TABLE temp ADD COLUMN q point;
 
-ALTER TABLE temp
-    ADD COLUMN r lseg;
+ALTER TABLE temp ADD COLUMN r lseg;
 
-ALTER TABLE temp
-    ADD COLUMN s path;
+ALTER TABLE temp ADD COLUMN s path;
 
-ALTER TABLE temp
-    ADD COLUMN t box;
+ALTER TABLE temp ADD COLUMN t box;
 
-ALTER TABLE temp
-    ADD COLUMN u tinterval;
+ALTER TABLE temp ADD COLUMN u tinterval;
 
-ALTER TABLE temp
-    ADD COLUMN v oidint4;
+ALTER TABLE temp ADD COLUMN v oidint4;
 
-ALTER TABLE temp
-    ADD COLUMN w oidname;
+ALTER TABLE temp ADD COLUMN w oidname;
 
-ALTER TABLE temp
-    ADD COLUMN x float8[];
+ALTER TABLE temp ADD COLUMN x float8[];
 
-ALTER TABLE temp
-    ADD COLUMN y float4[];
+ALTER TABLE temp ADD COLUMN y float4[];
 
-ALTER TABLE temp
-    ADD COLUMN z int2[];
+ALTER TABLE temp ADD COLUMN z int2[];
 
 INSERT INTO temp (a, b, c, d, e, f, g, h, i, j, k, l, m, n, p, q, r, s, t, u,
-                  v, w, x, y, z)
-VALUES (4, 'char16', 'text', 4.1, 4.1, 2, '(4.1,4.1,3.1,3.1)',
-        'Mon May  1 00:30:30 PDT 1995', 'c', '{Mon May  1 00:30:30 PDT 1995, Monday Aug 24 14:43:07 1992 PDT, epoch}',
-        314159, '(1,1)', 512,
-        '1 2 3 4 5 6 7 8', 'magnetic disk', '(1.1,1.1)', '(4.1,4.1,3.1,3.1)',
-        '(0,2,4.1,4.1,3.1,3.1)', '(4.1,4.1,3.1,3.1)', '["current" "infinity"]',
-        '1/3', '1,char16', '{1.0,2.0,3.0,4.0}', '{1.0,2.0,3.0,4.0}', '{1,2,3,4}');
+	v, w, x, y, z)
+   VALUES (4, 'char16', 'text', 4.1, 4.1, 2, '(4.1,4.1,3.1,3.1)', 
+	'Mon May  1 00:30:30 PDT 1995', 'c', '{Mon May  1 00:30:30 PDT 1995, Monday Aug 24 14:43:07 1992 PDT, epoch}',
+	 314159, '(1,1)', 512,
+	'1 2 3 4 5 6 7 8', 'magnetic disk', '(1.1,1.1)', '(4.1,4.1,3.1,3.1)',
+	'(0,2,4.1,4.1,3.1,3.1)', '(4.1,4.1,3.1,3.1)', '["current" "infinity"]',
+	'1/3', '1,char16', '{1.0,2.0,3.0,4.0}', '{1.0,2.0,3.0,4.0}', '{1,2,3,4}');
 
-SELECT *
-FROM temp[,];
+SELECT * FROM temp[,];
 
 DROP TABLE temp;
 
@@ -3032,26 +2358,18 @@ DROP TABLE temp;
 ALTER TABLE tenk1 RENAME TO ten_k;
 
 -- 20 values, sorted 
-SELECT unique1
-FROM ten_k
-WHERE unique1 < 20;
+SELECT unique1 FROM ten_k WHERE unique1 < 20;
 
 -- 20 values, sorted 
-SELECT unique2
-FROM ten_k
-WHERE unique2 < 20;
+SELECT unique2 FROM ten_k WHERE unique2 < 20;
 
 -- 100 values, sorted 
-SELECT hundred
-FROM ten_k
-WHERE hundred = 50;
+SELECT hundred FROM ten_k WHERE hundred = 50;
 
 ALTER TABLE ten_k RENAME TO tenk1;
 
 -- 5 values, sorted 
-SELECT unique1
-FROM tenk1
-WHERE unique1 < 5;
+SELECT unique1 FROM tenk1 WHERE unique1 < 5;
 
 
 --
@@ -3059,100 +2377,75 @@ WHERE unique1 < 5;
 --
 -- test the views defined in create.source
 --
-SELECT *
-from street;
+SELECT * from street;
 
-SELECT *
-from iexit;
+SELECT * from iexit;
 
-SELECT *
-from toyemp
-where name = 'sharon';
+SELECT * from toyemp where name='sharon';
+
 
 
 
 --
 -- AGGREGATES
 --
-SELECT avg(four) AS avg_1
-FROM onek;
+SELECT avg(four) AS avg_1 FROM onek;
 
-SELECT avg(a) AS avg_49
-FROM aggtest
-WHERE a < 100;
+SELECT avg(a) AS avg_49 FROM aggtest WHERE a < 100;
 
-SELECT avg(b) AS avg_107_943
-FROM aggtest;
+SELECT avg(b) AS avg_107_943 FROM aggtest;
 
-SELECT avg(gpa) AS avg_3_4
-FROM student;
+SELECT avg(gpa) AS avg_3_4 FROM student;
 
 
-SELECT sum(four) AS sum_1500
-FROM onek;
+SELECT sum(four) AS sum_1500 FROM onek;
 
-SELECT sum(a) AS sum_198
-FROM aggtest;
+SELECT sum(a) AS sum_198 FROM aggtest;
 
-SELECT sum(b) AS avg_431_773
-FROM aggtest;
+SELECT sum(b) AS avg_431_773 FROM aggtest;
 
-SELECT sum(gpa) AS avg_6_8
-FROM student;
+SELECT sum(gpa) AS avg_6_8 FROM student;
 
 
-SELECT max(four) AS max_3
-FROM onek;
+SELECT max(four) AS max_3 FROM onek;
 
-SELECT max(a) AS max_100
-FROM aggtest;
+SELECT max(a) AS max_100 FROM aggtest;
 
-SELECT max(aggtest.b) AS max_324_78
-FROM aggtest;
+SELECT max(aggtest.b) AS max_324_78 FROM aggtest;
 
-SELECT max(student.gpa) AS max_3_7
-FROM student;
+SELECT max(student.gpa) AS max_3_7 FROM student;
 
 
-SELECT count(four) AS cnt_1000
-FROM onek;
+SELECT count(four) AS cnt_1000 FROM onek;
 
 
-SELECT newavg(four) AS avg_1
-FROM onek;
+SELECT newavg(four) AS avg_1 FROM onek;
 
-SELECT newsum(four) AS sum_1500
-FROM onek;
+SELECT newsum(four) AS sum_1500 FROM onek;
 
-SELECT newcnt(four) AS cnt_1000
-FROM onek;
+SELECT newcnt(four) AS cnt_1000 FROM onek;
 
 
 --
 -- inheritance stress test
 --
-SELECT *
-FROM a_star*;
+SELECT * FROM a_star*;
 
-SELECT *
-FROM b_star* x
-WHERE x.b = 'bumble'::text or x.a < 3;
+SELECT * 
+   FROM b_star* x
+   WHERE x.b = 'bumble'::text or x.a < 3;
 
-SELECT class, a
-FROM c_star* x
-WHERE x.c ~ 'hi'::text;
+SELECT class, a 
+   FROM c_star* x 
+   WHERE x.c ~ 'hi'::text;
 
 SELECT class, b, c
-FROM d_star* x
-WHERE x.a < 100;
+   FROM d_star* x
+   WHERE x.a < 100;
 
-SELECT class, c
-FROM e_star* x
-WHERE x.c NOTNULL;
+SELECT class, c FROM e_star* x WHERE x.c NOTNULL;
 
-SELECT *
-FROM f_star* x
-WHERE x.c ISNULL;
+SELECT * FROM f_star* x WHERE x.c ISNULL;
 
 ALTER TABLE f_star RENAME COLUMN f TO ff;
 
@@ -3167,43 +2460,38 @@ ALTER TABLE b_star* RENAME COLUMN b TO bb;
 ALTER TABLE a_star* RENAME COLUMN a TO aa;
 
 SELECT class, aa
-FROM a_star* x
-WHERE aa ISNULL;
+   FROM a_star* x
+   WHERE aa ISNULL;
 
 ALTER TABLE a_star RENAME COLUMN aa TO foo;
 
 SELECT class, foo
-FROM a_star x
-WHERE x.foo >= 2;
+   FROM a_star x
+   WHERE x.foo >= 2;
 
 ALTER TABLE a_star RENAME COLUMN foo TO aa;
 
-SELECT *
-from a_star*
-WHERE aa < 1000;
+SELECT * 
+   from a_star*
+   WHERE aa < 1000;
 
-ALTER TABLE f_star
-    ADD COLUMN f int4;
+ALTER TABLE f_star ADD COLUMN f int4;
 
-UPDATE f_star
-SET f = 10;
+UPDATE f_star SET f = 10;
 
 ALTER TABLE e_star* ADD COLUMN e int4;
 
-UPDATE e_star*
-SET e = 42;
+UPDATE e_star* SET e = 42;
 
-SELECT *
-FROM e_star*;
+SELECT * FROM e_star*;
 
 ALTER TABLE a_star* ADD COLUMN a text;
 
 UPDATE b_star*
-SET a = 'gazpacho'::text
-WHERE aa > 4;
+   SET a = 'gazpacho'::text
+   WHERE aa > 4;
 
-SELECT class, aa, a
-FROM a_star*;
+SELECT class, aa, a FROM a_star*;
 
 
 --
@@ -3218,57 +2506,47 @@ FROM a_star*;
 -- joe and sally play basketball, and
 -- everyone else does nothing.
 --
-SELECT p.name, p.hobbies.name
-FROM person p;
+SELECT p.name, p.hobbies.name FROM person p;
 
 --
 -- as above, but jeff also does post_hacking.
 --
-SELECT p.name, p.hobbies.name
-FROM person* p;
+SELECT p.name, p.hobbies.name FROM person* p;
 
 --
 -- the next two queries demonstrate how functions generate bogus duplicates.
 -- this is a "feature" ..
 --
-SELECT DISTINCT hobbies_r.name, hobbies_r.equipment.name
-FROM hobbies_r;
+SELECT DISTINCT hobbies_r.name, hobbies_r.equipment.name FROM hobbies_r;
 
-SELECT hobbies_r.name, hobbies_r.equipment.name
-FROM hobbies_r;
+SELECT hobbies_r.name, hobbies_r.equipment.name FROM hobbies_r;
 
 --
 -- mike needs advil and peet's coffee,
 -- joe and sally need hightops, and
 -- everyone else is fine.
 --
-SELECT p.name, p.hobbies.name, p.hobbies.equipment.name
-FROM person p;
+SELECT p.name, p.hobbies.name, p.hobbies.equipment.name FROM person p;
 
 --
 -- as above, but jeff needs advil and peet's coffee as well.
 --
-SELECT p.name, p.hobbies.name, p.hobbies.equipment.name
-FROM person* p;
+SELECT p.name, p.hobbies.name, p.hobbies.equipment.name FROM person* p;
 
 --
 -- just like the last two, but make sure that the target list fixup and
 -- unflattening is being done correctly.
 --
-SELECT p.hobbies.equipment.name, p.name, p.hobbies.name
-FROM person p;
+SELECT p.hobbies.equipment.name, p.name, p.hobbies.name FROM person p;
 
-SELECT p.hobbies.equipment.name, p.name, p.hobbies.name
-FROM person* p;
+SELECT p.hobbies.equipment.name, p.name, p.hobbies.name FROM person* p;
 
-SELECT p.hobbies.equipment.name, p.hobbies.name, p.name
-FROM person p;
+SELECT p.hobbies.equipment.name, p.hobbies.name, p.name FROM person p;
 
-SELECT p.hobbies.equipment.name, p.hobbies.name, p.name
-FROM person* p;
+SELECT p.hobbies.equipment.name, p.hobbies.name, p.name FROM person* p;
 
 SELECT user_relns() AS user_relns
-ORDER BY user_relns;
+   ORDER BY user_relns;
 
 --SELECT name(equipment(hobby_construct('skywalking'::text, 'mer'::text))) AS equip_name;
 
@@ -3288,33 +2566,32 @@ ORDER BY user_relns;
 --
 -- ARRAYS
 --
-SELECT *
-FROM arrtest;
+SELECT * FROM arrtest;
 
 SELECT arrtest.a[1],
-       arrtest.b[1][1][1],
-       arrtest.c[1],
-       arrtest.d[1][1],
-       arrtest.e[0]
-FROM arrtest;
+          arrtest.b[1][1][1],
+          arrtest.c[1],
+          arrtest.d[1][1], 
+          arrtest.e[0]
+   FROM arrtest;
 -- ??? what about
 -- SELECT a[1], b[1][1][1], c[1], d[1][1], e[0]
 --    FROM arrtest;
 
 SELECT arrtest.a[1:3],
-       arrtest.b[1:1][1:2][1:2],
-       arrtest.c[1:2],
-       arrtest.d[1:1][1:2]
-FROM arrtest;
+          arrtest.b[1:1][1:2][1:2],
+          arrtest.c[1:2], 
+          arrtest.d[1:1][1:2]
+   FROM arrtest;
 
 -- returns three different results--
 SELECT array_dims(arrtest.b) AS x;
 
 -- returns nothing 
 SELECT *
-FROM arrtest
-WHERE arrtest.a[1] < 5
-  and arrtest.c = '{"foobar"}'::_char16;
+   FROM arrtest
+   WHERE arrtest.a[1] < 5 and 
+         arrtest.c = '{"foobar"}'::_char16;
 
 -- updating array subranges seems to be broken
 -- 
@@ -3324,10 +2601,10 @@ WHERE arrtest.a[1] < 5
 --       c[1:1] = '{"new_word"}';
 
 SELECT arrtest.a[1:3],
-       arrtest.b[1:1][1:2][1:2],
-       arrtest.c[1:2],
-       arrtest.d[1:1][1:2]
-FROM arrtest;
+          arrtest.b[1:1][1:2][1:2],
+          arrtest.c[1:2], 
+          arrtest.d[1:1][1:2]
+   FROM arrtest;
 
 
 --

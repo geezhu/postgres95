@@ -13,13 +13,13 @@
  */
 #include <stdio.h>
 #include "libpq++.H"
-
 extern "C" {
 #include "libpq/libpq-fs.h"
 }
 
 int
-main(int argc, char **argv) {
+main(int argc, char **argv)
+{
     char *in_filename, *out_filename;
     char *database;
     Oid lobjOid;
@@ -27,9 +27,9 @@ main(int argc, char **argv) {
     PGlobj *object;
 
     if (argc < 4 || argc > 5) {
-        fprintf(stderr, "Usage: %s database_name in_filename out_filename [oid]\n",
-                argv[0]);
-        exit(1);
+	fprintf(stderr, "Usage: %s database_name in_filename out_filename [oid]\n",
+		argv[0]);
+	exit(1);
     }
 
     database = argv[1];
@@ -40,19 +40,19 @@ main(int argc, char **argv) {
      * set up the connection and create a largeobject for us
      */
     if (argc == 4) {
-        object = new PGlobj(&env, database);
+      object = new PGlobj(&env, database);
     } else {
-        object = new PGlobj(&env, database, atoi(argv[4]));
+      object = new PGlobj(&env, database, atoi(argv[4]));
     }
 
     /* check to see that the backend connection was successfully made */
     if (object->status() == CONNECTION_BAD) {
-        fprintf(stderr, "Connection to database '%s' failed.\n", database);
-        fprintf(stderr, "%s", object->errormessage());
-        delete object;
-        exit(1);
+	fprintf(stderr,"Connection to database '%s' failed.\n", database);
+	fprintf(stderr,"%s",object->errormessage());
+	delete object;
+	exit(1);
     }
-
+	
     object->exec("BEGIN");
     printf("importing file \"%s\" ...\n", in_filename);
     object->import(in_filename);

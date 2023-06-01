@@ -28,7 +28,7 @@ static char sccsid[] = "@(#) tclAppInit.c 1.11 94/12/17 16:14:03";
 extern int matherr();
 int *tclDummyMathPtr = (int *) matherr;
 #endif
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -48,13 +48,13 @@ int *tclDummyMathPtr = (int *) matherr;
 
 int
 main(argc, argv)
-        int argc;            /* Number of command-line arguments. */
-        char **argv;        /* Values of command-line arguments. */
+    int argc;			/* Number of command-line arguments. */
+    char **argv;		/* Values of command-line arguments. */
 {
     Tcl_Main(argc, argv, Tcl_AppInit);
-    return 0;            /* Needed only to prevent compiler warning. */
+    return 0;			/* Needed only to prevent compiler warning. */
 }
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -76,10 +76,10 @@ main(argc, argv)
 
 int
 Tcl_AppInit(interp)
-        Tcl_Interp *interp;        /* Interpreter for application. */
+    Tcl_Interp *interp;		/* Interpreter for application. */
 {
     if (Tcl_Init(interp) == TCL_ERROR) {
-        return TCL_ERROR;
+	return TCL_ERROR;
     }
 
     /*
@@ -93,8 +93,8 @@ Tcl_AppInit(interp)
      * where "Mod" is the name of the module.
      */
 
-    if (Pg_Init(interp) == TCL_ERROR) {
-        return TCL_ERROR;
+    if (Pg_Init(interp) == TCL_ERROR) { 
+      return TCL_ERROR;
     }
 
     /*

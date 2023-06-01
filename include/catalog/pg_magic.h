@@ -31,12 +31,10 @@
  *	typedef struct FormData_pg_magic
  * ----------------
  */
-CATALOG(pg_magic)
-BOOTSTRAP {
-NameData magname;
-NameData magvalue;
-}
-FormData_pg_magic;
+CATALOG(pg_magic) BOOTSTRAP {
+    NameData magname;
+    NameData magvalue;
+} FormData_pg_magic;
 
 /* ----------------
  *	Form_pg_magic corresponds to a pointer to a tuple with

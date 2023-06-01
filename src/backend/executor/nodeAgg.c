@@ -305,7 +305,7 @@ ExecAgg(Agg *node) {
                 value2[i] =
                         (Datum) fmgr_c(aggfns->xfn2, aggfns->xfn2_oid,
                                        aggfns->xfn2_nargs,
-                                       (FmgrValues *) &xfn2_val, &isNull2);
+                                       (FmgrValues * ) & xfn2_val, &isNull2);
                 Assert(!isNull2);
             }
         }

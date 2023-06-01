@@ -29,13 +29,11 @@
  */
 #include "postgres.h"
 
-CATALOG(pg_hosts)
-BOOTSTRAP {
-NameData dbName;
-text address;
-text mask;
-}
-FormData_pg_hosts;
+CATALOG(pg_hosts) BOOTSTRAP {
+    NameData dbName;
+    text address;
+    text mask;
+} FormData_pg_hosts;
 
 typedef FormData_pg_hosts *Form_pg_hosts;
 #define Natts_pg_hosts        3

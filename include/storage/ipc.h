@@ -21,7 +21,9 @@
 
 #ifndef    _IPC_
 #define _IPC_
+
 #include <sys/ipc.h>
+
 #endif
 
 #include "c.h"
