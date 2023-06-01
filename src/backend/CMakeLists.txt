@@ -86,6 +86,6 @@ set(postgres_objects
         $<TARGET_OBJECTS:postgres_utils_sort>
         $<TARGET_OBJECTS:postgres_utils_time>
         )
-set(postgres_LINK_LIBS -lm)
+set(postgres_LINK_LIBS -lm -ldl)
 add_executable(postgres ${postgres_objects})
 target_link_libraries(postgres ${postgres_LINK_LIBS})
