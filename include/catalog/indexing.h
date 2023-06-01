@@ -19,10 +19,10 @@
 /*
  * Some definitions for indices on pg_attribute
  */
-#define Num_pg_attr_indices	3
-#define Num_pg_proc_indices	3
-#define Num_pg_type_indices	2
-#define Num_pg_class_indices	2
+#define Num_pg_attr_indices    3
+#define Num_pg_proc_indices    3
+#define Num_pg_type_indices    2
+#define Num_pg_class_indices    2
 
 
 /*
@@ -52,27 +52,37 @@ extern char *IndexedCatalogNames[];
  * Functions for each index to perform the necessary scan on a cache miss.
  */
 extern void CatalogOpenIndices(int nIndices, char *names[], Relation idescs[]);
+
 extern void CatalogCloseIndices(int nIndices, Relation *idescs);
+
 extern void CatalogIndexInsert(Relation *idescs,
-			       int nIndices,
-			       Relation heapRelation,
-			       HeapTuple heapTuple);
+                               int nIndices,
+                               Relation heapRelation,
+                               HeapTuple heapTuple);
+
 extern bool CatalogHasIndex(char *catName, Oid catId);
 
 extern HeapTuple AttributeNameIndexScan(Relation heapRelation,
-					Oid relid,
-					char *attname);
+                                        Oid relid,
+                                        char *attname);
 
 extern HeapTuple AttributeNumIndexScan(Relation heapRelation,
-				       Oid relid,
-				       AttrNumber attnum);
+                                       Oid relid,
+                                       AttrNumber attnum);
+
 extern HeapTuple ProcedureOidIndexScan(Relation heapRelation, Oid procId);
+
 extern HeapTuple ProcedureNameIndexScan(Relation heapRelation,
-	char *procName, int nargs, Oid *argTypes);
+                                        char *procName, int nargs, Oid *argTypes);
+
 extern HeapTuple ProcedureSrcIndexScan(Relation heapRelation, text *procSrc);
+
 extern HeapTuple TypeOidIndexScan(Relation heapRelation, Oid typeId);
+
 extern HeapTuple TypeNameIndexScan(Relation heapRelation, char *typeName);
+
 extern HeapTuple ClassNameIndexScan(Relation heapRelation, char *relName);
+
 extern HeapTuple ClassOidIndexScan(Relation heapRelation, Oid relId);
 
 
@@ -83,19 +93,19 @@ extern HeapTuple ClassOidIndexScan(Relation heapRelation, Oid relId);
  * The keyword is DECLARE_INDEX every thing after that is just like in a
  * normal specification of the 'define index' POSTQUEL command.
  */
-DECLARE_INDEX(pg_attnameind on pg_attribute using btree (mkoidname(attrelid, attname) oidname_ops));
-DECLARE_INDEX(pg_attnumind  on pg_attribute using btree (mkoidint2(attrelid, attnum) oidint2_ops));
-DECLARE_INDEX(pg_attrelidind on pg_attribute using btree (attrelid oid_ops));
+DECLARE_INDEX(pg_attnameind on pg_attribute using btree(mkoidname(attrelid, attname) oidname_ops));
+DECLARE_INDEX(pg_attnumind on pg_attribute using btree(mkoidint2(attrelid, attnum) oidint2_ops));
+DECLARE_INDEX(pg_attrelidind on pg_attribute using btree(attrelid oid_ops));
 
-DECLARE_INDEX(pg_procidind on pg_proc using btree (Oid oid_ops));
-DECLARE_INDEX(pg_procnameind on pg_proc using btree (proname name_ops));
-DECLARE_INDEX(pg_procsrcind on pg_proc using btree (prosrc text_ops));
+DECLARE_INDEX(pg_procidind on pg_proc using btree(Oid oid_ops));
+DECLARE_INDEX(pg_procnameind on pg_proc using btree(proname name_ops));
+DECLARE_INDEX(pg_procsrcind on pg_proc using btree(prosrc text_ops));
 
-DECLARE_INDEX(pg_typeidind on pg_type using btree (Oid oid_ops));
-DECLARE_INDEX(pg_typenameind on pg_type using btree (typname name_ops));
+DECLARE_INDEX(pg_typeidind on pg_type using btree(Oid oid_ops));
+DECLARE_INDEX(pg_typenameind on pg_type using btree(typname name_ops));
 
-DECLARE_INDEX(pg_classnameind on pg_class using btree (relname name_ops));
-DECLARE_INDEX(pg_classoidind on pg_class using btree (Oid oid_ops));
+DECLARE_INDEX(pg_classnameind on pg_class using btree(relname name_ops));
+DECLARE_INDEX(pg_classoidind on pg_class using btree(Oid oid_ops));
 
 /* now build indices in the initialization scripts */
 BUILD_INDICES

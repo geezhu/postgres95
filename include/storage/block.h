@@ -10,7 +10,7 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	BLOCK_H
+#ifndef    BLOCK_H
 #define BLOCK_H
 
 #include "c.h"
@@ -29,9 +29,9 @@
  * more or less the only pieces of code that should be accessing disk
  * blocks directly.
  */
-typedef uint32	BlockNumber;
+typedef uint32 BlockNumber;
 
-#define InvalidBlockNumber	((BlockNumber) 0xFFFFFFFF)
+#define InvalidBlockNumber    ((BlockNumber) 0xFFFFFFFF)
 
 /*
  * BlockId:
@@ -50,11 +50,11 @@ typedef uint32	BlockNumber;
  * wise to change this without good reason.
  */
 typedef struct BlockIdData {
-    uint16	bi_hi;
-    uint16	bi_lo;
+    uint16 bi_hi;
+    uint16 bi_lo;
 } BlockIdData;
 
-typedef BlockIdData	*BlockId;	/* block identifier */
+typedef BlockIdData *BlockId;    /* block identifier */
 
 /* ----------------
  *	support macros
@@ -111,4 +111,4 @@ typedef BlockIdData	*BlockId;	/* block identifier */
      (BlockNumber) (((blockId)->bi_hi << 16) | ((uint16) (blockId)->bi_lo)) : \
      (BlockNumber) InvalidBlockNumber)
 
-#endif	/* BLOCK_H */
+#endif    /* BLOCK_H */

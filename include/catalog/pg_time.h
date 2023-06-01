@@ -29,13 +29,13 @@
 #include "postgres.h"
 
 CATALOG(pg_time) BOOTSTRAP {
-    Oid  	timefoo;
+    Oid timefoo;
 } FormData_pg_time;
 
-typedef FormData_pg_time	*Form_pg_time;
+typedef FormData_pg_time *Form_pg_time;
 
-#define Natts_pg_time		1
-#define Anum_pg_time_timefoo	1
+#define Natts_pg_time        1
+#define Anum_pg_time_timefoo    1
 
 
 #endif /* PG_TIME_H */

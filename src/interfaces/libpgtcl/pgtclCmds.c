@@ -377,7 +377,7 @@ Pg_lo_open(ClientData cData, Tcl_Interp *interp, int argc, const char *argv[]) {
     char tcl_result[11];
     sprintf(tcl_result, "%d", fd);
     Tcl_SetResult(interp, tcl_result, TCL_VOLATILE);
-    
+
     return TCL_OK;
 }
 
@@ -716,7 +716,7 @@ Pg_lo_unlink(ClientData cData, Tcl_Interp *interp, int argc, const char *argv[])
 
     retval = lo_unlink(conn, lobjId);
     if (retval == -1) {
-        char tcl_result[26+10];
+        char tcl_result[26 + 10];
         sprintf(tcl_result, "Pg_lo_unlink of '%d' failed", lobjId);
         Tcl_SetResult(interp, tcl_result, TCL_VOLATILE);
         return TCL_ERROR;
@@ -762,7 +762,7 @@ Pg_lo_import(ClientData cData, Tcl_Interp *interp, int argc, const char *argv[])
 
     lobjId = lo_import(conn, filename);
     if (lobjId == InvalidOid) {
-        char tcl_result[26+ strlen(filename)];
+        char tcl_result[26 + strlen(filename)];
         sprintf(tcl_result, "Pg_lo_import of '%s' failed", filename);
         Tcl_SetResult(interp, tcl_result, TCL_VOLATILE);
         return TCL_ERROR;

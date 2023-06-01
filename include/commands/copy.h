@@ -11,11 +11,11 @@
  *-------------------------------------------------------------------------
  */
 #ifndef COPY_H
-#define	COPY_H
+#define    COPY_H
 
 #include "postgres.h"
 
 void DoCopy(char *relname, bool binary, bool from, bool pipe, char *filename,
-	    char *delim);
+            char *delim);
 
-#endif	/* COPY_H */
+#endif    /* COPY_H */

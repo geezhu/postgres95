@@ -35,10 +35,11 @@
 #include "utils/lsyscache.h"
 
 static Plan *subplanner(Query *root, List *flat_tlist, List *qual);
+
 static Result *make_result(List *tlist, Node *resconstantqual, Plan *subplan);
 
 static Plan *make_groupPlan(List *tlist, bool tuplePerGroup,
-			    List *groupClause, Plan *subplan);
+                            List *groupClause, Plan *subplan);
 
 /*    
  * query_planner--
@@ -59,35 +60,34 @@ static Plan *make_groupPlan(List *tlist, bool tuplePerGroup,
  */
 Plan *
 query_planner(Query *root,
-	      int command_type,
-	      List *tlist,
-	      List *qual)
-{
-    List 	*constant_qual = NIL;
-    List	*flattened_tlist = NIL;
-    List	*level_tlist = NIL;
-    Plan	*subplan = (Plan*)NULL;
-    Agg		*aggplan = NULL;
-    
+              int command_type,
+              List *tlist,
+              List *qual) {
+    List *constant_qual = NIL;
+    List *flattened_tlist = NIL;
+    List *level_tlist = NIL;
+    Plan *subplan = (Plan *) NULL;
+    Agg *aggplan = NULL;
+
     /*
      * A command without a target list or qualification is an error,
      * except for "delete foo".
      */
-    if (tlist==NIL && qual==NULL) {
-	if (command_type == CMD_DELETE ||
-	    /* Total hack here. I don't know how to handle
-	       statements like notify in action bodies.
-	       Notify doesn't return anything but
-	       scans a system table. */
-	    command_type == CMD_NOTIFY) {
-	    return ((Plan*)make_seqscan(NIL,
-					NIL,
-					root->resultRelation,
-					(Plan*)NULL));
-	} else
-	    return((Plan*)NULL);
+    if (tlist == NIL && qual == NULL) {
+        if (command_type == CMD_DELETE ||
+            /* Total hack here. I don't know how to handle
+               statements like notify in action bodies.
+               Notify doesn't return anything but
+               scans a system table. */
+            command_type == CMD_NOTIFY) {
+            return ((Plan *) make_seqscan(NIL,
+                                          NIL,
+                                          root->resultRelation,
+                                          (Plan *) NULL));
+        } else
+            return ((Plan *) NULL);
     }
-    
+
     /*
      * Pull out any non-variable qualifications so these can be put in
      * the topmost result node.  The opids for the remaining
@@ -95,17 +95,17 @@ query_planner(Query *root,
      */
     qual = pull_constant_clauses(qual, &constant_qual);
     fix_opids(constant_qual);
-    
+
     /*
      * Create a target list that consists solely of (resdom var) target
      * list entries, i.e., contains no arbitrary expressions.
      */
     flattened_tlist = flatten_tlist(tlist);
     if (flattened_tlist) {
-	level_tlist = flattened_tlist;
+        level_tlist = flattened_tlist;
     } else {
-	/* from old code. the logic is beyond me. - ay 2/95 */
-	level_tlist = tlist;
+        /* from old code. the logic is beyond me. - ay 2/95 */
+        level_tlist = tlist;
     }
 
     /*
@@ -114,12 +114,12 @@ query_planner(Query *root,
      * list may not contain the group attribute(s).)
      */
     if (root->groupClause) {
-	AddGroupAttrToTlist(level_tlist, root->groupClause);
+        AddGroupAttrToTlist(level_tlist, root->groupClause);
     }
-    
+
     if (root->qry_aggs) {
-	aggplan = make_agg(tlist, root->qry_numAgg, root->qry_aggs);
-	tlist = level_tlist;
+        aggplan = make_agg(tlist, root->qry_numAgg, root->qry_aggs);
+        tlist = level_tlist;
     }
 
     /*
@@ -128,36 +128,35 @@ query_planner(Query *root,
      *    - the query creates all-new tuples, or
      *    - the query is a replace (a scan must still be done in this case).
      */
-    if (flattened_tlist==NULL && qual==NULL) {
+    if (flattened_tlist == NULL && qual == NULL) {
 
-	switch (command_type) {
-	case CMD_SELECT: 
-	case CMD_INSERT:
-	    return ((Plan*)make_result(tlist,
-				       (Node*)constant_qual,
-				       (Plan*)NULL));
-	    break;
+        switch (command_type) {
+            case CMD_SELECT:
+            case CMD_INSERT:
+                return ((Plan *) make_result(tlist,
+                                             (Node *) constant_qual,
+                                             (Plan *) NULL));
+                break;
 
-	case CMD_DELETE:
-	case CMD_UPDATE:
-	    {
-		SeqScan *scan = make_seqscan(tlist,
-					     (List *)NULL,
-					     root->resultRelation,
-					     (Plan*)NULL);
-		if (constant_qual!=NULL) {
-		    return ((Plan*)make_result(tlist,
-					       (Node*)constant_qual,
-					       (Plan*)scan));
-		} else {
-		    return ((Plan*)scan);
-		} 
-	    }
-	    break;
-	       
-	default:
-	    return ((Plan*)NULL);
-	}
+            case CMD_DELETE:
+            case CMD_UPDATE: {
+                SeqScan *scan = make_seqscan(tlist,
+                                             (List *) NULL,
+                                             root->resultRelation,
+                                             (Plan *) NULL);
+                if (constant_qual != NULL) {
+                    return ((Plan *) make_result(tlist,
+                                                 (Node *) constant_qual,
+                                                 (Plan *) scan));
+                } else {
+                    return ((Plan *) scan);
+                }
+            }
+                break;
+
+            default:
+                return ((Plan *) NULL);
+        }
     }
 
     /*
@@ -166,7 +165,7 @@ query_planner(Query *root,
      * join references.
      */
     subplan = subplanner(root, level_tlist, qual);
-     
+
     set_tlist_references(subplan);
 
     /*
@@ -174,59 +173,59 @@ query_planner(Query *root,
      * sort node.)
      */
     if (root->groupClause != NULL) {
-	bool tuplePerGroup;
+        bool tuplePerGroup;
 
-	/*
-	 * decide whether how many tuples per group the Group node needs
-	 * to return. (Needs only one tuple per group if no aggregate is
-	 * present. Otherwise, need every tuple from the group to do the
-	 * aggregation.)
-	 */
-	tuplePerGroup = (aggplan == NULL) ? FALSE : TRUE;
-	
-	subplan =
-	    make_groupPlan(tlist, tuplePerGroup, root->groupClause, subplan);
+        /*
+         * decide whether how many tuples per group the Group node needs
+         * to return. (Needs only one tuple per group if no aggregate is
+         * present. Otherwise, need every tuple from the group to do the
+         * aggregation.)
+         */
+        tuplePerGroup = (aggplan == NULL) ? FALSE : TRUE;
 
-	/* XXX fake it: this works for the Group node too! very very ugly,
-	   please change me -ay 2/95 */
-	set_agg_tlist_references((Agg*)subplan);
+        subplan =
+                make_groupPlan(tlist, tuplePerGroup, root->groupClause, subplan);
+
+        /* XXX fake it: this works for the Group node too! very very ugly,
+           please change me -ay 2/95 */
+        set_agg_tlist_references((Agg *) subplan);
     }
 
     /*
      * If aggregate is present, insert the agg node 
      */
     if (aggplan != NULL) {
-	aggplan->plan.lefttree = subplan;
-	subplan = (Plan*)aggplan;
+        aggplan->plan.lefttree = subplan;
+        subplan = (Plan *) aggplan;
 
-	/*
-	 * set the varno/attno entries to the appropriate references to
-	 * the result tuple of the subplans. (We need to set those in the
-	 * array of aggreg's in the Agg node also. Even though they're 
-	 * pointers, after a few dozen's of copying, they're not the same as
-	 * those in the target list.)
-	 */
-	set_agg_tlist_references((Agg*)subplan);
-	set_agg_agglist_references((Agg*)subplan);
+        /*
+         * set the varno/attno entries to the appropriate references to
+         * the result tuple of the subplans. (We need to set those in the
+         * array of aggreg's in the Agg node also. Even though they're 
+         * pointers, after a few dozen's of copying, they're not the same as
+         * those in the target list.)
+         */
+        set_agg_tlist_references((Agg *) subplan);
+        set_agg_agglist_references((Agg *) subplan);
 
-	tlist = aggplan->plan.targetlist;
+        tlist = aggplan->plan.targetlist;
     }
-    
+
     /*
      * Build a result node linking the plan if we have constant quals
      */
     if (constant_qual) {
-	Plan *plan;
+        Plan *plan;
 
-	plan = (Plan*)make_result(tlist,
-				  (Node*)constant_qual,
-				  subplan);
-	/*
-	 * Change all varno's of the Result's node target list.
-	 */
-	set_result_tlist_references((Result*)plan);
+        plan = (Plan *) make_result(tlist,
+                                    (Node *) constant_qual,
+                                    subplan);
+        /*
+         * Change all varno's of the Result's node target list.
+         */
+        set_result_tlist_references((Result *) plan);
 
-	return (plan);
+        return (plan);
     }
 
     /*
@@ -238,7 +237,7 @@ query_planner(Query *root,
      * expressions down the plan tree.  -- Wei
      */
     subplan->targetlist = flatten_tlist_vars(tlist,
-					     subplan->targetlist);
+                                             subplan->targetlist);
 
     /*
      * Destructively modify the query plan's targetlist to add fjoin
@@ -263,9 +262,8 @@ query_planner(Query *root,
  */
 static Plan *
 subplanner(Query *root,
-	   List *flat_tlist,
-	   List *qual)
-{
+           List *flat_tlist,
+           List *qual) {
     Rel *final_relation;
     List *final_relation_list;
 
@@ -273,7 +271,7 @@ subplanner(Query *root,
      * *query-relation-list* as relation references are found (e.g., in the
      *  qualification, the targetlist, etc.)
      */
-    root->base_relation_list_ = NIL; 
+    root->base_relation_list_ = NIL;
     root->join_relation_list_ = NIL;
     initialize_base_rels_list(root, flat_tlist);
     initialize_base_rels_jinfo(root, qual);
@@ -285,12 +283,12 @@ subplanner(Query *root,
      */
     initialize_join_clause_info(root->base_relation_list_);
     final_relation_list = find_paths(root,
-				     root->base_relation_list_);
+                                     root->base_relation_list_);
 
     if (final_relation_list)
-	final_relation = (Rel*)lfirst (final_relation_list);
+        final_relation = (Rel *) lfirst (final_relation_list);
     else
-	final_relation = (Rel*)NIL;
+        final_relation = (Rel *) NIL;
 
 #if 0 /* fix xfunc */
     /*
@@ -302,27 +300,27 @@ subplanner(Query *root,
      * expensive functions left to pull up.  -- JMH, 11/22/92
      */
     if (XfuncMode != XFUNC_OFF && XfuncMode != XFUNC_NOPM && 
-	XfuncMode != XFUNC_NOPULL && !final_relation->pruneable)
-	{
-	    List *pathnode;
-	    foreach(pathnode, final_relation->pathlist)
-		{
-		    if (xfunc_do_predmig((Path*)lfirst(pathnode)))
-			set_cheapest(final_relation, final_relation->pathlist);
-		}
-	}
+    XfuncMode != XFUNC_NOPULL && !final_relation->pruneable)
+    {
+        List *pathnode;
+        foreach(pathnode, final_relation->pathlist)
+        {
+            if (xfunc_do_predmig((Path*)lfirst(pathnode)))
+            set_cheapest(final_relation, final_relation->pathlist);
+        }
+    }
 #endif
-    
+
     /*
      * Determine the cheapest path and create a subplan corresponding to it.
      */
     if (final_relation) {
-	return (create_plan ((Path*)final_relation->cheapestpath));
-    }else {
-	elog(NOTICE, "final relation is nil");
-	return(create_plan ((Path*)NULL));
+        return (create_plan((Path *) final_relation->cheapestpath));
+    } else {
+        elog(NOTICE, "final relation is nil");
+        return (create_plan((Path *) NULL));
     }
-    
+
 }
 
 /*****************************************************************************
@@ -331,23 +329,22 @@ subplanner(Query *root,
 
 static Result *
 make_result(List *tlist,
-	    Node *resconstantqual,
-	    Plan *subplan)
-{
+            Node *resconstantqual,
+            Plan *subplan) {
     Result *node = makeNode(Result);
     Plan *plan = &node->plan;
 
     tlist = generate_fjoin(tlist);
     plan->cost = 0.0;
-    plan->state = (EState *)NULL;
+    plan->state = (EState *) NULL;
     plan->targetlist = tlist;
     plan->lefttree = subplan;
     plan->righttree = NULL;
     node->resconstantqual = resconstantqual;
     node->resstate = NULL;
-    
-    return(node);
-} 
+
+    return (node);
+}
 
 /*****************************************************************************
  *
@@ -355,10 +352,9 @@ make_result(List *tlist,
 
 static Plan *
 make_groupPlan(List *tlist,
-	       bool tuplePerGroup,
-	       List *groupClause,
-	       Plan *subplan)
-{
+               bool tuplePerGroup,
+               List *groupClause,
+               Plan *subplan) {
     List *sort_tlist;
     List *gl;
     int keyno;
@@ -368,7 +364,7 @@ make_groupPlan(List *tlist,
     AttrNumber *grpColIdx;
 
     numCols = length(groupClause);
-    grpColIdx = (AttrNumber *)palloc(sizeof(AttrNumber)*numCols);
+    grpColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numCols);
 
     /*
      * first, make a sort node. Group node expects the tuples it gets
@@ -378,45 +374,45 @@ make_groupPlan(List *tlist,
     sort_tlist = new_unsorted_tlist(subplan->targetlist);
 
     {
-	/* if this is a mergejoin node, varno could be OUTER/INNER */
-	List *l;
-	foreach(l, sort_tlist) {
-	    TargetEntry *tle;
-	    tle = lfirst(l);
-	    ((Var*)tle->expr)->varno = 1;
-	}
+        /* if this is a mergejoin node, varno could be OUTER/INNER */
+        List *l;
+        foreach(l, sort_tlist) {
+            TargetEntry *tle;
+            tle = lfirst(l);
+            ((Var *) tle->expr)->varno = 1;
+        }
     }
-    
+
     foreach (gl, groupClause) {
-	GroupClause *grpcl = (GroupClause*)lfirst(gl);
-	TargetEntry *tle;
+        GroupClause *grpcl = (GroupClause *) lfirst(gl);
+        TargetEntry *tle;
 
-	tle = match_varid(grpcl->grpAttr, sort_tlist);
-	/*
-	 * the parser should have checked to make sure the group attribute
-	 * is valid but the optimizer might have screwed up and hence we
-	 * check again.
-	 */
-	if (tle==NULL) {
-	    elog(WARN, "group attribute disappeared from target list");
-	}
-	tle->resdom->reskey = keyno;
-	tle->resdom->reskeyop = get_opcode(grpcl->grpOpoid);
+        tle = match_varid(grpcl->grpAttr, sort_tlist);
+        /*
+         * the parser should have checked to make sure the group attribute
+         * is valid but the optimizer might have screwed up and hence we
+         * check again.
+         */
+        if (tle == NULL) {
+            elog(WARN, "group attribute disappeared from target list");
+        }
+        tle->resdom->reskey = keyno;
+        tle->resdom->reskeyop = get_opcode(grpcl->grpOpoid);
 
-	grpColIdx[keyno-1] = tle->resdom->resno;
-	keyno++;
+        grpColIdx[keyno - 1] = tle->resdom->resno;
+        keyno++;
     }
     sortplan = make_sort(sort_tlist,
-			 _TEMP_RELATION_ID_,
-			 subplan,
-			 numCols);
-    sortplan->plan.cost = subplan->cost;	/* XXX assume no cost */
+                         _TEMP_RELATION_ID_,
+                         subplan,
+                         numCols);
+    sortplan->plan.cost = subplan->cost;    /* XXX assume no cost */
 
     /*
      * make the Group node
      */
-    tlist = copyObject(tlist);	/* make a copy */
+    tlist = copyObject(tlist);    /* make a copy */
     grpplan = make_group(tlist, tuplePerGroup, numCols, grpColIdx, sortplan);
-    
-    return (Plan*)grpplan;
+
+    return (Plan *) grpplan;
 }

@@ -14,17 +14,17 @@
 #include <math.h>
 #include "postgres.h"
 
-#include "machine.h"		/* in port/ directory (needed for BLCKSZ) */
+#include "machine.h"        /* in port/ directory (needed for BLCKSZ) */
 #include "storage/buf.h"
 #include "storage/bufmgr.h"
-#include "storage/ipc.h"	/* for OIDGENLOCKID */
+#include "storage/ipc.h"    /* for OIDGENLOCKID */
 
 #include "utils/rel.h"
 #include "utils/elog.h"
 
 #include "access/heapam.h"
-#include "access/transam.h"	/* where the declarations go */
-#include "access/xact.h"	/* where the declarations go */
+#include "access/transam.h"    /* where the declarations go */
+#include "access/xact.h"    /* where the declarations go */
 
 #include "catalog/catname.h"
 
@@ -52,39 +52,37 @@ int OidGenLockId;
  * --------------------------------
  */
 void
-VariableRelationGetNextXid(TransactionId *xidP)
-{
+VariableRelationGetNextXid(TransactionId *xidP) {
     Buffer buf;
     VariableRelationContents var;
-    
+
     /* ----------------
      * We assume that a spinlock has been acquire to guarantee
      * exclusive access to the variable relation.
      * ----------------
      */
-    
+
     /* ----------------
      *	do nothing before things are initialized
      * ----------------
      */
-    if (! RelationIsValid(VariableRelation))
-	return;
-    
+    if (!RelationIsValid(VariableRelation))
+        return;
+
     /* ----------------
      *	read the variable page, get the the nextXid field and
      *  release the buffer
      * ----------------
      */
     buf = ReadBuffer(VariableRelation, 0);
-    
-    if (! BufferIsValid(buf))
-	{
-	    SpinRelease(OidGenLockId);
-	    elog(WARN, "VariableRelationGetNextXid: ReadBuffer failed");
-	}
-    
+
+    if (!BufferIsValid(buf)) {
+        SpinRelease(OidGenLockId);
+        elog(WARN, "VariableRelationGetNextXid: ReadBuffer failed");
+    }
+
     var = (VariableRelationContents) BufferGetBlock(buf);
-    
+
     TransactionIdStore(var->nextXidData, xidP);
     ReleaseBuffer(buf);
 }
@@ -94,41 +92,39 @@ VariableRelationGetNextXid(TransactionId *xidP)
  * --------------------------------
  */
 void
-VariableRelationGetLastXid(TransactionId *xidP)
-{
+VariableRelationGetLastXid(TransactionId *xidP) {
     Buffer buf;
     VariableRelationContents var;
-    
+
     /* ----------------
      * We assume that a spinlock has been acquire to guarantee
      * exclusive access to the variable relation.
      * ----------------
      */
-    
+
     /* ----------------
      *	do nothing before things are initialized
      * ----------------
      */
-    if (! RelationIsValid(VariableRelation))
-	return;
-    
+    if (!RelationIsValid(VariableRelation))
+        return;
+
     /* ----------------
      *	read the variable page, get the the lastXid field and
      *  release the buffer
      * ----------------
      */
     buf = ReadBuffer(VariableRelation, 0);
-    
-    if (! BufferIsValid(buf))
-	{
-	    SpinRelease(OidGenLockId);
-	    elog(WARN, "VariableRelationGetNextXid: ReadBuffer failed");
-	}
-    
+
+    if (!BufferIsValid(buf)) {
+        SpinRelease(OidGenLockId);
+        elog(WARN, "VariableRelationGetNextXid: ReadBuffer failed");
+    }
+
     var = (VariableRelationContents) BufferGetBlock(buf);
-    
+
     TransactionIdStore(var->lastXidData, xidP);
-    
+
     ReleaseBuffer(buf);
 }
 
@@ -137,41 +133,39 @@ VariableRelationGetLastXid(TransactionId *xidP)
  * --------------------------------
  */
 void
-VariableRelationPutNextXid(TransactionId xid)
-{
+VariableRelationPutNextXid(TransactionId xid) {
     Buffer buf;
     VariableRelationContents var;
-    
+
     /* ----------------
      * We assume that a spinlock has been acquire to guarantee
      * exclusive access to the variable relation.
      * ----------------
      */
-    
+
     /* ----------------
      *	do nothing before things are initialized
      * ----------------
      */
-    if (! RelationIsValid(VariableRelation))
-	return;
-    
+    if (!RelationIsValid(VariableRelation))
+        return;
+
     /* ----------------
      *	read the variable page, update the nextXid field and
      *  write the page back out to disk.
      * ----------------
      */
     buf = ReadBuffer(VariableRelation, 0);
-    
-    if (! BufferIsValid(buf))
-	{
-	    SpinRelease(OidGenLockId);
-	    elog(WARN, "VariableRelationPutNextXid: ReadBuffer failed");
-	}
-    
+
+    if (!BufferIsValid(buf)) {
+        SpinRelease(OidGenLockId);
+        elog(WARN, "VariableRelationPutNextXid: ReadBuffer failed");
+    }
+
     var = (VariableRelationContents) BufferGetBlock(buf);
-    
+
     TransactionIdStore(xid, &(var->nextXidData));
-    
+
     WriteBuffer(buf);
 }
 
@@ -180,41 +174,39 @@ VariableRelationPutNextXid(TransactionId xid)
  * --------------------------------
  */
 void
-VariableRelationPutLastXid(TransactionId xid)
-{
+VariableRelationPutLastXid(TransactionId xid) {
     Buffer buf;
     VariableRelationContents var;
-    
+
     /* ----------------
      * We assume that a spinlock has been acquire to guarantee
      * exclusive access to the variable relation.
      * ----------------
      */
-    
+
     /* ----------------
      *	do nothing before things are initialized
      * ----------------
      */
-    if (! RelationIsValid(VariableRelation))
-	return;
-    
+    if (!RelationIsValid(VariableRelation))
+        return;
+
     /* ----------------
      *	read the variable page, update the lastXid field and
      *  force the page back out to disk.
      * ----------------
      */
     buf = ReadBuffer(VariableRelation, 0);
-    
-    if (! BufferIsValid(buf))
-	{
-	    SpinRelease(OidGenLockId);
-	    elog(WARN, "VariableRelationPutLastXid: ReadBuffer failed");
-	}
-    
+
+    if (!BufferIsValid(buf)) {
+        SpinRelease(OidGenLockId);
+        elog(WARN, "VariableRelationPutLastXid: ReadBuffer failed");
+    }
+
     var = (VariableRelationContents) BufferGetBlock(buf);
-    
+
     TransactionIdStore(xid, &(var->lastXidData));
-    
+
     WriteBuffer(buf);
 }
 
@@ -223,17 +215,16 @@ VariableRelationPutLastXid(TransactionId xid)
  * --------------------------------
  */
 void
-VariableRelationGetNextOid(Oid *oid_return)
-{
+VariableRelationGetNextOid(Oid *oid_return) {
     Buffer buf;
     VariableRelationContents var;
-    
+
     /* ----------------
      * We assume that a spinlock has been acquire to guarantee
      * exclusive access to the variable relation.
      * ----------------
      */
-    
+
     /* ----------------
      *	if the variable relation is not initialized, then we
      *  assume we are running at bootstrap time and so we return
@@ -241,29 +232,28 @@ VariableRelationGetNextOid(Oid *oid_return)
      *  should be called instead..
      * ----------------
      */
-    if (! RelationIsValid(VariableRelation)) {
-	if (PointerIsValid(oid_return))
-	    (*oid_return) = InvalidOid;
-	return;
+    if (!RelationIsValid(VariableRelation)) {
+        if (PointerIsValid(oid_return))
+            (*oid_return) = InvalidOid;
+        return;
     }
-    
+
     /* ----------------
      *	read the variable page, get the the nextOid field and
      *  release the buffer
      * ----------------
      */
     buf = ReadBuffer(VariableRelation, 0);
-    
-    if (! BufferIsValid(buf))
-	{
-	    SpinRelease(OidGenLockId);
-	    elog(WARN, "VariableRelationGetNextXid: ReadBuffer failed");
-	}
-    
+
+    if (!BufferIsValid(buf)) {
+        SpinRelease(OidGenLockId);
+        elog(WARN, "VariableRelationGetNextXid: ReadBuffer failed");
+    }
+
     var = (VariableRelationContents) BufferGetBlock(buf);
-    
+
     if (PointerIsValid(oid_return)) {
-	
+
         /* ----------------
          * nothing up my sleeve...  what's going on here is that this code
 	 * is guaranteed never to be called until all files in data/base/
@@ -277,12 +267,12 @@ VariableRelationGetNextOid(Oid *oid_return)
 	 * on system oid's to be less than BootstrapObjectIdData. mer 9/18/91
          * ----------------
          */
-	if (OidIsValid(var->nextOid))
-	    (*oid_return) = var->nextOid;
-	else
-	    (*oid_return) = BootstrapObjectIdData;
+        if (OidIsValid(var->nextOid))
+            (*oid_return) = var->nextOid;
+        else
+            (*oid_return) = BootstrapObjectIdData;
     }
-    
+
     ReleaseBuffer(buf);
 }
 
@@ -291,51 +281,48 @@ VariableRelationGetNextOid(Oid *oid_return)
  * --------------------------------
  */
 void
-VariableRelationPutNextOid(Oid *oidP)
-{
+VariableRelationPutNextOid(Oid *oidP) {
     Buffer buf;
     VariableRelationContents var;
-    
+
     /* ----------------
      * We assume that a spinlock has been acquire to guarantee
      * exclusive access to the variable relation.
      * ----------------
      */
-    
+
     /* ----------------
      *	do nothing before things are initialized
      * ----------------
      */
-    if (! RelationIsValid(VariableRelation))
-	return;
-    
+    if (!RelationIsValid(VariableRelation))
+        return;
+
     /* ----------------
      *	sanity check
      * ----------------
      */
-    if (! PointerIsValid(oidP))
-	{
-	    SpinRelease(OidGenLockId);
-	    elog(WARN, "VariableRelationPutNextOid: invalid oid pointer");
-	}
-    
+    if (!PointerIsValid(oidP)) {
+        SpinRelease(OidGenLockId);
+        elog(WARN, "VariableRelationPutNextOid: invalid oid pointer");
+    }
+
     /* ----------------
      *	read the variable page, update the nextXid field and
      *  write the page back out to disk.
      * ----------------
      */
     buf = ReadBuffer(VariableRelation, 0);
-    
-    if (! BufferIsValid(buf))
-	{
-	    SpinRelease(OidGenLockId);
-	    elog(WARN, "VariableRelationPutNextXid: ReadBuffer failed");
-	}
-    
+
+    if (!BufferIsValid(buf)) {
+        SpinRelease(OidGenLockId);
+        elog(WARN, "VariableRelationPutNextXid: ReadBuffer failed");
+    }
+
     var = (VariableRelationContents) BufferGetBlock(buf);
-    
+
     var->nextOid = (*oidP);
-    
+
     WriteBuffer(buf);
 }
 
@@ -385,56 +372,55 @@ VariableRelationPutNextOid(Oid *oidP)
  * ----------------
  */
 
-#define VAR_XID_PREFETCH	32
+#define VAR_XID_PREFETCH    32
 
 static int prefetched_xid_count = 0;
 static TransactionId next_prefetched_xid;
 
 void
-GetNewTransactionId(TransactionId *xid)
-{
+GetNewTransactionId(TransactionId *xid) {
     TransactionId nextid;
-    
+
     /* ----------------
      *	during bootstrap initialization, we return the special
      *  bootstrap transaction id.
      * ----------------
      */
-    if (AMI_OVERRIDE) {	
-	TransactionIdStore(AmiTransactionId, xid);
-	return;
+    if (AMI_OVERRIDE) {
+        TransactionIdStore(AmiTransactionId, xid);
+        return;
     }
-    
+
     /* ----------------
      *  if we run out of prefetched xids, then we get some
      *  more before handing them out to the caller.
      * ----------------
      */
-    
+
     if (prefetched_xid_count == 0) {
-	/* ----------------
-	 *	obtain exclusive access to the variable relation page
-	 *
-	 *	get the "next" xid from the variable relation
-	 *	and save it in the prefetched id.
-	 * ----------------
-	 */
-	SpinAcquire(OidGenLockId);
-	VariableRelationGetNextXid(&nextid);
-	TransactionIdStore(nextid, &next_prefetched_xid);
-	
-	/* ----------------
-	 *	now increment the variable relation's next xid
-	 *	and reset the prefetched_xid_count.  We multiply
-	 *	the id by two because our xid's are always even.
-	 * ----------------
-	 */
-	prefetched_xid_count = VAR_XID_PREFETCH;
-	TransactionIdAdd(&nextid, prefetched_xid_count);
-	VariableRelationPutNextXid(nextid);
-	SpinRelease(OidGenLockId);
+        /* ----------------
+         *	obtain exclusive access to the variable relation page
+         *
+         *	get the "next" xid from the variable relation
+         *	and save it in the prefetched id.
+         * ----------------
+         */
+        SpinAcquire(OidGenLockId);
+        VariableRelationGetNextXid(&nextid);
+        TransactionIdStore(nextid, &next_prefetched_xid);
+
+        /* ----------------
+         *	now increment the variable relation's next xid
+         *	and reset the prefetched_xid_count.  We multiply
+         *	the id by two because our xid's are always even.
+         * ----------------
+         */
+        prefetched_xid_count = VAR_XID_PREFETCH;
+        TransactionIdAdd(&nextid, prefetched_xid_count);
+        VariableRelationPutNextXid(nextid);
+        SpinRelease(OidGenLockId);
     }
-    
+
     /* ----------------
      *	return the next prefetched xid in the pointer passed by
      *  the user and decrement the prefetch count.  We add two
@@ -457,22 +443,21 @@ GetNewTransactionId(TransactionId *xid)
  */
 
 void
-UpdateLastCommittedXid(TransactionId xid)
-{
+UpdateLastCommittedXid(TransactionId xid) {
     TransactionId lastid;
-    
-    
+
+
     /* we assume that spinlock OidGenLockId has been acquired
      * prior to entering this function
      */
-    
+
     /* ----------------
      *	get the "last committed" transaction id from
      *  the variable relation page.
      * ----------------
      */
     VariableRelationGetLastXid(&lastid);
-    
+
     /* ----------------
      *	if the transaction id is greater than the last committed
      *  transaction then we update the last committed transaction
@@ -480,8 +465,8 @@ UpdateLastCommittedXid(TransactionId xid)
      * ----------------
      */
     if (TransactionIdIsLessThan(lastid, xid))
-	VariableRelationPutLastXid(xid);
-    
+        VariableRelationPutLastXid(xid);
+
 }
 
 /* ----------------------------------------------------------------
@@ -499,17 +484,17 @@ UpdateLastCommittedXid(TransactionId xid)
  */
 void
 GetNewObjectIdBlock(Oid *oid_return, /* place to return the new object id */
-		    int oid_block_size)	/* number of oids desired */
+                    int oid_block_size)    /* number of oids desired */
 {
-    Oid nextoid;		
-    
+    Oid nextoid;
+
     /* ----------------
      *	SOMEDAY obtain exclusive access to the variable relation page
      *  That someday is today -mer 6 Aug 1992
      * ----------------
      */
     SpinAcquire(OidGenLockId);
-    
+
     /* ----------------
      *	get the "next" oid from the variable relation
      *	and give it to the caller.
@@ -517,8 +502,8 @@ GetNewObjectIdBlock(Oid *oid_return, /* place to return the new object id */
      */
     VariableRelationGetNextOid(&nextoid);
     if (PointerIsValid(oid_return))
-	(*oid_return) = nextoid;
-    
+        (*oid_return) = nextoid;
+
     /* ----------------
      *	now increment the variable relation's next oid
      *	field by the size of the oid block requested.
@@ -526,7 +511,7 @@ GetNewObjectIdBlock(Oid *oid_return, /* place to return the new object id */
      */
     nextoid += oid_block_size;
     VariableRelationPutNextOid(&nextoid);
-    
+
     /* ----------------
      *	SOMEDAY relinquish our lock on the variable relation page
      *  That someday is today -mer 6 Apr 1992
@@ -552,55 +537,55 @@ GetNewObjectIdBlock(Oid *oid_return, /* place to return the new object id */
  * ----------------
  */
 
-#define VAR_OID_PREFETCH	32
+#define VAR_OID_PREFETCH    32
 
 static int prefetched_oid_count = 0;
 static Oid next_prefetched_oid;
 
 void
-GetNewObjectId(Oid *oid_return)	/* place to return the new object id */
+GetNewObjectId(Oid *oid_return)    /* place to return the new object id */
 {
     /* ----------------
      *  if we run out of prefetched oids, then we get some
      *  more before handing them out to the caller.
      * ----------------
      */
-    
+
     if (prefetched_oid_count == 0) {
-	int oid_block_size = VAR_OID_PREFETCH;
-	
-	/* ----------------
-	 *	during bootstrap time, we want to allocate oids
-	 *	one at a time.  Otherwise there might be some
-	 *      bootstrap oid's left in the block we prefetch which
-	 *	would be passed out after the variable relation was
-	 *	initialized.  This would be bad.
-	 * ----------------
-	 */
-	if (! RelationIsValid(VariableRelation))
-	    VariableRelation = heap_openr(VariableRelationName);
-	
-	/* ----------------
-	 *	get a new block of prefetched object ids.
-	 * ----------------
-	 */
-	GetNewObjectIdBlock(&next_prefetched_oid, oid_block_size);
-	
-	/* ----------------
-	 *	now reset the prefetched_oid_count.
-	 * ----------------
-	 */
-	prefetched_oid_count = oid_block_size;
+        int oid_block_size = VAR_OID_PREFETCH;
+
+        /* ----------------
+         *	during bootstrap time, we want to allocate oids
+         *	one at a time.  Otherwise there might be some
+         *      bootstrap oid's left in the block we prefetch which
+         *	would be passed out after the variable relation was
+         *	initialized.  This would be bad.
+         * ----------------
+         */
+        if (!RelationIsValid(VariableRelation))
+            VariableRelation = heap_openr(VariableRelationName);
+
+        /* ----------------
+         *	get a new block of prefetched object ids.
+         * ----------------
+         */
+        GetNewObjectIdBlock(&next_prefetched_oid, oid_block_size);
+
+        /* ----------------
+         *	now reset the prefetched_oid_count.
+         * ----------------
+         */
+        prefetched_oid_count = oid_block_size;
     }
-    
+
     /* ----------------
      *	return the next prefetched oid in the pointer passed by
      *  the user and decrement the prefetch count.
      * ----------------
      */
     if (PointerIsValid(oid_return))
-	(*oid_return) = next_prefetched_oid;
-    
+        (*oid_return) = next_prefetched_oid;
+
     next_prefetched_oid++;
     prefetched_oid_count--;
 }

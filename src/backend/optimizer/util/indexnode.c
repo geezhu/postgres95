@@ -19,7 +19,7 @@
 
 #include "optimizer/internal.h"
 #include "optimizer/plancat.h"
-#include "optimizer/pathnode.h"		/* where the decls go */
+#include "optimizer/pathnode.h"        /* where the decls go */
 
 
 static List *find_secondary_index(Query *root, Oid relid);
@@ -31,12 +31,11 @@ static List *find_secondary_index(Query *root, Oid relid);
  *    
  */
 List *
-find_relation_indices(Query *root, Rel *rel)
-{
+find_relation_indices(Query *root, Rel *rel) {
     if (rel->indexed) {
-	return (find_secondary_index(root, lfirsti(rel->relids)));
+        return (find_secondary_index(root, lfirsti(rel->relids)));
     } else {
-	return (NIL);
+        return (NIL);
     }
 }
 
@@ -52,39 +51,38 @@ find_relation_indices(Query *root, Rel *rel)
  *    
  */
 static List *
-find_secondary_index(Query *root, Oid relid)
-{
+find_secondary_index(Query *root, Oid relid) {
     IdxInfoRetval indexinfo;
     List *indexes = NIL;
     bool first = TRUE;
 
-    while (index_info(root, first, relid,&indexinfo)) {
-	Rel *indexnode = makeNode(Rel);
+    while (index_info(root, first, relid, &indexinfo)) {
+        Rel *indexnode = makeNode(Rel);
 
-	indexnode->relids = lconsi(indexinfo.relid,NIL);
-	indexnode->relam = indexinfo.relam;
-	indexnode->pages = indexinfo.pages;
-	indexnode->tuples = indexinfo.tuples;
-	indexnode->indexkeys = indexinfo.indexkeys;
-	indexnode->ordering = indexinfo.orderOprs;
-	indexnode->classlist = indexinfo.classlist;
-	indexnode->indproc= indexinfo.indproc;
-	indexnode->indpred = (List*)indexinfo.indpred;
-	
-	indexnode->indexed= false; /* not indexed itself */
-	indexnode->size = 0;
-	indexnode->width= 0;
-	indexnode->targetlist= NIL;
-	indexnode->pathlist= NIL;
-	indexnode->unorderedpath= NULL;
-	indexnode->cheapestpath= NULL;
-	indexnode->pruneable= true;
-	indexnode->clauseinfo= NIL;
-	indexnode->joininfo= NIL;
-	indexnode->innerjoin= NIL;
+        indexnode->relids = lconsi(indexinfo.relid, NIL);
+        indexnode->relam = indexinfo.relam;
+        indexnode->pages = indexinfo.pages;
+        indexnode->tuples = indexinfo.tuples;
+        indexnode->indexkeys = indexinfo.indexkeys;
+        indexnode->ordering = indexinfo.orderOprs;
+        indexnode->classlist = indexinfo.classlist;
+        indexnode->indproc = indexinfo.indproc;
+        indexnode->indpred = (List *) indexinfo.indpred;
 
-	indexes = lcons(indexnode, indexes);
-	first = FALSE;
+        indexnode->indexed = false; /* not indexed itself */
+        indexnode->size = 0;
+        indexnode->width = 0;
+        indexnode->targetlist = NIL;
+        indexnode->pathlist = NIL;
+        indexnode->unorderedpath = NULL;
+        indexnode->cheapestpath = NULL;
+        indexnode->pruneable = true;
+        indexnode->clauseinfo = NIL;
+        indexnode->joininfo = NIL;
+        indexnode->innerjoin = NIL;
+
+        indexes = lcons(indexnode, indexes);
+        first = FALSE;
     }
 
     return indexes;

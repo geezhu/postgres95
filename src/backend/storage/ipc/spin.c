@@ -33,7 +33,7 @@
 #include "utils/elog.h"
 
 /* globals used in this file */
-IpcSemaphoreId	SpinLockId;
+IpcSemaphoreId SpinLockId;
 
 #ifdef HAS_TEST_AND_SET
 /* real spin lock implementations */
@@ -113,8 +113,7 @@ SpinIsLocked(SPINLOCK lock)
  * FAILS if the semaphore is corrupted.
  */
 void
-SpinAcquire(SPINLOCK lock)
-{
+SpinAcquire(SPINLOCK lock) {
     IpcSemaphoreLock(SpinLockId, lock, IpcExclusiveLock);
     PROC_INCR_SLOCK(lock);
 }
@@ -125,20 +124,18 @@ SpinAcquire(SPINLOCK lock)
  * FAILS if the semaphore is corrupted
  */
 void
-SpinRelease(SPINLOCK lock)
-{
+SpinRelease(SPINLOCK lock) {
     Assert(SpinIsLocked(lock))
-	PROC_DECR_SLOCK(lock);
+    PROC_DECR_SLOCK(lock);
     IpcSemaphoreUnlock(SpinLockId, lock, IpcExclusiveLock);
 }
 
 bool
-SpinIsLocked(SPINLOCK lock)
-{
+SpinIsLocked(SPINLOCK lock) {
     int semval;
-    
+
     semval = IpcSemaphoreGetValue(SpinLockId, lock);
-    return(semval < IpcSemaphoreDefaultStartValue);
+    return (semval < IpcSemaphoreDefaultStartValue);
 }
 
 /*
@@ -147,49 +144,47 @@ SpinIsLocked(SPINLOCK lock)
  *
  */
 bool
-CreateSpinlocks(IPCKey key)
-{
-    
+CreateSpinlocks(IPCKey key) {
+
     int status;
     IpcSemaphoreId semid;
-    semid = IpcSemaphoreCreate(key, MAX_SPINS, IPCProtection, 
-			       IpcSemaphoreDefaultStartValue, 1, &status);
+    semid = IpcSemaphoreCreate(key, MAX_SPINS, IPCProtection,
+                               IpcSemaphoreDefaultStartValue, 1, &status);
     if (status == IpcSemIdExist) {
-	IpcSemaphoreKill(key);
-	elog(NOTICE,"Destroying old spinlock semaphore");
-	semid = IpcSemaphoreCreate(key, MAX_SPINS, IPCProtection, 
-				   IpcSemaphoreDefaultStartValue, 1, &status);
+        IpcSemaphoreKill(key);
+        elog(NOTICE, "Destroying old spinlock semaphore");
+        semid = IpcSemaphoreCreate(key, MAX_SPINS, IPCProtection,
+                                   IpcSemaphoreDefaultStartValue, 1, &status);
     }
-    
+
     if (semid >= 0) {
-	SpinLockId = semid;
-	return(TRUE);
+        SpinLockId = semid;
+        return (TRUE);
     }
     /* cannot create spinlocks */
-    elog(FATAL,"CreateSpinlocks: cannot create spin locks");
-    return(FALSE);
+    elog(FATAL, "CreateSpinlocks: cannot create spin locks");
+    return (FALSE);
 }
 
 /*
  * Attach to existing spinlock set
  */
 bool
-AttachSpinLocks(IPCKey key)
-{
+AttachSpinLocks(IPCKey key) {
     IpcSemaphoreId id;
-    
-    id = semget (key, MAX_SPINS, 0);
+
+    id = semget(key, MAX_SPINS, 0);
     if (id < 0) {
-	if (errno == EEXIST) {
-	    /* key is the name of someone else's semaphore */
-	    elog (FATAL,"AttachSpinlocks: SPIN_KEY belongs to someone else");
-	}
-	/* cannot create spinlocks */
-	elog(FATAL,"AttachSpinlocks: cannot create spin locks");
-	return(FALSE);
+        if (errno == EEXIST) {
+            /* key is the name of someone else's semaphore */
+            elog(FATAL, "AttachSpinlocks: SPIN_KEY belongs to someone else");
+        }
+        /* cannot create spinlocks */
+        elog(FATAL, "AttachSpinlocks: cannot create spin locks");
+        return (FALSE);
     }
     SpinLockId = id;
-    return(TRUE);
+    return (TRUE);
 }
 
 /*
@@ -205,8 +200,7 @@ AttachSpinLocks(IPCKey key)
  *
  */
 bool
-InitSpinLocks(int init, IPCKey key)
-{
+InitSpinLocks(int init, IPCKey key) {
     extern SPINLOCK ShmemLock;
     extern SPINLOCK BindingLock;
     extern SPINLOCK BufMgrLock;
@@ -214,21 +208,21 @@ InitSpinLocks(int init, IPCKey key)
     extern SPINLOCK ProcStructLock;
     extern SPINLOCK SInvalLock;
     extern SPINLOCK OidGenLockId;
-    
+
 #ifdef MAIN_MEMORY
     extern SPINLOCK MMCacheLock;
 #endif /* MAIN_MEMORY */
-    
+
     if (!init || key != IPC_PRIVATE) {
-	/* if bootstrap and key is IPC_PRIVATE, it means that we are running
-	 * backend by itself.  no need to attach spinlocks
-	 */
-	if (! AttachSpinLocks(key)) {
-	    elog(FATAL,"InitSpinLocks: couldnt attach spin locks");
-	    return(FALSE);
-	}
+        /* if bootstrap and key is IPC_PRIVATE, it means that we are running
+         * backend by itself.  no need to attach spinlocks
+         */
+        if (!AttachSpinLocks(key)) {
+            elog(FATAL, "InitSpinLocks: couldnt attach spin locks");
+            return (FALSE);
+        }
     }
-    
+
     /* These five (or six) spinlocks have fixed location is shmem */
     ShmemLock = (SPINLOCK) SHMEMLOCKID;
     BindingLock = (SPINLOCK) BINDINGLOCKID;
@@ -237,11 +231,12 @@ InitSpinLocks(int init, IPCKey key)
     ProcStructLock = (SPINLOCK) PROCSTRUCTLOCKID;
     SInvalLock = (SPINLOCK) SINVALLOCKID;
     OidGenLockId = (SPINLOCK) OIDGENLOCKID;
-    
+
 #ifdef MAIN_MEMORY
     MMCacheLock = (SPINLOCK) MMCACHELOCKID;
 #endif /* MAIN_MEMORY */
-    
-    return(TRUE);
+
+    return (TRUE);
 }
+
 #endif /* HAS_TEST_AND_SET */

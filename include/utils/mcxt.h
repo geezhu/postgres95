@@ -10,7 +10,7 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	MCXT_H
+#ifndef    MCXT_H
 #define MCXT_H
 
 #include "c.h"
@@ -18,8 +18,8 @@
 #include "nodes/memnodes.h"
 #include "nodes/nodes.h"
 
-extern MemoryContext	CurrentMemoryContext;
-extern MemoryContext	TopMemoryContext;
+extern MemoryContext CurrentMemoryContext;
+extern MemoryContext TopMemoryContext;
 
 
 /*
@@ -35,22 +35,30 @@ extern MemoryContext	TopMemoryContext;
  *
  * XXX This should be defined in a file of tunable constants.
  */
-#define MaxAllocSize	(0xfffffff)	/* 16G - 1 */
+#define MaxAllocSize    (0xfffffff)    /* 16G - 1 */
 
 /*
  * prototypes for functions in mcxt.c
  */
 extern void EnableMemoryContext(bool on);
+
 extern Pointer MemoryContextAlloc(MemoryContext context, Size size);
+
 extern Pointer MemoryContextRealloc(MemoryContext context,
-				    Pointer pointer,
-				    Size size);
+                                    Pointer pointer,
+                                    Size size);
+
 extern void MemoryContextFree(MemoryContext context, Pointer pointer);
+
 extern char *MemoryContextGetName(MemoryContext context);
+
 extern Size PointerGetAllocSize(Pointer pointer);
+
 extern MemoryContext MemoryContextSwitchTo(MemoryContext context);
+
 extern GlobalMemory CreateGlobalMemory(char *name);
+
 extern void GlobalMemoryDestroy(GlobalMemory context);
 
 
-#endif	/* MCXT_H */
+#endif    /* MCXT_H */

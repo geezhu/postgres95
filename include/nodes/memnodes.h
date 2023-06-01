@@ -15,7 +15,7 @@
  *							- ay 10/94
  *-------------------------------------------------------------------------
  */
-#ifndef	MEMNODES_H
+#ifndef    MEMNODES_H
 #define MEMNODES_H
 
 #include "c.h"
@@ -50,42 +50,45 @@
  */
 
 typedef struct MemoryContextMethodsData {
-    Pointer	(*alloc)();
-    void	(*free_p)(); /* need to use free as a #define,
+    Pointer (*alloc)();
+
+    void (*free_p)(); /* need to use free as a #define,
 				so can't use free */
-    Pointer	(*realloc)();
-    char*	(*getName)();
-    void	(*dump)();
+    Pointer (*realloc)();
+
+    char *(*getName)();
+
+    void (*dump)();
 } *MemoryContextMethods;
 
 typedef struct MemoryContext {
-    NodeTag			type;
-    MemoryContextMethods	method;
+    NodeTag type;
+    MemoryContextMethods method;
 } *MemoryContext;
 
 /* think about doing this right some time but we'll have explicit fields
    for now -ay 10/94 */
 typedef struct GlobalMemory {
-    NodeTag			type;
-    MemoryContextMethods	method;
-    AllocSetData	setData;
-    char		*name;
-    OrderedElemData	elemData;
+    NodeTag type;
+    MemoryContextMethods method;
+    AllocSetData setData;
+    char *name;
+    OrderedElemData elemData;
 } *GlobalMemory;
 
 typedef MemoryContext *PortalMemoryContext;
 
 typedef struct PortalVariableMemory {
-    NodeTag			type;
-    MemoryContextMethods	method;
-    AllocSetData	setData;
+    NodeTag type;
+    MemoryContextMethods method;
+    AllocSetData setData;
 } *PortalVariableMemory;
 
 typedef struct PortalHeapMemory {
-    NodeTag			type;
-    MemoryContextMethods	method;
-    Pointer		block;
-    FixedStackData	stackData;
+    NodeTag type;
+    MemoryContextMethods method;
+    Pointer block;
+    FixedStackData stackData;
 } *PortalHeapMemory;
 
 /*
@@ -96,6 +99,6 @@ typedef struct PortalHeapMemory {
     (IsA(context,MemoryContext) || IsA(context,GlobalMemory) || \
      IsA(context,PortalVariableMemory) || IsA(context,PortalHeapMemory))
 
-#endif	/* MEMNODES_H */
+#endif    /* MEMNODES_H */
 
 

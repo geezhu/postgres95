@@ -10,7 +10,7 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	ITEMPOS_H
+#ifndef    ITEMPOS_H
 #define ITEMPOS_H
 
 #include "c.h"
@@ -18,20 +18,20 @@
 #include "storage/itemid.h"
 
 typedef struct ItemSubpositionData {
-	Buffer		op_db;
-	ItemId		op_lpp;
-	char		*op_cp;		/* XXX */
-	uint32		op_len;
+    Buffer op_db;
+    ItemId op_lpp;
+    char *op_cp;        /* XXX */
+    uint32 op_len;
 } ItemSubpositionData;
 
-typedef ItemSubpositionData	*ItemSubposition;
+typedef ItemSubpositionData *ItemSubposition;
 
 /*
  *	PNOBREAK(OBJP, LEN)
  *	struct	objpos	*OBJP;
  *	unsigned	LEN;
  */
-#define PNOBREAK(OBJP, LEN)	((OBJP)->op_len >= LEN)
+#define PNOBREAK(OBJP, LEN)    ((OBJP)->op_len >= LEN)
 
 /*
  *	PSKIP(OBJP, LEN)
@@ -39,6 +39,6 @@ typedef ItemSubpositionData	*ItemSubposition;
  *	unsigned	LEN;
  */
 #define PSKIP(OBJP, LEN)\
-	{ (OBJP)->op_cp += (LEN); (OBJP)->op_len -= (LEN); }
+    { (OBJP)->op_cp += (LEN); (OBJP)->op_len -= (LEN); }
 
-#endif	/* ITEMPOS_H */
+#endif    /* ITEMPOS_H */

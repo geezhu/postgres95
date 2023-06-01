@@ -10,31 +10,31 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	BUF_H
+#ifndef    BUF_H
 #define BUF_H
 
-#define InvalidBuffer	(0)
-#define UnknownBuffer	(-99999)
+#define InvalidBuffer    (0)
+#define UnknownBuffer    (-99999)
 
-typedef long	Buffer;
+typedef long Buffer;
 
 /*
  * BufferIsInvalid --
  *	True iff the buffer is invalid.
  */
-#define BufferIsInvalid(buffer)	((buffer) == InvalidBuffer)
+#define BufferIsInvalid(buffer)    ((buffer) == InvalidBuffer)
 
 /*
  * BufferIsUnknown --
  *	True iff the buffer is unknown.
  */
-#define BufferIsUnknown(buffer)	((buffer) == UnknownBuffer)
+#define BufferIsUnknown(buffer)    ((buffer) == UnknownBuffer)
 
 /*
  * BufferIsLocal --
  *	True iff the buffer is local (not visible to other servers).
  */
-#define BufferIsLocal(buffer)	((buffer) < 0)
+#define BufferIsLocal(buffer)    ((buffer) < 0)
 
 /*
  * If NO_BUFFERISVALID is defined, all error checking using BufferIsValid()
@@ -44,4 +44,4 @@ typedef long	Buffer;
  */
 #undef NO_BUFFERISVALID
 
-#endif	/* BUF_H */
+#endif    /* BUF_H */

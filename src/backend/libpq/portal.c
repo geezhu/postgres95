@@ -61,12 +61,12 @@
  *	see utils/mmgr/portalmem.c for why. -cim 2/22/91
  *
  */
-#include <stdio.h>	/* for sprintf() */
+#include <stdio.h>    /* for sprintf() */
 #include <string.h>
 
 #include "c.h"
 #include "lib/dllist.h"
-#include "libpq/libpq.h"	/* where the declarations go */
+#include "libpq/libpq.h"    /* where the declarations go */
 #include "utils/exc.h"
 #include "utils/palloc.h"
 
@@ -80,32 +80,30 @@ Exception PostquelError = {"Sql Error"};
 Exception ProtocolError = {"Protocol Error"};
 char PQerrormsg[ERROR_MSG_LENGTH];
 
-int PQtracep = 0;		/* 1 to print out debugging messages */
+int PQtracep = 0;        /* 1 to print out debugging messages */
 FILE *debug_port = (FILE *) NULL;
 
 static int
-in_range(char *msg, int value, int min, int max)
-{
+in_range(char *msg, int value, int min, int max) {
     if (value < min || value >= max) {
-	(void) sprintf(PQerrormsg, "FATAL: %s, %d is not in range [%d,%d)\n",
-		       msg, value, min, max);
-	pqdebug("%s", PQerrormsg);
-	fputs(PQerrormsg, stderr);
-	return(0);
+        (void) sprintf(PQerrormsg, "FATAL: %s, %d is not in range [%d,%d)\n",
+                       msg, value, min, max);
+        pqdebug("%s", PQerrormsg);
+        fputs(PQerrormsg, stderr);
+        return (0);
     }
-    return(1);
+    return (1);
 }
 
 static int
-valid_pointer(char *msg, void *ptr)
-{
+valid_pointer(char *msg, void *ptr) {
     if (!ptr) {
-	(void) sprintf(PQerrormsg, "FATAL: %s\n", msg);
-	pqdebug("%s", PQerrormsg);
-	fputs(PQerrormsg, stderr);
-	return(0);
+        (void) sprintf(PQerrormsg, "FATAL: %s\n", msg);
+        pqdebug("%s", PQerrormsg);
+        fputs(PQerrormsg, stderr);
+        return (0);
     }
-    return(1);
+    return (1);
 }
 
 /* ----------------------------------------------------------------
@@ -113,36 +111,34 @@ valid_pointer(char *msg, void *ptr)
  * ----------------------------------------------------------------
  */
 void
-pqdebug(char *target, char *msg)
-{
+pqdebug(char *target, char *msg) {
     if (!target)
-	return;
-    
+        return;
+
     if (PQtracep) {
-	/*
-	 * if nothing else was suggested default to stdout
-	 */
-	if (!debug_port)
-	    debug_port = stdout;
-	fprintf(debug_port, target, msg);
-	fprintf(debug_port, "\n");
+        /*
+         * if nothing else was suggested default to stdout
+         */
+        if (!debug_port)
+            debug_port = stdout;
+        fprintf(debug_port, target, msg);
+        fprintf(debug_port, "\n");
     }
 }
 
 void
-pqdebug2(char *target, char *msg1, char *msg2)
-{
+pqdebug2(char *target, char *msg1, char *msg2) {
     if (!target)
-	return;
-    
+        return;
+
     if (PQtracep) {
-	/*
-	 * if nothing else was suggested default to stdout
-	 */
-	if (!debug_port)
-	    debug_port = stdout;
-	fprintf(debug_port, target, msg1, msg2);
-	fprintf(debug_port, "\n");
+        /*
+         * if nothing else was suggested default to stdout
+         */
+        if (!debug_port)
+            debug_port = stdout;
+        fprintf(debug_port, target, msg1, msg2);
+        fprintf(debug_port, "\n");
     }
 }
 
@@ -151,14 +147,12 @@ pqdebug2(char *target, char *msg1, char *msg2)
  * --------------------------------
  */
 void
-PQtrace()
-{
+PQtrace() {
     PQtracep = 1;
 }
 
 void
-PQuntrace()
-{
+PQuntrace() {
     PQtracep = 0;
 }
 
@@ -173,18 +167,17 @@ PQuntrace()
  * --------------------------------
  */
 int
-PQnportals(int rule_p)
-{
+PQnportals(int rule_p) {
     int i, n = 0;
-    
+
     for (i = 0; i < portals_array_size; ++i) {
-	if (portals[i] && portals[i]->portal) {
-	    if (!rule_p || portals[i]->portal->rule_p) {
-		++n;
-	    }
-	}
+        if (portals[i] && portals[i]->portal) {
+            if (!rule_p || portals[i]->portal->rule_p) {
+                ++n;
+            }
+        }
     }
-    return(n);
+    return (n);
 }
 
 /* --------------------------------
@@ -200,20 +193,19 @@ PQnportals(int rule_p)
  * --------------------------------
  */
 void
-PQpnames(char **pnames, int rule_p)
-{
+PQpnames(char **pnames, int rule_p) {
     int i, cur_pname = 0;
-    
+
     if (!valid_pointer("PQpnames: invalid name buffer", pnames))
-	return;
-    
+        return;
+
     for (i = 0; i < portals_array_size; ++i) {
-	if (portals[i] && portals[i]->portal) {
-	    if (!rule_p || portals[i]->portal->rule_p) {
-		(void) strncpy(pnames[cur_pname], portals[i]->name, PortalNameLength);
-		++cur_pname;
-	    }
-	}
+        if (portals[i] && portals[i]->portal) {
+            if (!rule_p || portals[i]->portal->rule_p) {
+                (void) strncpy(pnames[cur_pname], portals[i]->name, PortalNameLength);
+                ++cur_pname;
+            }
+        }
     }
 }
 
@@ -222,16 +214,15 @@ PQpnames(char **pnames, int rule_p)
  * --------------------------------
  */
 PortalBuffer *
-PQparray(char *pname)
-{
+PQparray(char *pname) {
     int i;
-    
+
     if (!valid_pointer("PQparray: invalid name buffer", pname))
-	return NULL;
-    
+        return NULL;
+
     if ((i = pbuf_getIndex(pname)) < 0)
-	return((PortalBuffer *) NULL);
-    return(portals[i]->portal);
+        return ((PortalBuffer *) NULL);
+    return (portals[i]->portal);
 }
 
 /* --------------------------------
@@ -239,12 +230,11 @@ PQparray(char *pname)
  * --------------------------------
  */
 int
-PQrulep(PortalBuffer *portal)
-{
+PQrulep(PortalBuffer *portal) {
     if (!valid_pointer("PQrulep: invalid portal pointer", portal))
-	return(-1);
-    
-    return(portal->rule_p);
+        return (-1);
+
+    return (portal->rule_p);
 }
 
 /* --------------------------------
@@ -252,18 +242,16 @@ PQrulep(PortalBuffer *portal)
  * --------------------------------
  */
 int
-PQntuples(PortalBuffer *portal)
-{
+PQntuples(PortalBuffer *portal) {
     if (!valid_pointer("PQntuples: invalid portal pointer", portal))
-	return(-1);
-    
-    return(portal->no_tuples);
+        return (-1);
+
+    return (portal->no_tuples);
 }
 
 int
-PQninstances(PortalBuffer *portal)
-{
-    return(PQntuples(portal));
+PQninstances(PortalBuffer *portal) {
+    return (PQntuples(portal));
 }
 
 /* --------------------------------
@@ -271,12 +259,11 @@ PQninstances(PortalBuffer *portal)
  * --------------------------------
  */
 int
-PQngroups(PortalBuffer *portal)
-{
+PQngroups(PortalBuffer *portal) {
     if (!valid_pointer("PQngroups: invalid portal pointer", portal))
-	return(-1);
-    
-    return(portal->no_groups);
+        return (-1);
+
+    return (portal->no_groups);
 }
 
 /* --------------------------------
@@ -284,25 +271,23 @@ PQngroups(PortalBuffer *portal)
  * --------------------------------
  */
 int
-PQntuplesGroup(PortalBuffer *portal, int group_index)
-{
+PQntuplesGroup(PortalBuffer *portal, int group_index) {
     GroupBuffer *gbp;
-    
+
     if (!valid_pointer("PQntuplesGroup: invalid portal pointer", portal) ||
-	!in_range("PQntuplesGroup: group index",
-		  group_index, 0, portal->no_groups))
-	return(-1);
+        !in_range("PQntuplesGroup: group index",
+                  group_index, 0, portal->no_groups))
+        return (-1);
 
     gbp = pbuf_findGroup(portal, group_index);
     if (gbp)
-	return(gbp->no_tuples);
-    return(-1);
+        return (gbp->no_tuples);
+    return (-1);
 }
 
 int
-PQninstancesGroup(PortalBuffer *portal, int group_index)
-{
-    return(PQntuplesGroup(portal, group_index));
+PQninstancesGroup(PortalBuffer *portal, int group_index) {
+    return (PQntuplesGroup(portal, group_index));
 }
 
 /* --------------------------------
@@ -310,18 +295,17 @@ PQninstancesGroup(PortalBuffer *portal, int group_index)
  * --------------------------------
  */
 int
-PQnfieldsGroup(PortalBuffer *portal, int group_index)
-{
+PQnfieldsGroup(PortalBuffer *portal, int group_index) {
     GroupBuffer *gbp;
-    
+
     if (!valid_pointer("PQnfieldsGroup: invalid portal pointer", portal) ||
-	!in_range("PQnfieldsGroup: group index",
-		  group_index, 0, portal->no_groups))
-	return(-1);
+        !in_range("PQnfieldsGroup: group index",
+                  group_index, 0, portal->no_groups))
+        return (-1);
     gbp = pbuf_findGroup(portal, group_index);
     if (gbp)
-	return(gbp->no_fields);
-    return(-1);
+        return (gbp->no_fields);
+    return (-1);
 }
 
 /* --------------------------------
@@ -330,20 +314,19 @@ PQnfieldsGroup(PortalBuffer *portal, int group_index)
  * --------------------------------
  */
 int
-PQfnumberGroup(PortalBuffer *portal, int group_index, char *field_name)
-{
+PQfnumberGroup(PortalBuffer *portal, int group_index, char *field_name) {
     GroupBuffer *gbp;
-    
+
     if (!valid_pointer("PQfnumberGroup: invalid portal pointer", portal) ||
-	!valid_pointer("PQfnumberGroup: invalid field name pointer",
-		       field_name) ||
-	!in_range("PQfnumberGroup: group index",
-		  group_index, 0, portal->no_groups))
-	return(-1);
+        !valid_pointer("PQfnumberGroup: invalid field name pointer",
+                       field_name) ||
+        !in_range("PQfnumberGroup: group index",
+                  group_index, 0, portal->no_groups))
+        return (-1);
     gbp = pbuf_findGroup(portal, group_index);
     if (gbp)
-	return(pbuf_findFnumber(gbp, field_name));
-    return(-1);
+        return (pbuf_findFnumber(gbp, field_name));
+    return (-1);
 }
 
 /* --------------------------------
@@ -352,20 +335,19 @@ PQfnumberGroup(PortalBuffer *portal, int group_index, char *field_name)
  * --------------------------------
  */
 char *
-PQfnameGroup(PortalBuffer *portal, int group_index, int field_number)
-{
+PQfnameGroup(PortalBuffer *portal, int group_index, int field_number) {
     GroupBuffer *gbp;
-    
+
     if (!valid_pointer("PQfnameGroup: invalid portal pointer", portal) ||
-	!in_range("PQfnameGroup: group index",
-		  group_index, 0, portal->no_groups))
-	return((char *) NULL);
-    
+        !in_range("PQfnameGroup: group index",
+                  group_index, 0, portal->no_groups))
+        return ((char *) NULL);
+
     if ((gbp = pbuf_findGroup(portal, group_index)) &&
-	in_range("PQfnameGroup: field number",
-		 field_number, 0, gbp->no_fields))
-	return(pbuf_findFname(gbp, field_number));
-    return((char *) NULL);
+        in_range("PQfnameGroup: field number",
+                 field_number, 0, gbp->no_fields))
+        return (pbuf_findFname(gbp, field_number));
+    return ((char *) NULL);
 }
 
 /* --------------------------------
@@ -374,19 +356,18 @@ PQfnameGroup(PortalBuffer *portal, int group_index, int field_number)
  * --------------------------------
  */
 int
-PQftypeGroup(PortalBuffer *portal, int group_index, int field_number)
-{
+PQftypeGroup(PortalBuffer *portal, int group_index, int field_number) {
     GroupBuffer *gbp;
-    
+
     if (!valid_pointer("PQftypeGroup: invalid portal pointer", portal) ||
-	!in_range("PQftypeGroup: group index",
-		  group_index, 0, portal->no_groups))
-	return(-1);
-    
+        !in_range("PQftypeGroup: group index",
+                  group_index, 0, portal->no_groups))
+        return (-1);
+
     if ((gbp = pbuf_findGroup(portal, group_index)) &&
-	in_range("PQftypeGroup: field number", field_number, 0, gbp->no_fields))
-	return(gbp->types[field_number].adtid);
-    return(-1);
+        in_range("PQftypeGroup: field number", field_number, 0, gbp->no_fields))
+        return (gbp->types[field_number].adtid);
+    return (-1);
 }
 
 /* --------------------------------
@@ -395,19 +376,18 @@ PQftypeGroup(PortalBuffer *portal, int group_index, int field_number)
  * --------------------------------
  */
 int
-PQfsizeGroup(PortalBuffer *portal, int group_index, int field_number)
-{
+PQfsizeGroup(PortalBuffer *portal, int group_index, int field_number) {
     GroupBuffer *gbp;
-    
+
     if (!valid_pointer("PQfsizeGroup: invalid portal pointer", portal) ||
-	!in_range("PQfsizeGroup: tuple index",
-		  group_index, 0, portal->no_groups))
-	return(-1);
-    
+        !in_range("PQfsizeGroup: tuple index",
+                  group_index, 0, portal->no_groups))
+        return (-1);
+
     if ((gbp = pbuf_findGroup(portal, group_index)) &&
-	in_range("PQfsizeGroup: field number", field_number, 0, gbp->no_fields))
-	return(gbp->types[field_number].adtsize);
-    return(-1);
+        in_range("PQfsizeGroup: field number", field_number, 0, gbp->no_fields))
+        return (gbp->types[field_number].adtsize);
+    return (-1);
 }
 
 
@@ -416,24 +396,22 @@ PQfsizeGroup(PortalBuffer *portal, int group_index, int field_number)
  * --------------------------------
  */
 GroupBuffer *
-PQgroup(PortalBuffer *portal, int tuple_index)
-{
+PQgroup(PortalBuffer *portal, int tuple_index) {
     GroupBuffer *gbp;
     int tuple_count = 0;
-    
+
     if (!valid_pointer("PQgroup: invalid portal pointer", portal) ||
-	!in_range("PQgroup: tuple index",
-		  tuple_index, 0, portal->no_tuples))
-	return((GroupBuffer *) NULL);
-    
+        !in_range("PQgroup: tuple index",
+                  tuple_index, 0, portal->no_tuples))
+        return ((GroupBuffer *) NULL);
+
     for (gbp = portal->groups;
-	 gbp && tuple_index >= (tuple_count += gbp->no_tuples);
-	 gbp = gbp->next)
-	;
+         gbp && tuple_index >= (tuple_count += gbp->no_tuples);
+         gbp = gbp->next);
     if (!in_range("PQgroup: tuple not found: tuple index",
-		  tuple_index, 0, tuple_count))
-	return((GroupBuffer *) NULL);
-    return(gbp);
+                  tuple_index, 0, tuple_count))
+        return ((GroupBuffer *) NULL);
+    return (gbp);
 }
 
 /* --------------------------------
@@ -442,24 +420,23 @@ PQgroup(PortalBuffer *portal, int tuple_index)
  * --------------------------------
  */
 int
-PQgetgroup(PortalBuffer *portal, int tuple_index)
-{
+PQgetgroup(PortalBuffer *portal, int tuple_index) {
     GroupBuffer *gbp;
     int tuple_count = 0, group_count = 0;
-    
+
     if (!valid_pointer("PQgetgroup: invalid portal pointer", portal) ||
-	!in_range("PQgetgroup: tuple index",
-		  tuple_index, 0, portal->no_tuples))
-	return(-1);
-    
+        !in_range("PQgetgroup: tuple index",
+                  tuple_index, 0, portal->no_tuples))
+        return (-1);
+
     for (gbp = portal->groups;
-	 gbp && tuple_index >= (tuple_count += gbp->no_tuples);
-	 gbp = gbp->next)
-	++group_count;
+         gbp && tuple_index >= (tuple_count += gbp->no_tuples);
+         gbp = gbp->next)
+        ++group_count;
     if (!gbp || !in_range("PQgetgroup: tuple not found: tuple index",
-			  tuple_index, 0, tuple_count))
-	return(-1);
-    return(group_count);
+                          tuple_index, 0, tuple_count))
+        return (-1);
+    return (group_count);
 }
 
 /* --------------------------------
@@ -467,18 +444,17 @@ PQgetgroup(PortalBuffer *portal, int tuple_index)
  * --------------------------------
  */
 int
-PQnfields(PortalBuffer *portal, int	tuple_index)
-{
+PQnfields(PortalBuffer *portal, int tuple_index) {
     GroupBuffer *gbp;
-    
+
     if (!valid_pointer("PQnfields: invalid portal pointer", portal) ||
-	!in_range("PQnfields: tuple index",
-		  tuple_index, 0, portal->no_tuples))
-	return(-1);
+        !in_range("PQnfields: tuple index",
+                  tuple_index, 0, portal->no_tuples))
+        return (-1);
     gbp = PQgroup(portal, tuple_index);
     if (gbp)
-	return(gbp->no_fields);
-    return(-1);
+        return (gbp->no_fields);
+    return (-1);
 }
 
 /* --------------------------------
@@ -487,19 +463,18 @@ PQnfields(PortalBuffer *portal, int	tuple_index)
  * --------------------------------
  */
 int
-PQfnumber(PortalBuffer *portal, int tuple_index, char *field_name)
-{
+PQfnumber(PortalBuffer *portal, int tuple_index, char *field_name) {
     GroupBuffer *gbp;
-    
+
     if (!valid_pointer("PQfnumber: invalid portal pointer", portal) ||
-	!valid_pointer("PQfnumber: invalid field name pointer", field_name) ||
-	!in_range("PQfnumber: tuple index",
-		  tuple_index, 0, portal->no_tuples))
-	return(-1);
+        !valid_pointer("PQfnumber: invalid field name pointer", field_name) ||
+        !in_range("PQfnumber: tuple index",
+                  tuple_index, 0, portal->no_tuples))
+        return (-1);
     gbp = PQgroup(portal, tuple_index);
     if (gbp)
-	return(pbuf_findFnumber(gbp, field_name));
-    return(-1);
+        return (pbuf_findFnumber(gbp, field_name));
+    return (-1);
 }
 
 /* --------------------------------
@@ -507,20 +482,19 @@ PQfnumber(PortalBuffer *portal, int tuple_index, char *field_name)
  * --------------------------------
  */
 char *
-PQfname(PortalBuffer *portal, int	tuple_index, int field_number)
-{
+PQfname(PortalBuffer *portal, int tuple_index, int field_number) {
     GroupBuffer *gbp;
-    
+
     if (!valid_pointer("PQfname: invalid portal pointer", portal) ||
-	!in_range("PQfname: tuple index",
-		  tuple_index, 0, portal->no_tuples))
-	return((char *) NULL);
-    
+        !in_range("PQfname: tuple index",
+                  tuple_index, 0, portal->no_tuples))
+        return ((char *) NULL);
+
     if ((gbp = PQgroup(portal, tuple_index)) &&
-	in_range("PQfname: field number",
-		 field_number, 0, gbp->no_fields))
-	return(pbuf_findFname(gbp, field_number));
-    return((char *) NULL);
+        in_range("PQfname: field number",
+                 field_number, 0, gbp->no_fields))
+        return (pbuf_findFname(gbp, field_number));
+    return ((char *) NULL);
 }
 
 /* --------------------------------
@@ -528,19 +502,18 @@ PQfname(PortalBuffer *portal, int	tuple_index, int field_number)
  * --------------------------------
  */
 int
-PQftype(PortalBuffer *portal, int tuple_index, int field_number)
-{
+PQftype(PortalBuffer *portal, int tuple_index, int field_number) {
     GroupBuffer *gbp;
-    
+
     if (!valid_pointer("PQftype: invalid portal pointer", portal) ||
-	!in_range("PQfname: tuple index",
-		  tuple_index, 0, portal->no_tuples))
-	return(-1);
-    
+        !in_range("PQfname: tuple index",
+                  tuple_index, 0, portal->no_tuples))
+        return (-1);
+
     if ((gbp = PQgroup(portal, tuple_index)) &&
-	in_range("PQftype: field number", field_number, 0, gbp->no_fields))
-	return(gbp->types[field_number].adtid);
-    return(-1);
+        in_range("PQftype: field number", field_number, 0, gbp->no_fields))
+        return (gbp->types[field_number].adtid);
+    return (-1);
 }
 
 /* --------------------------------
@@ -548,21 +521,19 @@ PQftype(PortalBuffer *portal, int tuple_index, int field_number)
  * --------------------------------
  */
 int
-PQfsize(PortalBuffer *portal, int tuple_index, int field_number)
-{
+PQfsize(PortalBuffer *portal, int tuple_index, int field_number) {
     GroupBuffer *gbp;
-    
+
     if (!valid_pointer("PQfsize: invalid portal pointer", portal) ||
-	!in_range("PQfsize: tuple index",
-		  tuple_index, 0, portal->no_tuples))
-	return(-1);
-    
+        !in_range("PQfsize: tuple index",
+                  tuple_index, 0, portal->no_tuples))
+        return (-1);
+
     if ((gbp = PQgroup(portal, tuple_index)) &&
-	in_range("PQfsize: field number", field_number, 0, gbp->no_fields))
-	return(gbp->types[field_number].adtsize);
-    return(-1);
+        in_range("PQfsize: field number", field_number, 0, gbp->no_fields))
+        return (gbp->types[field_number].adtsize);
+    return (-1);
 }
-  
 
 
 /* --------------------------------
@@ -571,61 +542,57 @@ PQfsize(PortalBuffer *portal, int tuple_index, int field_number)
  * --------------------------------
  */
 int
-PQsametype(PortalBuffer *portal, int tuple_index1, int tuple_index2)
-{
+PQsametype(PortalBuffer *portal, int tuple_index1, int tuple_index2) {
     GroupBuffer *gbp1, *gbp2;
-    
+
     if (!valid_pointer("PQsametype: invalid portal pointer", portal) ||
-	!in_range("PQsametype: tuple index 1",
-		  tuple_index1, 0, portal->no_tuples) ||
-	!in_range("PQsametype: tuple index 2",
-		  tuple_index2, 0, portal->no_tuples))
-	return(-1);
-    
+        !in_range("PQsametype: tuple index 1",
+                  tuple_index1, 0, portal->no_tuples) ||
+        !in_range("PQsametype: tuple index 2",
+                  tuple_index2, 0, portal->no_tuples))
+        return (-1);
+
     gbp1 = PQgroup(portal, tuple_index1);
     gbp2 = PQgroup(portal, tuple_index2);
     if (gbp1 && gbp2)
-	return(gbp1 == gbp2);
-    return(-1);
+        return (gbp1 == gbp2);
+    return (-1);
 }
 
 static TupleBlock *
 PQGetTupleBlock(PortalBuffer *portal,
-		int tuple_index,
-		int *tuple_offset)
-{
+                int tuple_index,
+                int *tuple_offset) {
     GroupBuffer *gbp;
-    TupleBlock  *tbp;
+    TupleBlock *tbp;
     int tuple_count = 0;
-    
+
     if (!valid_pointer("PQGetTupleBlock: invalid portal pointer", portal) ||
-	!valid_pointer("PQGetTupleBlock: invalid offset pointer",
-		       tuple_offset) ||
-	!in_range("PQGetTupleBlock: tuple index",
-		  tuple_index, 0, portal->no_tuples))
-	return((TupleBlock *) NULL);
-    
+        !valid_pointer("PQGetTupleBlock: invalid offset pointer",
+                       tuple_offset) ||
+        !in_range("PQGetTupleBlock: tuple index",
+                  tuple_index, 0, portal->no_tuples))
+        return ((TupleBlock *) NULL);
+
     for (gbp = portal->groups;
-	 gbp && tuple_index >= (tuple_count += gbp->no_tuples);
-	 gbp = gbp->next)
-	;
+         gbp && tuple_index >= (tuple_count += gbp->no_tuples);
+         gbp = gbp->next);
     if (!gbp ||
-	!in_range("PQGetTupleBlock: tuple not found: tuple index",
-		  tuple_index, 0, tuple_count))
-	return((TupleBlock *) NULL);
+        !in_range("PQGetTupleBlock: tuple not found: tuple index",
+                  tuple_index, 0, tuple_count))
+        return ((TupleBlock *) NULL);
     tuple_count -= gbp->no_tuples;
     for (tbp = gbp->tuples;
-	 tbp && tuple_index >= (tuple_count += TupleBlockSize);
-	 tbp = tbp->next)
-	;
+         tbp && tuple_index >= (tuple_count += TupleBlockSize);
+         tbp = tbp->next);
     if (!tbp ||
-	!in_range("PQGetTupleBlock: tuple not found: tuple index",
-		  tuple_index, 0, tuple_count))
-	return((TupleBlock *) NULL);
+        !in_range("PQGetTupleBlock: tuple not found: tuple index",
+                  tuple_index, 0, tuple_count))
+        return ((TupleBlock *) NULL);
     tuple_count -= TupleBlockSize;
-    
+
     *tuple_offset = tuple_index - tuple_count;
-    return(tbp);
+    return (tbp);
 }
 
 /* --------------------------------
@@ -634,16 +601,15 @@ PQGetTupleBlock(PortalBuffer *portal,
  */
 char *
 PQgetvalue(PortalBuffer *portal,
-	   int tuple_index,
-	   int field_number)
-{
+           int tuple_index,
+           int field_number) {
     TupleBlock *tbp;
     int tuple_offset;
 
     tbp = PQGetTupleBlock(portal, tuple_index, &tuple_offset);
     if (tbp)
-	return(tbp->values[tuple_offset][field_number]);
-    return((char *) NULL);
+        return (tbp->values[tuple_offset][field_number]);
+    return ((char *) NULL);
 }
 
 /* --------------------------------
@@ -654,22 +620,21 @@ PQgetvalue(PortalBuffer *portal,
  */
 char *
 PQgetAttr(PortalBuffer *portal,
-	  int tuple_index,
-	  int field_number)
-{
+          int tuple_index,
+          int field_number) {
     TupleBlock *tbp;
     int tuple_offset;
     int len;
-    char* result = NULL;
+    char *result = NULL;
 
     tbp = PQGetTupleBlock(portal, tuple_index, &tuple_offset);
     if (tbp) {
-      len = tbp->lengths[tuple_offset][field_number];
-      result = malloc(len + 1);
-      memcpy(result, 
-	     tbp->values[tuple_offset][field_number],
-	     len);
-      result[len] = '\0';
+        len = tbp->lengths[tuple_offset][field_number];
+        result = malloc(len + 1);
+        memcpy(result,
+               tbp->values[tuple_offset][field_number],
+               len);
+        result[len] = '\0';
     }
     return result;
 }
@@ -681,16 +646,15 @@ PQgetAttr(PortalBuffer *portal,
  */
 int
 PQgetlength(PortalBuffer *portal,
-	    int tuple_index,
-	    int field_number)
-{
+            int tuple_index,
+            int field_number) {
     TupleBlock *tbp;
     int tuple_offset;
 
     tbp = PQGetTupleBlock(portal, tuple_index, &tuple_offset);
     if (tbp)
-	return(tbp->lengths[tuple_offset][field_number]);
-    return(-1);
+        return (tbp->lengths[tuple_offset][field_number]);
+    return (-1);
 }
 
 /* ----------------
@@ -698,10 +662,9 @@ PQgetlength(PortalBuffer *portal,
  * ----------------
  */
 void
-PQclear(char *pname)
-{    
+PQclear(char *pname) {
     if (!valid_pointer("PQclear: invalid portal name pointer", pname))
-	return;
+        return;
     pbuf_close(pname);
 }
 
@@ -714,68 +677,62 @@ static Dllist *pqNotifyList = NULL;
 
 /* remove invalid notifies before returning */
 void
-PQcleanNotify()
-{
-  Dlelem *e, *next;
-  PQNotifyList *p;
+PQcleanNotify() {
+    Dlelem *e, *next;
+    PQNotifyList *p;
 
-  e = DLGetHead(pqNotifyList);
+    e = DLGetHead(pqNotifyList);
 
-  while (e) {
-    next = DLGetSucc(e);
-    p = (PQNotifyList*)DLE_VAL(e);
-    if (p->valid == 0)  {
-      DLRemove(e);
-      DLFreeElem(e);
-      pfree(p);
+    while (e) {
+        next = DLGetSucc(e);
+        p = (PQNotifyList *) DLE_VAL(e);
+        if (p->valid == 0) {
+            DLRemove(e);
+            DLFreeElem(e);
+            pfree(p);
+        }
+        e = next;
     }
-    e = next;
-  }
 }
 
 void
-PQnotifies_init()
-{
+PQnotifies_init() {
     Dlelem *e;
     PQNotifyList *p;
-    
+
     if (pqNotifyList == NULL) {
-	pqNotifyList = DLNewList();
-    }
-    else {
-	/* clean all notifies */
-	for (e = DLGetHead(pqNotifyList); e != NULL; e = DLGetSucc(e)) {
-	    p = (PQNotifyList*)DLE_VAL(e);
-	    p->valid = 0;
-	}
-	PQcleanNotify();
+        pqNotifyList = DLNewList();
+    } else {
+        /* clean all notifies */
+        for (e = DLGetHead(pqNotifyList); e != NULL; e = DLGetSucc(e)) {
+            p = (PQNotifyList *) DLE_VAL(e);
+            p->valid = 0;
+        }
+        PQcleanNotify();
     }
 }
 
 PQNotifyList *
-PQnotifies()
-{
+PQnotifies() {
     Dlelem *e;
     PQcleanNotify();
     e = DLGetHead(pqNotifyList);
-    return (e ? (PQNotifyList*)DLE_VAL(e) : NULL);
+    return (e ? (PQNotifyList *) DLE_VAL(e) : NULL);
 }
 
 void
-PQremoveNotify(PQNotifyList *nPtr)
-{
-    nPtr->valid = 0;		/* remove later */
+PQremoveNotify(PQNotifyList *nPtr) {
+    nPtr->valid = 0;        /* remove later */
 }
 
 void
-PQappendNotify(char *relname, int pid)
-{
+PQappendNotify(char *relname, int pid) {
     PQNotifyList *p;
-    
-    if (pqNotifyList == NULL) 
-	pqNotifyList = DLNewList();
-    
-    p = (PQNotifyList*)pbuf_alloc(sizeof(PQNotifyList));
+
+    if (pqNotifyList == NULL)
+        pqNotifyList = DLNewList();
+
+    p = (PQNotifyList *) pbuf_alloc(sizeof(PQNotifyList));
     strncpy(p->relname, relname, NAMEDATALEN);
     p->be_pid = pid;
     p->valid = 1;

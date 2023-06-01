@@ -11,15 +11,16 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	KEYWORDS_H
-#define	KEYWORDS_H
+#ifndef    KEYWORDS_H
+#define    KEYWORDS_H
 
 typedef struct ScanKeyword {
     char *name;
-    int	value;
+    int value;
 } ScanKeyword;
 
 extern ScanKeyword *ScanKeywordLookup(char *text);
-extern char* AtomValueGetString(int atomval);
 
-#endif	/* KEYWORDS_H */
+extern char *AtomValueGetString(int atomval);
+
+#endif    /* KEYWORDS_H */

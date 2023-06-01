@@ -27,7 +27,7 @@
 #include "optimizer/xfunc.h"
 #include "optimizer/ordering.h"
 
-#include "parser/parsetree.h"		/* for getrelid() */
+#include "parser/parsetree.h"        /* for getrelid() */
 
 static Path *better_path(Path *new_path, List *unique_paths, bool *noOther);
 
@@ -42,12 +42,11 @@ static Path *better_path(Path *new_path, List *unique_paths, bool *noOther);
  *    
  */
 bool
-path_is_cheaper(Path *path1, Path *path2)
-{
+path_is_cheaper(Path *path1, Path *path2) {
     Cost cost1 = path1->path_cost;
     Cost cost2 = path2->path_cost;
 
-    return((bool)(cost1 < cost2));
+    return ((bool) (cost1 < cost2));
 }
 
 /*    
@@ -62,27 +61,26 @@ path_is_cheaper(Path *path1, Path *path2)
  *    
  */
 Path *
-set_cheapest(Rel *parent_rel, List *pathlist)
-{
+set_cheapest(Rel *parent_rel, List *pathlist) {
     List *p;
     Path *cheapest_so_far;
 
-    Assert(pathlist!=NIL);
-    Assert(IsA(parent_rel,Rel));
+    Assert(pathlist != NIL);
+    Assert(IsA(parent_rel, Rel));
 
-    cheapest_so_far = (Path*)lfirst(pathlist);
+    cheapest_so_far = (Path *) lfirst(pathlist);
 
     foreach (p, lnext(pathlist)) {
-	Path *path = (Path*)lfirst(p);
+        Path *path = (Path *) lfirst(p);
 
-	if (path_is_cheaper(path, cheapest_so_far)) {
-	    cheapest_so_far = path;
-	}
+        if (path_is_cheaper(path, cheapest_so_far)) {
+            cheapest_so_far = path;
+        }
     }
 
     parent_rel->cheapestpath = cheapest_so_far;
 
-    return(cheapest_so_far);
+    return (cheapest_so_far);
 }
 
 /*    
@@ -99,35 +97,33 @@ set_cheapest(Rel *parent_rel, List *pathlist)
  *    
  */
 List *
-add_pathlist(Rel *parent_rel, List *unique_paths, List *new_paths)
-{
+add_pathlist(Rel *parent_rel, List *unique_paths, List *new_paths) {
     List *x;
     Path *new_path;
     Path *old_path;
     bool noOther;
 
     foreach (x, new_paths) {
-	new_path = (Path*)lfirst(x);
-	if (member(new_path, unique_paths)) 
-	    continue;
-	old_path = better_path(new_path,unique_paths,&noOther);
+        new_path = (Path *) lfirst(x);
+        if (member(new_path, unique_paths))
+            continue;
+        old_path = better_path(new_path, unique_paths, &noOther);
 
-	if (noOther) {
-	    /*  Is a brand new path.  */
-	    new_path->parent = parent_rel;
-	    unique_paths = lcons(new_path, unique_paths);
-	} else if (old_path==NULL) {
-	    ;	/* do nothing if path is not cheaper */
-	} else if (old_path != NULL) { /* (IsA(old_path,Path)) { */
-	    new_path->parent = parent_rel;
-	    if (!parent_rel->pruneable) {
-		unique_paths = lcons(new_path, unique_paths);
-	    }else
-		unique_paths = lcons(new_path,
-				    LispRemove(old_path,unique_paths));
-	}
+        if (noOther) {
+            /*  Is a brand new path.  */
+            new_path->parent = parent_rel;
+            unique_paths = lcons(new_path, unique_paths);
+        } else if (old_path == NULL) { ;    /* do nothing if path is not cheaper */
+        } else if (old_path != NULL) { /* (IsA(old_path,Path)) { */
+            new_path->parent = parent_rel;
+            if (!parent_rel->pruneable) {
+                unique_paths = lcons(new_path, unique_paths);
+            } else
+                unique_paths = lcons(new_path,
+                                     LispRemove(old_path, unique_paths));
+        }
     }
-    return(unique_paths);
+    return (unique_paths);
 }
 
 /*    
@@ -144,10 +140,9 @@ add_pathlist(Rel *parent_rel, List *unique_paths, List *new_paths)
  *    
  */
 static Path *
-better_path(Path *new_path, List *unique_paths, bool *noOther)
-{
-    Path *old_path = (Path*)NULL;
-    Path *path = (Path*)NULL;
+better_path(Path *new_path, List *unique_paths, bool *noOther) {
+    Path *old_path = (Path *) NULL;
+    Path *path = (Path *) NULL;
     List *temp = NIL;
     Path *retval = NULL;
 
@@ -155,27 +150,27 @@ better_path(Path *new_path, List *unique_paths, bool *noOther)
      * the lisp planner, but otherwise, doesn't seem to work
      * for the case where new_path is 'nil
      */
-    foreach (temp,unique_paths) {
-	path = (Path*) lfirst(temp);
+    foreach (temp, unique_paths) {
+        path = (Path *) lfirst(temp);
 
-	if ((equal_path_path_ordering(&new_path->p_ordering,
-				      &path->p_ordering) &&
-	     samekeys(new_path->keys, path->keys))) {
-	    old_path = path;
-	    break;
-	}
+        if ((equal_path_path_ordering(&new_path->p_ordering,
+                                      &path->p_ordering) &&
+             samekeys(new_path->keys, path->keys))) {
+            old_path = path;
+            break;
+        }
     }
 
-    if (old_path==NULL) {
-	*noOther = true;
-    } else { 
-	*noOther = false;
-	if (path_is_cheaper(new_path,old_path)) {
-	    retval = old_path;
-	}
+    if (old_path == NULL) {
+        *noOther = true;
+    } else {
+        *noOther = false;
+        if (path_is_cheaper(new_path, old_path)) {
+            retval = old_path;
+        }
     }
-     
-    return(retval);
+
+    return (retval);
 }
 
 
@@ -191,13 +186,12 @@ better_path(Path *new_path, List *unique_paths, bool *noOther)
  *    
  */
 Path *
-create_seqscan_path(Rel *rel)
-{
-    int relid=0;
+create_seqscan_path(Rel *rel) {
+    int relid = 0;
 
     Path *pathnode = makeNode(Path);
 
-    pathnode->pathtype = T_SeqScan; 
+    pathnode->pathtype = T_SeqScan;
     pathnode->parent = rel;
     pathnode->path_cost = 0.0;
     pathnode->p_ordering.ordtype = SORTOP_ORDER;
@@ -206,19 +200,19 @@ create_seqscan_path(Rel *rel)
     /* copy clauseinfo list into path for expensive function processing 
      * -- JMH, 7/7/92
      */
-    pathnode->locclauseinfo= 
-	(List*)copyObject((Node*)rel->clauseinfo);
+    pathnode->locclauseinfo =
+            (List *) copyObject((Node *) rel->clauseinfo);
 
-    if (rel->relids !=NULL)
-	relid = lfirsti(rel->relids);
+    if (rel->relids != NULL)
+        relid = lfirsti(rel->relids);
 
-    pathnode->path_cost = cost_seqscan (relid,
-					rel->pages, rel->tuples);
+    pathnode->path_cost = cost_seqscan(relid,
+                                       rel->pages, rel->tuples);
     /* add in expensive functions cost!  -- JMH, 7/7/92 */
 #if 0
     if (XfuncMode != XFUNC_OFF) {
-	pathnode->path_cost +=
-	    xfunc_get_path_cost(pathnode));
+    pathnode->path_cost +=
+        xfunc_get_path_cost(pathnode));
     }
 #endif
     return (pathnode);
@@ -240,12 +234,11 @@ create_seqscan_path(Rel *rel)
 IndexPath *
 create_index_path(Query *root,
                   Rel *rel,
-		  Rel *index,
-		  List *restriction_clauses,
-		  bool is_join_scan)
-{
+                  Rel *index,
+                  List *restriction_clauses,
+                  bool is_join_scan) {
     IndexPath *pathnode = makeNode(IndexPath);
-    
+
     pathnode->path.pathtype = T_IndexScan;
     pathnode->path.parent = rel;
     pathnode->indexid = index->relids;
@@ -258,114 +251,114 @@ create_index_path(Query *root,
      *  -- JMH, 7/7/92
      */
     pathnode->path.locclauseinfo =
-	set_difference((List*) copyObject((Node*)rel->clauseinfo),
-		       (List*) restriction_clauses);
+            set_difference((List *) copyObject((Node *) rel->clauseinfo),
+                           (List *) restriction_clauses);
 
     /*
      * The index must have an ordering for the path to have (ordering) keys, 
      * and vice versa.
      */
     if (pathnode->path.p_ordering.ord.sortop) {
-	pathnode->path.keys = collect_index_pathkeys(index->indexkeys,
-						     rel->targetlist);
-	/*
-	 * Check that the keys haven't 'disappeared', since they may 
-	 * no longer be in the target list (i.e., index keys that are not 
-	 * relevant to the scan are not applied to the scan path node,
-	 * so if no index keys were found, we can't order the path).
-	 */
-	if (pathnode->path.keys==NULL) {
-	    pathnode->path.p_ordering.ord.sortop = NULL;
-	}
+        pathnode->path.keys = collect_index_pathkeys(index->indexkeys,
+                                                     rel->targetlist);
+        /*
+         * Check that the keys haven't 'disappeared', since they may 
+         * no longer be in the target list (i.e., index keys that are not 
+         * relevant to the scan are not applied to the scan path node,
+         * so if no index keys were found, we can't order the path).
+         */
+        if (pathnode->path.keys == NULL) {
+            pathnode->path.p_ordering.ord.sortop = NULL;
+        }
     } else {
-	pathnode->path.keys = NULL;
+        pathnode->path.keys = NULL;
     }
 
-    if (is_join_scan || restriction_clauses==NULL) {
-	/*
-	 * Indices used for joins or sorting result nodes don't
-	 * restrict the result at all, they simply order it,
-	 * so compute the scan cost 
-	 * accordingly -- use a selectivity of 1.0.
-	 */
+    if (is_join_scan || restriction_clauses == NULL) {
+        /*
+         * Indices used for joins or sorting result nodes don't
+         * restrict the result at all, they simply order it,
+         * so compute the scan cost 
+         * accordingly -- use a selectivity of 1.0.
+         */
 /* is the statement above really true?  what about IndexScan as the 
    inner of a join? */
-	pathnode->path.path_cost =
-	    cost_index (lfirsti(index->relids),
-			index->pages,
-			1.0,
-			rel->pages,
-			rel->tuples,
-			index->pages,
-			index->tuples,
-			false);
-	/* add in expensive functions cost!  -- JMH, 7/7/92 */
+        pathnode->path.path_cost =
+                cost_index(lfirsti(index->relids),
+                           index->pages,
+                           1.0,
+                           rel->pages,
+                           rel->tuples,
+                           index->pages,
+                           index->tuples,
+                           false);
+        /* add in expensive functions cost!  -- JMH, 7/7/92 */
 #if 0
-	if (XfuncMode != XFUNC_OFF) {
-	    pathnode->path_cost =
-		(pathnode->path_cost +
-		 xfunc_get_path_cost((Path*)pathnode));
-	}
+        if (XfuncMode != XFUNC_OFF) {
+            pathnode->path_cost =
+            (pathnode->path_cost +
+             xfunc_get_path_cost((Path*)pathnode));
+        }
 #endif
-    } else  {
-	/*
-	 * Compute scan cost for the case when 'index' is used with a 
-	 * restriction clause.
-	 */
-	List *attnos;
-	List *values;
-	List *flags;
-	float npages;
-	float selec;
-	Cost clausesel;
+    } else {
+        /*
+         * Compute scan cost for the case when 'index' is used with a 
+         * restriction clause.
+         */
+        List *attnos;
+        List *values;
+        List *flags;
+        float npages;
+        float selec;
+        Cost clausesel;
 
-	get_relattvals(restriction_clauses,
-		       &attnos,
-		       &values,
-		       &flags);
-	index_selectivity(lfirsti(index->relids),
-			  index->classlist,
-			  get_opnos(restriction_clauses),
-			  getrelid(lfirsti(rel->relids),
-				   root->rtable),
-			  attnos,
-			  values,
-			  flags,
-			  length(restriction_clauses),
-			  &npages,
-			  &selec);
-	/*   each clause gets an equal selectivity */
-	clausesel = 
-	    pow(selec, 
-		1.0 / (double) length(restriction_clauses));
-    
-	pathnode->indexqual = restriction_clauses;
-	pathnode->path.path_cost =
-	    cost_index (lfirsti(index->relids),
-			(int)npages,
-			selec,
-			rel->pages,
-			rel->tuples,
-			index->pages,
-			index->tuples,
-			false);
+        get_relattvals(restriction_clauses,
+                       &attnos,
+                       &values,
+                       &flags);
+        index_selectivity(lfirsti(index->relids),
+                          index->classlist,
+                          get_opnos(restriction_clauses),
+                          getrelid(lfirsti(rel->relids),
+                                   root->rtable),
+                          attnos,
+                          values,
+                          flags,
+                          length(restriction_clauses),
+                          &npages,
+                          &selec);
+        /*   each clause gets an equal selectivity */
+        clausesel =
+                pow(selec,
+                    1.0 / (double) length(restriction_clauses));
+
+        pathnode->indexqual = restriction_clauses;
+        pathnode->path.path_cost =
+                cost_index(lfirsti(index->relids),
+                           (int) npages,
+                           selec,
+                           rel->pages,
+                           rel->tuples,
+                           index->pages,
+                           index->tuples,
+                           false);
 
 #if 0
-	/* add in expensive functions cost!  -- JMH, 7/7/92 */
-	if (XfuncMode != XFUNC_OFF) {
-	    pathnode->path_cost += 
-		xfunc_get_path_cost((Path*)pathnode);
-	}
+        /* add in expensive functions cost!  -- JMH, 7/7/92 */
+        if (XfuncMode != XFUNC_OFF) {
+            pathnode->path_cost += 
+            xfunc_get_path_cost((Path*)pathnode);
+        }
 #endif
-	/* Set selectivities of clauses used with index to the selectivity 
-	 * of this index, subdividing the selectivity equally over each of 
-	 * the clauses. 
-	 */
+        /* Set selectivities of clauses used with index to the selectivity 
+         * of this index, subdividing the selectivity equally over each of 
+         * the clauses. 
+         */
 
-	/* XXX Can this divide the selectivities in a better way? */
-	set_clause_selectivities(restriction_clauses, clausesel);
+        /* XXX Can this divide the selectivities in a better way? */
+        set_clause_selectivities(restriction_clauses, clausesel);
     }
-    return(pathnode);
+    return (pathnode);
 }
 
 /*    
@@ -384,53 +377,52 @@ create_index_path(Query *root,
  */
 JoinPath *
 create_nestloop_path(Rel *joinrel,
-		     Rel *outer_rel,
-		     Path *outer_path,
-		     Path *inner_path,
-		     List *keys)
-{
+                     Rel *outer_rel,
+                     Path *outer_path,
+                     Path *inner_path,
+                     List *keys) {
     JoinPath *pathnode = makeNode(JoinPath);
-     
+
     pathnode->path.pathtype = T_NestLoop;
-    pathnode->path.parent  = joinrel;
+    pathnode->path.parent = joinrel;
     pathnode->outerjoinpath = outer_path;
     pathnode->innerjoinpath = inner_path;
     pathnode->pathclauseinfo = joinrel->clauseinfo;
     pathnode->path.keys = keys;
     pathnode->path.joinid = NIL;
-    pathnode->path.outerjoincost = (Cost)0.0;
+    pathnode->path.outerjoincost = (Cost) 0.0;
     pathnode->path.locclauseinfo = NIL;
 
     if (keys) {
-	pathnode->path.p_ordering.ordtype =
-	    outer_path->p_ordering.ordtype;
-	if (outer_path->p_ordering.ordtype == SORTOP_ORDER) {
-	    pathnode->path.p_ordering.ord.sortop =
-		outer_path->p_ordering.ord.sortop;
-	} else {
-	    pathnode->path.p_ordering.ord.merge =
-		outer_path->p_ordering.ord.merge;
-	}
+        pathnode->path.p_ordering.ordtype =
+                outer_path->p_ordering.ordtype;
+        if (outer_path->p_ordering.ordtype == SORTOP_ORDER) {
+            pathnode->path.p_ordering.ord.sortop =
+                    outer_path->p_ordering.ord.sortop;
+        } else {
+            pathnode->path.p_ordering.ord.merge =
+                    outer_path->p_ordering.ord.merge;
+        }
     } else {
-	pathnode->path.p_ordering.ordtype = SORTOP_ORDER;
-	pathnode->path.p_ordering.ord.sortop = NULL;
+        pathnode->path.p_ordering.ordtype = SORTOP_ORDER;
+        pathnode->path.p_ordering.ord.sortop = NULL;
     }
 
-    pathnode->path.path_cost  = 
-	cost_nestloop(outer_path->path_cost,
-		      inner_path->path_cost,
-		      outer_rel->size,
-		      inner_path->parent->size,
-		      page_size(outer_rel->size,
-				outer_rel->width),
-		      IsA(inner_path,IndexPath));
+    pathnode->path.path_cost =
+            cost_nestloop(outer_path->path_cost,
+                          inner_path->path_cost,
+                          outer_rel->size,
+                          inner_path->parent->size,
+                          page_size(outer_rel->size,
+                                    outer_rel->width),
+                          IsA(inner_path, IndexPath));
     /* add in expensive function costs -- JMH 7/7/92 */
 #if 0
     if (XfuncMode != XFUNC_OFF) {
-	pathnode->path_cost += xfunc_get_path_cost((Path*)pathnode);
+    pathnode->path_cost += xfunc_get_path_cost((Path*)pathnode);
     }
 #endif
-    return(pathnode);
+    return (pathnode);
 }
 
 /*    
@@ -454,49 +446,48 @@ create_nestloop_path(Rel *joinrel,
  */
 MergePath *
 create_mergesort_path(Rel *joinrel,
-		      int outersize,
-		      int innersize,
-		      int outerwidth,
-		      int innerwidth,
-		      Path *outer_path,
-		      Path *inner_path,
-		      List *keys,
-		      MergeOrder *order,
-		      List *mergeclauses,
-		      List *outersortkeys,
-		      List *innersortkeys)
-{
+                      int outersize,
+                      int innersize,
+                      int outerwidth,
+                      int innerwidth,
+                      Path *outer_path,
+                      Path *inner_path,
+                      List *keys,
+                      MergeOrder *order,
+                      List *mergeclauses,
+                      List *outersortkeys,
+                      List *innersortkeys) {
     MergePath *pathnode = makeNode(MergePath);
 
-    pathnode->jpath.path.pathtype  = T_MergeJoin;
-    pathnode->jpath.path.parent  = joinrel;
+    pathnode->jpath.path.pathtype = T_MergeJoin;
+    pathnode->jpath.path.parent = joinrel;
     pathnode->jpath.outerjoinpath = outer_path;
     pathnode->jpath.innerjoinpath = inner_path;
     pathnode->jpath.pathclauseinfo = joinrel->clauseinfo;
     pathnode->jpath.path.keys = keys;
     pathnode->jpath.path.p_ordering.ordtype = MERGE_ORDER;
-    pathnode->jpath.path.p_ordering.ord.merge  = order;
+    pathnode->jpath.path.p_ordering.ord.merge = order;
     pathnode->path_mergeclauses = mergeclauses;
     pathnode->jpath.path.locclauseinfo = NIL;
     pathnode->outersortkeys = outersortkeys;
     pathnode->innersortkeys = innersortkeys;
-    pathnode->jpath.path.path_cost  =
-	cost_mergesort(outer_path->path_cost,
-		       inner_path->path_cost,
-		       outersortkeys,
-		       innersortkeys,
-		       outersize,
-		       innersize,
-		       outerwidth,
-		       innerwidth);
+    pathnode->jpath.path.path_cost =
+            cost_mergesort(outer_path->path_cost,
+                           inner_path->path_cost,
+                           outersortkeys,
+                           innersortkeys,
+                           outersize,
+                           innersize,
+                           outerwidth,
+                           innerwidth);
     /* add in expensive function costs -- JMH 7/7/92 */
 #if 0
     if (XfuncMode != XFUNC_OFF) {
-	pathnode->path_cost +=
-	    xfunc_get_path_cost((Path*)pathnode);
+    pathnode->path_cost +=
+        xfunc_get_path_cost((Path*)pathnode);
     }
 #endif
-    return(pathnode);
+    return (pathnode);
 }
 
 /*    
@@ -519,22 +510,21 @@ create_mergesort_path(Rel *joinrel,
  */
 HashPath *
 create_hashjoin_path(Rel *joinrel,
-		     int outersize,
-		     int innersize,
-		     int outerwidth,
-		     int innerwidth,
-		     Path *outer_path,
-		     Path *inner_path,
-		     List *keys,
-		     Oid operator,
-		     List *hashclauses,
-		     List *outerkeys,
-		     List *innerkeys)
-{
+                     int outersize,
+                     int innersize,
+                     int outerwidth,
+                     int innerwidth,
+                     Path *outer_path,
+                     Path *inner_path,
+                     List *keys,
+                     Oid operator,
+                     List *hashclauses,
+                     List *outerkeys,
+                     List *innerkeys) {
     HashPath *pathnode = makeNode(HashPath);
 
-    pathnode->jpath.path.pathtype  = T_HashJoin; 
-    pathnode->jpath.path.parent  = joinrel;
+    pathnode->jpath.path.pathtype = T_HashJoin;
+    pathnode->jpath.path.parent = joinrel;
     pathnode->jpath.outerjoinpath = outer_path;
     pathnode->jpath.innerjoinpath = inner_path;
     pathnode->jpath.pathclauseinfo = joinrel->clauseinfo;
@@ -542,25 +532,25 @@ create_hashjoin_path(Rel *joinrel,
     pathnode->jpath.path.keys = keys;
     pathnode->jpath.path.p_ordering.ordtype = SORTOP_ORDER;
     pathnode->jpath.path.p_ordering.ord.sortop = NULL;
-    pathnode->jpath.path.outerjoincost = (Cost)0.0;
-    pathnode->jpath.path.joinid =  (Relid)NULL;
-    /*    pathnode->hashjoinoperator = operator;  */ 
+    pathnode->jpath.path.outerjoincost = (Cost) 0.0;
+    pathnode->jpath.path.joinid = (Relid) NULL;
+    /*    pathnode->hashjoinoperator = operator;  */
     pathnode->path_hashclauses = hashclauses;
     pathnode->outerhashkeys = outerkeys;
     pathnode->innerhashkeys = innerkeys;
-    pathnode->jpath.path.path_cost  =
-	cost_hashjoin(outer_path->path_cost,
-		      inner_path->path_cost,
-		      outerkeys,
-		      innerkeys,
-		      outersize,innersize,
-		      outerwidth,innerwidth);
+    pathnode->jpath.path.path_cost =
+            cost_hashjoin(outer_path->path_cost,
+                          inner_path->path_cost,
+                          outerkeys,
+                          innerkeys,
+                          outersize, innersize,
+                          outerwidth, innerwidth);
     /* add in expensive function costs -- JMH 7/7/92 */
 #if 0
     if (XfuncMode != XFUNC_OFF) {
-	pathnode->path_cost += 
-	    xfunc_get_path_cost((Path*)pathnode);
+    pathnode->path_cost += 
+        xfunc_get_path_cost((Path*)pathnode);
     }
 #endif
-    return(pathnode);
+    return (pathnode);
 }

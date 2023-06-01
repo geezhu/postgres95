@@ -31,13 +31,14 @@
  *  AllocateFile();
  *  FreeFile();
  */
-#ifndef	FD_H
+#ifndef    FD_H
 #define FD_H
 
 /*
  * FileOpen uses the standard UNIX open(2) flags.
  */
-#include <fcntl.h>	/* for O_ on most */
+#include <fcntl.h>    /* for O_ on most */
+
 #ifndef O_RDONLY
 #include <sys/file.h>	/* for O_ on the rest */
 #endif /* O_RDONLY */
@@ -46,7 +47,9 @@
  * FileSeek uses the standard UNIX lseek(2) flags.
  */
 #ifndef WIN32
-#include <unistd.h>	/* for SEEK_ on most */
+
+#include <unistd.h>    /* for SEEK_ on most */
+
 #else
 #ifndef SEEK_SET
 #include <stdio.h>	/* for SEEK_ on the rest */
@@ -56,41 +59,56 @@
 #include "c.h"
 #include "storage/block.h"
 
-typedef char   *FileName;
+typedef char *FileName;
 
-typedef int	File;
+typedef int File;
 
 /* originally in libpq-fs.h */
 struct pgstat { /* just the fields we need from stat structure */
     int st_ino;
     int st_mode;
     unsigned int st_size;
-    unsigned int st_sizehigh;	/* high order bits */
+    unsigned int st_sizehigh;    /* high order bits */
 /* 2^64 == 1.8 x 10^20 bytes */
     int st_uid;
-    int st_atime_s;	/* just the seconds */
-    int st_mtime_s;	/* since SysV and the new BSD both have */
-    int st_ctime_s;	/* usec fields.. */
+    int st_atime_s;    /* just the seconds */
+    int st_mtime_s;    /* since SysV and the new BSD both have */
+    int st_ctime_s;    /* usec fields.. */
 };
 
 /*
  * prototypes for functions in fd.c
  */
 extern void FileInvalidate(File file);
+
 extern File FileNameOpenFile(FileName fileName, int fileFlags, int fileMode);
+
 extern File PathNameOpenFile(FileName fileName, int fileFlags, int fileMode);
+
 extern void FileClose(File file);
+
 extern void FileUnlink(File file);
+
 extern int FileRead(File file, char *buffer, int amount);
+
 extern int FileWrite(File file, char *buffer, int amount);
+
 extern long FileSeek(File file, long offset, int whence);
+
 extern long FileTell(File file);
+
 extern int FileTruncate(File file, int offset);
+
 extern int FileSync(File file);
+
 extern int FileNameUnlink(char *filename);
+
 extern void AllocateFile(void);
+
 extern void FreeFile(void);
+
 extern void closeAllVfds(void);
+
 extern void closeOneVfd(void);
 
-#endif	/* FD_H */
+#endif    /* FD_H */

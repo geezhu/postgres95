@@ -26,20 +26,30 @@
 #include "utils/palloc.h"
 
 typedef struct f_smgr {
-    int		(*smgr_init)();		/* may be NULL */
-    int		(*smgr_shutdown)();	/* may be NULL */
-    int		(*smgr_create)();
-    int		(*smgr_unlink)();
-    int		(*smgr_extend)();
-    int		(*smgr_open)();
-    int		(*smgr_close)();
-    int		(*smgr_read)();
-    int		(*smgr_write)();
-    int		(*smgr_flush)();
-    int		(*smgr_blindwrt)();
-    int		(*smgr_nblocks)();
-    int		(*smgr_commit)();	/* may be NULL */
-    int		(*smgr_abort)();	/* may be NULL */
+    int (*smgr_init)();        /* may be NULL */
+    int (*smgr_shutdown)();    /* may be NULL */
+    int (*smgr_create)();
+
+    int (*smgr_unlink)();
+
+    int (*smgr_extend)();
+
+    int (*smgr_open)();
+
+    int (*smgr_close)();
+
+    int (*smgr_read)();
+
+    int (*smgr_write)();
+
+    int (*smgr_flush)();
+
+    int (*smgr_blindwrt)();
+
+    int (*smgr_nblocks)();
+
+    int (*smgr_commit)();    /* may be NULL */
+    int (*smgr_abort)();    /* may be NULL */
 } f_smgr;
 
 /*
@@ -49,14 +59,14 @@ typedef struct f_smgr {
 
 static f_smgr smgrsw[] = {
 
-    /* magnetic disk */
-    { mdinit, NULL, mdcreate, mdunlink, mdextend, mdopen, mdclose,
-      mdread, mdwrite, mdflush, mdblindwrt, mdnblocks, mdcommit, mdabort },
+        /* magnetic disk */
+        {mdinit, NULL, mdcreate, mdunlink, mdextend, mdopen, mdclose,
+         mdread, mdwrite, mdflush, mdblindwrt, mdnblocks, mdcommit, mdabort},
 
 #ifdef MAIN_MEMORY
-    /* main memory */
-    { mminit, mmshutdown, mmcreate, mmunlink, mmextend, mmopen, mmclose,
-      mmread, mmwrite, mmflush, mmblindwrt, mmnblocks, mmcommit, mmabort },
+        /* main memory */
+        { mminit, mmshutdown, mmcreate, mmunlink, mmextend, mmopen, mmclose,
+          mmread, mmwrite, mmflush, mmblindwrt, mmnblocks, mmcommit, mmabort },
 
 #endif /* MAIN_MEMORY */
 };
@@ -69,9 +79,9 @@ static f_smgr smgrsw[] = {
  */
 
 static bool smgrwo[] = {
-    false,		/* magnetic disk */
+        false,        /* magnetic disk */
 #ifdef MAIN_MEMORY
-    false,		/* main memory*/
+        false,		/* main memory*/
 #endif /* MAIN_MEMORY */
 };
 static int NSmgr = lengthof(smgrsw);
@@ -82,16 +92,15 @@ static int NSmgr = lengthof(smgrsw);
  *
  */
 int
-smgrinit()
-{
+smgrinit() {
     int i;
     extern char *smgrout();
 
     for (i = 0; i < NSmgr; i++) {
-	if (smgrsw[i].smgr_init) {
-	    if ((*(smgrsw[i].smgr_init))() == SM_FAIL)
-		elog(FATAL, "initialization failed on %s", smgrout(i));
-	}
+        if (smgrsw[i].smgr_init) {
+            if ((*(smgrsw[i].smgr_init))() == SM_FAIL)
+                elog(FATAL, "initialization failed on %s", smgrout(i));
+        }
     }
 
     /* register the shutdown proc */
@@ -101,16 +110,15 @@ smgrinit()
 }
 
 void
-smgrshutdown(int dummy)
-{
+smgrshutdown(int dummy) {
     int i;
     extern char *smgrout();
 
     for (i = 0; i < NSmgr; i++) {
-	if (smgrsw[i].smgr_shutdown) {
-	    if ((*(smgrsw[i].smgr_shutdown))() == SM_FAIL)
-		elog(FATAL, "shutdown failed on %s", smgrout(i));
-	}
+        if (smgrsw[i].smgr_shutdown) {
+            if ((*(smgrsw[i].smgr_shutdown))() == SM_FAIL)
+                elog(FATAL, "shutdown failed on %s", smgrout(i));
+        }
     }
 }
 
@@ -121,13 +129,12 @@ smgrshutdown(int dummy)
  *	device, and returns a file descriptor for it.
  */
 int
-smgrcreate(int16 which, Relation reln)
-{
+smgrcreate(int16 which, Relation reln) {
     int fd;
 
     if ((fd = (*(smgrsw[which].smgr_create))(reln)) < 0)
-	elog(WARN, "cannot open %.*s",
-	     NAMEDATALEN, &(reln->rd_rel->relname.data[0]));
+        elog(WARN, "cannot open %.*s",
+             NAMEDATALEN, &(reln->rd_rel->relname.data[0]));
 
     return (fd);
 }
@@ -138,13 +145,12 @@ smgrcreate(int16 which, Relation reln)
  *	The relation is removed from the store.
  */
 int
-smgrunlink(int16 which, Relation reln)
-{
+smgrunlink(int16 which, Relation reln) {
     int status;
 
     if ((status = (*(smgrsw[which].smgr_unlink))(reln)) == SM_FAIL)
-	elog(WARN, "cannot unlink %.*s",
-	     NAMEDATALEN, &(reln->rd_rel->relname.data[0]));
+        elog(WARN, "cannot unlink %.*s",
+             NAMEDATALEN, &(reln->rd_rel->relname.data[0]));
 
     return (status);
 }
@@ -156,15 +162,14 @@ smgrunlink(int16 which, Relation reln)
  *	failure.
  */
 int
-smgrextend(int16 which, Relation reln, char *buffer)
-{
+smgrextend(int16 which, Relation reln, char *buffer) {
     int status;
 
     status = (*(smgrsw[which].smgr_extend))(reln, buffer);
 
     if (status == SM_FAIL)
-	elog(WARN, "%.*s: cannot extend",
-	     NAMEDATALEN, &(reln->rd_rel->relname.data[0]));
+        elog(WARN, "%.*s: cannot extend",
+             NAMEDATALEN, &(reln->rd_rel->relname.data[0]));
 
     return (status);
 }
@@ -176,13 +181,12 @@ smgrextend(int16 which, Relation reln, char *buffer)
  *	transaction on failure.
  */
 int
-smgropen(int16 which, Relation reln)
-{
+smgropen(int16 which, Relation reln) {
     int fd;
 
     if ((fd = (*(smgrsw[which].smgr_open))(reln)) < 0)
-	elog(WARN, "cannot open %.*s",
-	     NAMEDATALEN, &(reln->rd_rel->relname.data[0]));
+        elog(WARN, "cannot open %.*s",
+             NAMEDATALEN, &(reln->rd_rel->relname.data[0]));
 
     return (fd);
 }
@@ -193,11 +197,10 @@ smgropen(int16 which, Relation reln)
  *	Returns SM_SUCCESS on success, aborts on failure.
  */
 int
-smgrclose(int16 which, Relation reln)
-{
+smgrclose(int16 which, Relation reln) {
     if ((*(smgrsw[which].smgr_close))(reln) == SM_FAIL)
-	elog(WARN, "cannot close %.*s",
-	     NAMEDATALEN, &(reln->rd_rel->relname.data[0]));
+        elog(WARN, "cannot close %.*s",
+             NAMEDATALEN, &(reln->rd_rel->relname.data[0]));
 
     return (SM_SUCCESS);
 }
@@ -213,15 +216,14 @@ smgrclose(int16 which, Relation reln)
  *	the current transaction is aborted.
  */
 int
-smgrread(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
-{
+smgrread(int16 which, Relation reln, BlockNumber blocknum, char *buffer) {
     int status;
 
     status = (*(smgrsw[which].smgr_read))(reln, blocknum, buffer);
 
     if (status == SM_FAIL)
-	elog(WARN, "cannot read block %d of %.*s",
-	     blocknum, NAMEDATALEN, &(reln->rd_rel->relname.data[0]));
+        elog(WARN, "cannot read block %d of %.*s",
+             blocknum, NAMEDATALEN, &(reln->rd_rel->relname.data[0]));
 
     return (status);
 }
@@ -235,15 +237,14 @@ smgrread(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
  *	the current transaction.
  */
 int
-smgrwrite(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
-{
+smgrwrite(int16 which, Relation reln, BlockNumber blocknum, char *buffer) {
     int status;
 
     status = (*(smgrsw[which].smgr_write))(reln, blocknum, buffer);
 
     if (status == SM_FAIL)
-	elog(WARN, "cannot write block %d of %.*s",
-	     blocknum, NAMEDATALEN, &(reln->rd_rel->relname.data[0]));
+        elog(WARN, "cannot write block %d of %.*s",
+             blocknum, NAMEDATALEN, &(reln->rd_rel->relname.data[0]));
 
     return (status);
 }
@@ -252,15 +253,14 @@ smgrwrite(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
  *  smgrflush() -- A synchronous smgrwrite().
  */
 int
-smgrflush(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
-{
+smgrflush(int16 which, Relation reln, BlockNumber blocknum, char *buffer) {
     int status;
 
     status = (*(smgrsw[which].smgr_flush))(reln, blocknum, buffer);
 
     if (status == SM_FAIL)
-	elog(WARN, "cannot flush block %d of %.*s to stable store",
-	     blocknum, NAMEDATALEN, &(reln->rd_rel->relname.data[0]));
+        elog(WARN, "cannot flush block %d of %.*s to stable store",
+             blocknum, NAMEDATALEN, &(reln->rd_rel->relname.data[0]));
 
     return (status);
 }
@@ -279,13 +279,12 @@ smgrflush(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
  */
 int
 smgrblindwrt(int16 which,
-	     char *dbname,
-	     char *relname,
-	     Oid dbid,
-	     Oid relid,
-	     BlockNumber blkno,
-	     char *buffer)
-{
+             char *dbname,
+             char *relname,
+             Oid dbid,
+             Oid relid,
+             BlockNumber blkno,
+             char *buffer) {
     char *dbstr;
     char *relstr;
     int status;
@@ -294,11 +293,11 @@ smgrblindwrt(int16 which,
     relstr = pstrdup(relname);
 
     status = (*(smgrsw[which].smgr_blindwrt))(dbstr, relstr, dbid, relid,
-					      blkno, buffer);
+                                              blkno, buffer);
 
     if (status == SM_FAIL)
-	elog(WARN, "cannot write block %d of %s [%s] blind",
-	     blkno, relstr, dbstr);
+        elog(WARN, "cannot write block %d of %s [%s] blind",
+             blkno, relstr, dbstr);
 
     pfree(dbstr);
     pfree(relstr);
@@ -314,13 +313,12 @@ smgrblindwrt(int16 which,
  *	transaction on failure.
  */
 int
-smgrnblocks(int16 which, Relation reln)
-{
+smgrnblocks(int16 which, Relation reln) {
     int nblocks;
 
     if ((nblocks = (*(smgrsw[which].smgr_nblocks))(reln)) < 0)
-	elog(WARN, "cannot count blocks for %.*s",
-	     NAMEDATALEN, &(reln->rd_rel->relname.data[0]));
+        elog(WARN, "cannot count blocks for %.*s",
+             NAMEDATALEN, &(reln->rd_rel->relname.data[0]));
 
     return (nblocks);
 }
@@ -330,42 +328,39 @@ smgrnblocks(int16 which, Relation reln)
  *				 current transaction.
  */
 int
-smgrcommit()
-{
+smgrcommit() {
     int i;
     extern char *smgrout();
 
     for (i = 0; i < NSmgr; i++) {
-	if (smgrsw[i].smgr_commit) {
-	    if ((*(smgrsw[i].smgr_commit))() == SM_FAIL)
-		elog(FATAL, "transaction commit failed on %s", smgrout(i));
-	}
+        if (smgrsw[i].smgr_commit) {
+            if ((*(smgrsw[i].smgr_commit))() == SM_FAIL)
+                elog(FATAL, "transaction commit failed on %s", smgrout(i));
+        }
     }
 
     return (SM_SUCCESS);
 }
 
 int
-smgrabort()
-{
+smgrabort() {
     int i;
     extern char *smgrout();
 
     for (i = 0; i < NSmgr; i++) {
-	if (smgrsw[i].smgr_abort) {
-	    if ((*(smgrsw[i].smgr_abort))() == SM_FAIL)
-		elog(FATAL, "transaction abort failed on %s", smgrout(i));
-	}
+        if (smgrsw[i].smgr_abort) {
+            if ((*(smgrsw[i].smgr_abort))() == SM_FAIL)
+                elog(FATAL, "transaction abort failed on %s", smgrout(i));
+        }
     }
 
     return (SM_SUCCESS);
 }
 
 bool
-smgriswo(int16 smgrno)
-{
+smgriswo(int16 smgrno) {
     if (smgrno < 0 || smgrno >= NSmgr)
-	elog(WARN, "illegal storage manager number %d", smgrno);
+        elog(WARN, "illegal storage manager number %d", smgrno);
 
     return (smgrwo[smgrno]);
 }

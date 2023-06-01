@@ -29,7 +29,7 @@
 #include "catalog/pg_class.h"
 #include "catalog/pg_proc.h"
 
-#include "storage/fd.h"		/* for O_ */
+#include "storage/fd.h"        /* for O_ */
 #include "storage/itemid.h"
 #include "storage/bufmgr.h"
 #include "storage/bufpage.h"
@@ -41,30 +41,44 @@
 
 #include "commands/vacuum.h"
 
-bool VacuumRunning =	false;
+bool VacuumRunning = false;
 
 /* non-export function prototypes */
 static void _vc_init(char *vacrel);
+
 static void _vc_shutdown(char *vacrel);
+
 static void _vc_vacuum(char *vacrel);
+
 static VRelList _vc_getrels(Portal p, char *vacrel);
+
 static void _vc_vacone(Portal p, VRelList curvrl);
+
 static void _vc_vacheap(Portal p, VRelList curvrl, Relation onerel);
+
 static void _vc_vacindices(VRelList curvrl, Relation onerel);
+
 static void _vc_vaconeind(VRelList curvrl, Relation indrel);
+
 static void _vc_updstats(Oid relid, int npages, int ntuples, bool hasindex);
+
 static void _vc_setpagelock(Relation rel, BlockNumber blkno);
+
 static bool _vc_ontidlist(ItemPointer itemptr, VTidList tidlist);
+
 static void _vc_reaptid(Portal p, VRelList curvrl, BlockNumber blkno,
-			OffsetNumber offnum);
+                        OffsetNumber offnum);
+
 static void _vc_free(Portal p, VRelList vrl);
+
 static Relation _vc_getarchrel(Relation heaprel);
+
 static void _vc_archive(Relation archrel, HeapTuple htup);
+
 static bool _vc_isarchrel(char *rname);
 
 void
-vacuum(char *vacrel)
-{
+vacuum(char *vacrel) {
     /* initialize vacuum cleaner */
     _vc_init(vacrel);
 
@@ -93,12 +107,11 @@ vacuum(char *vacrel)
  *	PostgresMain().
  */
 static void
-_vc_init(char *vacrel)
-{
+_vc_init(char *vacrel) {
     int fd;
 
-    if ((fd = open("pg_vlock", O_CREAT|O_EXCL, 0600)) < 0)
-	elog(WARN, "can't create lock file -- another vacuum cleaner running?");
+    if ((fd = open("pg_vlock", O_CREAT | O_EXCL, 0600)) < 0)
+        elog(WARN, "can't create lock file -- another vacuum cleaner running?");
 
     close(fd);
 
@@ -116,11 +129,10 @@ _vc_init(char *vacrel)
 }
 
 static void
-_vc_shutdown(char *vacrel)
-{
+_vc_shutdown(char *vacrel) {
     /* on entry, not in a transaction */
     if (unlink("pg_vlock") < 0)
-	elog(WARN, "vacuum: can't destroy lock file!");
+        elog(WARN, "vacuum: can't destroy lock file!");
 
     /* okay, we're done */
     VacuumRunning = false;
@@ -130,8 +142,7 @@ _vc_shutdown(char *vacrel)
 }
 
 void
-vc_abort()
-{
+vc_abort() {
     /* on abort, remove the vacuum cleaner lock file */
     (void) unlink("pg_vlock");
 
@@ -147,8 +158,7 @@ vc_abort()
  *	locks at one time.
  */
 static void
-_vc_vacuum(char *vacrel)
-{
+_vc_vacuum(char *vacrel) {
     VRelList vrl, cur;
     char *pname;
     Portal p;
@@ -170,7 +180,7 @@ _vc_vacuum(char *vacrel)
 
     /* vacuum each heap relation */
     for (cur = vrl; cur != (VRelList) NULL; cur = cur->vrl_next)
-	_vc_vacone(p, cur);
+        _vc_vacone(p, cur);
 
     _vc_free(p, vrl);
 
@@ -178,8 +188,7 @@ _vc_vacuum(char *vacrel)
 }
 
 static VRelList
-_vc_getrels(Portal p, char *vacrel)
-{
+_vc_getrels(Portal p, char *vacrel) {
     Relation pgclass;
     TupleDesc pgcdesc;
     HeapScanDesc pgcscan;
@@ -192,17 +201,17 @@ _vc_getrels(Portal p, char *vacrel)
     char *rname;
     int16 smgrno;
     bool n;
-    ScanKeyData  pgckey;
+    ScanKeyData pgckey;
 
     StartTransactionCommand();
 
     if (vacrel) {
-	ScanKeyEntryInitialize(&pgckey, 0x0, Anum_pg_class_relname,
-			       NameEqualRegProcedure, 
-			       PointerGetDatum(vacrel));
+        ScanKeyEntryInitialize(&pgckey, 0x0, Anum_pg_class_relname,
+                               NameEqualRegProcedure,
+                               PointerGetDatum(vacrel));
     } else {
-	ScanKeyEntryInitialize(&pgckey, 0x0, Anum_pg_class_relkind,
-			       CharacterEqualRegProcedure, CharGetDatum('r'));
+        ScanKeyEntryInitialize(&pgckey, 0x0, Anum_pg_class_relkind,
+                               CharacterEqualRegProcedure, CharGetDatum('r'));
     }
 
     portalmem = PortalGetVariableMemory(p);
@@ -215,52 +224,52 @@ _vc_getrels(Portal p, char *vacrel)
 
     while (HeapTupleIsValid(pgctup = heap_getnext(pgcscan, 0, &buf))) {
 
-	/*
-	 *  We have to be careful not to vacuum the archive (since it
-	 *  already contains vacuumed tuples), and not to vacuum
-	 *  relations on write-once storage managers like the Sony
-	 *  jukebox at Berkeley.
-	 */
+        /*
+         *  We have to be careful not to vacuum the archive (since it
+         *  already contains vacuumed tuples), and not to vacuum
+         *  relations on write-once storage managers like the Sony
+         *  jukebox at Berkeley.
+         */
 
-	d = (Datum) heap_getattr(pgctup, buf, Anum_pg_class_relname,
-				 pgcdesc, &n);
-	rname = (char*)d;
+        d = (Datum) heap_getattr(pgctup, buf, Anum_pg_class_relname,
+                                 pgcdesc, &n);
+        rname = (char *) d;
 
-	/* skip archive relations */
-	if (_vc_isarchrel(rname)) {
-	    ReleaseBuffer(buf);
-	    continue;
-	}
+        /* skip archive relations */
+        if (_vc_isarchrel(rname)) {
+            ReleaseBuffer(buf);
+            continue;
+        }
 
-	d = (Datum) heap_getattr(pgctup, buf, Anum_pg_class_relsmgr,
-				 pgcdesc, &n);
-	smgrno = DatumGetInt16(d);
+        d = (Datum) heap_getattr(pgctup, buf, Anum_pg_class_relsmgr,
+                                 pgcdesc, &n);
+        smgrno = DatumGetInt16(d);
 
-	/* skip write-once storage managers */
-	if (smgriswo(smgrno)) {
-	    ReleaseBuffer(buf);
-	    continue;
-	}
+        /* skip write-once storage managers */
+        if (smgriswo(smgrno)) {
+            ReleaseBuffer(buf);
+            continue;
+        }
 
-	/* get a relation list entry for this guy */
-	old = MemoryContextSwitchTo((MemoryContext)portalmem);
-	if (vrl == (VRelList) NULL) {
-	    vrl = cur = (VRelList) palloc(sizeof(VRelListData));
-	} else {
-	    cur->vrl_next = (VRelList) palloc(sizeof(VRelListData));
-	    cur = cur->vrl_next;
-	}
-	(void) MemoryContextSwitchTo(old);
+        /* get a relation list entry for this guy */
+        old = MemoryContextSwitchTo((MemoryContext) portalmem);
+        if (vrl == (VRelList) NULL) {
+            vrl = cur = (VRelList) palloc(sizeof(VRelListData));
+        } else {
+            cur->vrl_next = (VRelList) palloc(sizeof(VRelListData));
+            cur = cur->vrl_next;
+        }
+        (void) MemoryContextSwitchTo(old);
 
-	cur->vrl_relid = pgctup->t_oid;
-	cur->vrl_attlist = (VAttList) NULL;
-	cur->vrl_tidlist = (VTidList) NULL;
-	cur->vrl_npages = cur->vrl_ntups = 0;
-	cur->vrl_hasindex = false;
-	cur->vrl_next = (VRelList) NULL;
+        cur->vrl_relid = pgctup->t_oid;
+        cur->vrl_attlist = (VAttList) NULL;
+        cur->vrl_tidlist = (VTidList) NULL;
+        cur->vrl_npages = cur->vrl_ntups = 0;
+        cur->vrl_hasindex = false;
+        cur->vrl_next = (VRelList) NULL;
 
-	/* wei hates it if you forget to do this */
-	ReleaseBuffer(buf);
+        /* wei hates it if you forget to do this */
+        ReleaseBuffer(buf);
     }
 
     heap_close(pgclass);
@@ -284,8 +293,7 @@ _vc_getrels(Portal p, char *vacrel)
  *	us to lock the entire database during one pass of the vacuum cleaner.
  */
 static void
-_vc_vacone(Portal p, VRelList curvrl)
-{
+_vc_vacone(Portal p, VRelList curvrl) {
     Relation pgclass;
     TupleDesc pgcdesc;
     HeapTuple pgctup;
@@ -297,8 +305,8 @@ _vc_vacone(Portal p, VRelList curvrl)
     StartTransactionCommand();
 
     ScanKeyEntryInitialize(&pgckey, 0x0, ObjectIdAttributeNumber,
-			   ObjectIdEqualRegProcedure,
-			   ObjectIdGetDatum(curvrl->vrl_relid));
+                           ObjectIdEqualRegProcedure,
+                           ObjectIdGetDatum(curvrl->vrl_relid));
 
     pgclass = heap_openr(RelationRelationName);
     pgcdesc = RelationGetTupleDescriptor(pgclass);
@@ -310,10 +318,10 @@ _vc_vacone(Portal p, VRelList curvrl)
      */
 
     if (!HeapTupleIsValid(pgctup = heap_getnext(pgcscan, 0, &pgcbuf))) {
-	heap_endscan(pgcscan);
-	heap_close(pgclass);
-	CommitTransactionCommand();
-	return;
+        heap_endscan(pgcscan);
+        heap_close(pgclass);
+        CommitTransactionCommand();
+        return;
     }
 
     /* now open the class and vacuum it */
@@ -327,9 +335,9 @@ _vc_vacone(Portal p, VRelList curvrl)
 
     /* if we vacuumed any heap tuples, vacuum the indices too */
     if (curvrl->vrl_tidlist != (VTidList) NULL)
-	_vc_vacindices(curvrl, onerel);
+        _vc_vacindices(curvrl, onerel);
     else
-	curvrl->vrl_hasindex = onerel->rd_rel->relhasindex;
+        curvrl->vrl_hasindex = onerel->rd_rel->relhasindex;
 
     /* all done with this class */
     heap_close(onerel);
@@ -338,7 +346,7 @@ _vc_vacone(Portal p, VRelList curvrl)
 
     /* update statistics in pg_class */
     _vc_updstats(curvrl->vrl_relid, curvrl->vrl_npages, curvrl->vrl_ntups,
-		 curvrl->vrl_hasindex);
+                 curvrl->vrl_hasindex);
 
     CommitTransactionCommand();
 }
@@ -354,8 +362,7 @@ _vc_vacone(Portal p, VRelList curvrl)
  *	index tuples.
  */
 static void
-_vc_vacheap(Portal p, VRelList curvrl, Relation onerel)
-{
+_vc_vacheap(Portal p, VRelList curvrl, Relation onerel) {
     int nblocks, blkno;
     ItemId itemid;
     HeapTuple htup;
@@ -375,140 +382,138 @@ _vc_vacheap(Portal p, VRelList curvrl, Relation onerel)
     nblocks = RelationGetNumberOfBlocks(onerel);
 
     {
-	char *relname;
-	relname = (RelationGetRelationName(onerel))->data;
+        char *relname;
+        relname = (RelationGetRelationName(onerel))->data;
 
-	if ( (strlen(relname) > 4) && 
-	    relname[0] == 'X' &&
-	    relname[1] == 'i' &&
-	    relname[2] == 'n' &&
-	    (relname[3] == 'v' || relname[3] == 'x'))
-	    return;
+        if ((strlen(relname) > 4) &&
+            relname[0] == 'X' &&
+            relname[1] == 'i' &&
+            relname[2] == 'n' &&
+            (relname[3] == 'v' || relname[3] == 'x'))
+            return;
     }
 
 
     /* if the relation has an archive, open it */
     if (onerel->rd_rel->relarch != 'n') {
-	isarchived = true;
-	archrel = _vc_getarchrel(onerel);
+        isarchived = true;
+        archrel = _vc_getarchrel(onerel);
     } else
-	isarchived = false;
+        isarchived = false;
 
     /* don't vacuum large objects for now.
        something breaks when we do*/
     {
-	char *relname;
-	relname = (RelationGetRelationName(onerel))->data;
+        char *relname;
+        relname = (RelationGetRelationName(onerel))->data;
 
-	if ( (strlen(relname) > 4) && 
-	    relname[0] == 'X' &&
-	    relname[1] == 'i' &&
-	    relname[2] == 'n' &&
-	    (relname[3] == 'v' || relname[3] == 'x'))
-	    return;
+        if ((strlen(relname) > 4) &&
+            relname[0] == 'X' &&
+            relname[1] == 'i' &&
+            relname[2] == 'n' &&
+            (relname[3] == 'v' || relname[3] == 'x'))
+            return;
     }
 
     /* calculate the purge time: tuples that expired before this time
        will be archived or deleted */
     purgetime = GetCurrentTransactionStartTime();
-    expiretime = (AbsoluteTime)onerel->rd_rel->relexpires;
-    preservetime = (RelativeTime)onerel->rd_rel->relpreserved;
+    expiretime = (AbsoluteTime) onerel->rd_rel->relexpires;
+    preservetime = (RelativeTime) onerel->rd_rel->relpreserved;
 
     if (RelativeTimeIsValid(preservetime) && (preservetime)) {
-	purgetime -= preservetime;
-	if (AbsoluteTimeIsBackwardCompatiblyValid(expiretime) &&
-	    expiretime > purgetime)
-	    purgetime = expiretime;
-    }
+        purgetime -= preservetime;
+        if (AbsoluteTimeIsBackwardCompatiblyValid(expiretime) &&
+            expiretime > purgetime)
+            purgetime = expiretime;
+    } else if (AbsoluteTimeIsBackwardCompatiblyValid(expiretime))
+        purgetime = expiretime;
 
-    else if (AbsoluteTimeIsBackwardCompatiblyValid(expiretime))
-	purgetime = expiretime;
-	    
     for (blkno = 0; blkno < nblocks; blkno++) {
-	buf = ReadBuffer(onerel, blkno);
-	page = BufferGetPage(buf);
+        buf = ReadBuffer(onerel, blkno);
+        page = BufferGetPage(buf);
 
-	if (PageIsEmpty(page)) {
-	    ReleaseBuffer(buf);
-	    continue;
-	}
+        if (PageIsEmpty(page)) {
+            ReleaseBuffer(buf);
+            continue;
+        }
 
-	pgchanged = false;
-	maxoff = PageGetMaxOffsetNumber(page);
-	for (offnum = FirstOffsetNumber;
-	     offnum <= maxoff;
-	     offnum = OffsetNumberNext(offnum)) {
-	    itemid = PageGetItemId(page, offnum);
+        pgchanged = false;
+        maxoff = PageGetMaxOffsetNumber(page);
+        for (offnum = FirstOffsetNumber;
+             offnum <= maxoff;
+             offnum = OffsetNumberNext(offnum)) {
+            itemid = PageGetItemId(page, offnum);
 
-	    if (!ItemIdIsUsed(itemid))
-		continue;
+            if (!ItemIdIsUsed(itemid))
+                continue;
 
-	    htup = (HeapTuple) PageGetItem(page, itemid);
-	    tupgone = false;
+            htup = (HeapTuple) PageGetItem(page, itemid);
+            tupgone = false;
 
-	    if (!AbsoluteTimeIsBackwardCompatiblyValid(htup->t_tmin) && 
-		TransactionIdIsValid((TransactionId)htup->t_xmin)) {
+            if (!AbsoluteTimeIsBackwardCompatiblyValid(htup->t_tmin) &&
+                TransactionIdIsValid((TransactionId) htup->t_xmin)) {
 
-		if (TransactionIdDidAbort(htup->t_xmin)) {
-		    _vc_reaptid(p, curvrl, blkno, offnum);
-		    pgchanged = true;
-		    tupgone = true;
-		} else if (TransactionIdDidCommit(htup->t_xmin)) {
-		    htup->t_tmin = TransactionIdGetCommitTime(htup->t_xmin);
-		    pgchanged = true;
-		}
-	    }
+                if (TransactionIdDidAbort(htup->t_xmin)) {
+                    _vc_reaptid(p, curvrl, blkno, offnum);
+                    pgchanged = true;
+                    tupgone = true;
+                } else if (TransactionIdDidCommit(htup->t_xmin)) {
+                    htup->t_tmin = TransactionIdGetCommitTime(htup->t_xmin);
+                    pgchanged = true;
+                }
+            }
 
-	    if (TransactionIdIsValid((TransactionId)htup->t_xmax)) {
-		if (TransactionIdDidAbort(htup->t_xmax)) {
-		    StoreInvalidTransactionId(&(htup->t_xmax));
-		    pgchanged = true;
-		} else if (TransactionIdDidCommit(htup->t_xmax)) {
-		    if (!AbsoluteTimeIsBackwardCompatiblyReal(htup->t_tmax)) {
+            if (TransactionIdIsValid((TransactionId) htup->t_xmax)) {
+                if (TransactionIdDidAbort(htup->t_xmax)) {
+                    StoreInvalidTransactionId(&(htup->t_xmax));
+                    pgchanged = true;
+                } else if (TransactionIdDidCommit(htup->t_xmax)) {
+                    if (!AbsoluteTimeIsBackwardCompatiblyReal(htup->t_tmax)) {
 
-			htup->t_tmax = TransactionIdGetCommitTime(htup->t_xmax);  
-			pgchanged = true;
-		    }
+                        htup->t_tmax = TransactionIdGetCommitTime(htup->t_xmax);
+                        pgchanged = true;
+                    }
 
-		    /*
-		     *  Reap the dead tuple if its expiration time is
-		     *  before purgetime.
-		     */
+                    /*
+                     *  Reap the dead tuple if its expiration time is
+                     *  before purgetime.
+                     */
 
-		    if (!tupgone && htup->t_tmax < purgetime) {
-			_vc_reaptid(p, curvrl, blkno, offnum);
-			tupgone = true;
-			pgchanged = true;
-		    }
-		}
-	    }
+                    if (!tupgone && htup->t_tmax < purgetime) {
+                        _vc_reaptid(p, curvrl, blkno, offnum);
+                        tupgone = true;
+                        pgchanged = true;
+                    }
+                }
+            }
 
-	    if (tupgone) {
-		ItemId lpp = &(((PageHeader) page)->pd_linp[offnum - 1]);
+            if (tupgone) {
+                ItemId lpp = &(((PageHeader) page)->pd_linp[offnum - 1]);
 
-		/* write the tuple to the archive, if necessary */
-		if (isarchived)
-		    _vc_archive(archrel, htup);
+                /* write the tuple to the archive, if necessary */
+                if (isarchived)
+                    _vc_archive(archrel, htup);
 
-		/* mark it unused */
-		lpp->lp_flags &= ~LP_USED;
+                /* mark it unused */
+                lpp->lp_flags &= ~LP_USED;
 
-		++nvac;
-	    } else {
-		ntups++;
-	    }
-	}
+                ++nvac;
+            } else {
+                ntups++;
+            }
+        }
 
-	if (pgchanged) {
-	    PageRepairFragmentation(page);
-	    WriteBuffer(buf);
-	} else {
-	    ReleaseBuffer(buf);
-	}
+        if (pgchanged) {
+            PageRepairFragmentation(page);
+            WriteBuffer(buf);
+        } else {
+            ReleaseBuffer(buf);
+        }
     }
 
     if (isarchived)
-	heap_close(archrel);
+        heap_close(archrel);
 
     /* save stats in the rel list for use later */
     curvrl->vrl_ntups = ntups;
@@ -530,8 +535,7 @@ _vc_vacheap(Portal p, VRelList curvrl, Relation onerel)
  *	We're executing inside the transaction that vacuumed the heap.
  */
 static void
-_vc_vacindices(VRelList curvrl, Relation onerel)
-{
+_vc_vacindices(VRelList curvrl, Relation onerel) {
     Relation pgindex;
     TupleDesc pgidesc;
     HeapTuple pgitup;
@@ -546,7 +550,7 @@ _vc_vacindices(VRelList curvrl, Relation onerel)
 
     /* see if we can dodge doing any work at all */
     if (!(onerel->rd_rel->relhasindex))
-	return;
+        return;
 
     nindices = 0;
 
@@ -555,29 +559,29 @@ _vc_vacindices(VRelList curvrl, Relation onerel)
     pgidesc = RelationGetTupleDescriptor(pgindex);
 
     ScanKeyEntryInitialize(&pgikey, 0x0, Anum_pg_index_indrelid,
-			   ObjectIdEqualRegProcedure,
-			   ObjectIdGetDatum(curvrl->vrl_relid));
+                           ObjectIdEqualRegProcedure,
+                           ObjectIdGetDatum(curvrl->vrl_relid));
 
     pgiscan = heap_beginscan(pgindex, false, NowTimeQual, 1, &pgikey);
 
     /* vacuum all the indices */
     while (HeapTupleIsValid(pgitup = heap_getnext(pgiscan, 0, &buf))) {
-	d = (Datum) heap_getattr(pgitup, buf, Anum_pg_index_indexrelid,
-				 pgidesc, &n);
-	indoid = DatumGetObjectId(d);
-	indrel = index_open(indoid);
-	_vc_vaconeind(curvrl, indrel);
-	heap_close(indrel);
-	nindices++;
+        d = (Datum) heap_getattr(pgitup, buf, Anum_pg_index_indexrelid,
+                                 pgidesc, &n);
+        indoid = DatumGetObjectId(d);
+        indrel = index_open(indoid);
+        _vc_vaconeind(curvrl, indrel);
+        heap_close(indrel);
+        nindices++;
     }
 
     heap_endscan(pgiscan);
     heap_close(pgindex);
 
     if (nindices > 0)
-	curvrl->vrl_hasindex = true;
+        curvrl->vrl_hasindex = true;
     else
-	curvrl->vrl_hasindex = false;
+        curvrl->vrl_hasindex = false;
 }
 
 /*
@@ -594,8 +598,7 @@ _vc_vacindices(VRelList curvrl, Relation onerel)
  *	pg_class.
  */
 static void
-_vc_vaconeind(VRelList curvrl, Relation indrel)
-{
+_vc_vaconeind(VRelList curvrl, Relation indrel) {
     RetrieveIndexResult res;
     IndexScanDesc iscan;
     ItemPointer heapptr;
@@ -609,25 +612,25 @@ _vc_vaconeind(VRelList curvrl, Relation indrel)
     nitups = 0;
 
     while ((res = index_getnext(iscan, ForwardScanDirection))
-	   != (RetrieveIndexResult) NULL) {
-	heapptr = &res->heap_iptr;
+           != (RetrieveIndexResult) NULL) {
+        heapptr = &res->heap_iptr;
 
-	if (_vc_ontidlist(heapptr, curvrl->vrl_tidlist)) {
+        if (_vc_ontidlist(heapptr, curvrl->vrl_tidlist)) {
 #if 0
-	    elog(DEBUG, "<%x,%x> -> <%x,%x>",
-		 ItemPointerGetBlockNumber(&(res->index_iptr)),
-		 ItemPointerGetOffsetNumber(&(res->index_iptr)),
-		 ItemPointerGetBlockNumber(&(res->heap_iptr)),
-		 ItemPointerGetOffsetNumber(&(res->heap_iptr)));
+            elog(DEBUG, "<%x,%x> -> <%x,%x>",
+             ItemPointerGetBlockNumber(&(res->index_iptr)),
+             ItemPointerGetOffsetNumber(&(res->index_iptr)),
+             ItemPointerGetBlockNumber(&(res->heap_iptr)),
+             ItemPointerGetOffsetNumber(&(res->heap_iptr)));
 #endif
-	    ++nvac;
-	    index_delete(indrel, &res->index_iptr);
-	} else {
-	    nitups++;
-	}
+            ++nvac;
+            index_delete(indrel, &res->index_iptr);
+        } else {
+            nitups++;
+        }
 
-	/* be tidy */
-	pfree(res);
+        /* be tidy */
+        pfree(res);
     }
 
     index_endscan(iscan);
@@ -649,8 +652,7 @@ _vc_vaconeind(VRelList curvrl, Relation indrel)
  *	historical queries very expensive.
  */
 static void
-_vc_updstats(Oid relid, int npages, int ntuples, bool hasindex)
-{
+_vc_updstats(Oid relid, int npages, int ntuples, bool hasindex) {
     Relation rd;
     HeapScanDesc sdesc;
     HeapTuple tup;
@@ -662,15 +664,15 @@ _vc_updstats(Oid relid, int npages, int ntuples, bool hasindex)
      * update number of tuples and number of pages in pg_class
      */
     ScanKeyEntryInitialize(&skey, 0x0, ObjectIdAttributeNumber,
-			   ObjectIdEqualRegProcedure,
-			   ObjectIdGetDatum(relid));
+                           ObjectIdEqualRegProcedure,
+                           ObjectIdGetDatum(relid));
 
     rd = heap_openr(RelationRelationName);
     sdesc = heap_beginscan(rd, false, NowTimeQual, 1, &skey);
 
     if (!HeapTupleIsValid(tup = heap_getnext(sdesc, 0, &buf)))
-	elog(WARN, "pg_class entry for relid %d vanished during vacuuming",
-		   relid);
+        elog(WARN, "pg_class entry for relid %d vanished during vacuuming",
+             relid);
 
     /* overwrite the existing statistics in the tuple */
     _vc_setpagelock(rd, BufferGetBlockNumber(buf));
@@ -678,7 +680,7 @@ _vc_updstats(Oid relid, int npages, int ntuples, bool hasindex)
     pgcform->reltuples = ntuples;
     pgcform->relpages = npages;
     pgcform->relhasindex = hasindex;
- 
+
     /* XXX -- after write, should invalidate relcache in other backends */
     WriteNoReleaseBuffer(buf);
 
@@ -688,8 +690,7 @@ _vc_updstats(Oid relid, int npages, int ntuples, bool hasindex)
 
 }
 
-static void _vc_setpagelock(Relation rel, BlockNumber blkno)
-{
+static void _vc_setpagelock(Relation rel, BlockNumber blkno) {
     ItemPointerData itm;
 
     ItemPointerSet(&itm, blkno, 1);
@@ -703,8 +704,7 @@ static void _vc_setpagelock(Relation rel, BlockNumber blkno)
  *	Tidlist is sorted in reverse (page, offset) order.
  */
 static bool
-_vc_ontidlist(ItemPointer itemptr, VTidList tidlist)
-{
+_vc_ontidlist(ItemPointer itemptr, VTidList tidlist) {
     BlockNumber ibkno;
     OffsetNumber ioffno;
     ItemPointer check;
@@ -715,20 +715,20 @@ _vc_ontidlist(ItemPointer itemptr, VTidList tidlist)
     ioffno = ItemPointerGetOffsetNumber(itemptr);
 
     while (tidlist != (VTidList) NULL) {
-	check = &(tidlist->vtl_tid);
-	ckbkno = ItemPointerGetBlockNumber(check);
-	ckoffno = ItemPointerGetOffsetNumber(check);
+        check = &(tidlist->vtl_tid);
+        ckbkno = ItemPointerGetBlockNumber(check);
+        ckoffno = ItemPointerGetOffsetNumber(check);
 
-	/* see if we've looked far enough down the list */
-	if ((ckbkno < ibkno) || (ckbkno == ibkno && ckoffno < ioffno))
-	    return (false);
+        /* see if we've looked far enough down the list */
+        if ((ckbkno < ibkno) || (ckbkno == ibkno && ckoffno < ioffno))
+            return (false);
 
-	/* see if we have a match */
-	if (ckbkno == ibkno && ckoffno == ioffno)
-	    return (true);
+        /* see if we have a match */
+        if (ckbkno == ibkno && ckoffno == ioffno)
+            return (true);
 
-	/* check next */
-	tidlist = tidlist->vtl_next;
+        /* check next */
+        tidlist = tidlist->vtl_next;
     }
 
     /* ran off the end of the list without finding a match */
@@ -748,10 +748,9 @@ _vc_ontidlist(ItemPointer itemptr, VTidList tidlist)
  */
 static void
 _vc_reaptid(Portal p,
-	    VRelList curvrl,
-	    BlockNumber blkno,
-	    OffsetNumber offnum)
-{
+            VRelList curvrl,
+            BlockNumber blkno,
+            OffsetNumber offnum) {
     PortalVariableMemory pmem;
     MemoryContext old;
     VTidList newvtl;
@@ -769,8 +768,7 @@ _vc_reaptid(Portal p,
 }
 
 static void
-_vc_free(Portal p, VRelList vrl)
-{
+_vc_free(Portal p, VRelList vrl) {
     VRelList p_vrl;
     VAttList p_val, val;
     VTidList p_vtl, vtl;
@@ -778,30 +776,30 @@ _vc_free(Portal p, VRelList vrl)
     PortalVariableMemory pmem;
 
     pmem = PortalGetVariableMemory(p);
-    old = MemoryContextSwitchTo((MemoryContext)pmem);
+    old = MemoryContextSwitchTo((MemoryContext) pmem);
 
     while (vrl != (VRelList) NULL) {
 
-	/* free attribute list */
-	val = vrl->vrl_attlist;
-	while (val != (VAttList) NULL) {
-	    p_val = val;
-	    val = val->val_next;
-	    pfree(p_val);
-	}
+        /* free attribute list */
+        val = vrl->vrl_attlist;
+        while (val != (VAttList) NULL) {
+            p_val = val;
+            val = val->val_next;
+            pfree(p_val);
+        }
 
-	/* free tid list */
-	vtl = vrl->vrl_tidlist;
-	while (vtl != (VTidList) NULL) {
-	    p_vtl = vtl;
-	    vtl = vtl->vtl_next;
-	    pfree(p_vtl);
-	}
+        /* free tid list */
+        vtl = vrl->vrl_tidlist;
+        while (vtl != (VTidList) NULL) {
+            p_vtl = vtl;
+            vtl = vtl->vtl_next;
+            pfree(p_vtl);
+        }
 
-	/* free rel list entry */
-	p_vrl = vrl;
-	vrl = vrl->vrl_next;
-	pfree(p_vrl);
+        /* free rel list entry */
+        p_vrl = vrl;
+        vrl = vrl->vrl_next;
+        pfree(p_vrl);
     }
 
     (void) MemoryContextSwitchTo(old);
@@ -814,11 +812,10 @@ _vc_free(Portal p, VRelList vrl)
  *	whose relid is XXXXX.
  */
 
-#define ARCHIVE_PREFIX	"a,"
+#define ARCHIVE_PREFIX    "a,"
 
 static Relation
-_vc_getarchrel(Relation heaprel)
-{
+_vc_getarchrel(Relation heaprel) {
     Relation archrel;
     char *archrelname;
 
@@ -838,16 +835,14 @@ _vc_getarchrel(Relation heaprel)
  *	now, archive relations are on mag disk.
  */
 static void
-_vc_archive(Relation archrel, HeapTuple htup)
-{
+_vc_archive(Relation archrel, HeapTuple htup) {
     doinsert(archrel, htup);
 }
 
 static bool
-_vc_isarchrel(char *rname)
-{
-    if (strncmp(ARCHIVE_PREFIX, rname,strlen(ARCHIVE_PREFIX)) == 0)
-	return (true);
+_vc_isarchrel(char *rname) {
+    if (strncmp(ARCHIVE_PREFIX, rname, strlen(ARCHIVE_PREFIX)) == 0)
+        return (true);
 
     return (false);
 }

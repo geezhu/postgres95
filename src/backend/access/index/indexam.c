@@ -110,26 +110,26 @@
  */
 #define RELATION_CHECKS \
 Assert(RelationIsValid(relation)); \
-	 Assert(PointerIsValid(relation->rd_am))
-     
+     Assert(PointerIsValid(relation->rd_am))
+
 #define SCAN_CHECKS \
      Assert(IndexScanIsValid(scan)); \
-	 Assert(RelationIsValid(scan->relation)); \
-	 Assert(PointerIsValid(scan->relation->rd_am))
-     
-#define GET_REL_PROCEDURE(x,y) \
-	 procedure = relation->rd_am->y; \
-	 if (! RegProcedureIsValid(procedure)) \
-	 elog(WARN, "index_%s: invalid %s regproc", \
-	      CppAsString(x), CppAsString(y))
-     
-#define GET_SCAN_PROCEDURE(x,y) \
-	 procedure = scan->relation->rd_am->y; \
-	 if (! RegProcedureIsValid(procedure)) \
-	 elog(WARN, "index_%s: invalid %s regproc", \
-	      CppAsString(x), CppAsString(y))
-     
-     
+     Assert(RelationIsValid(scan->relation)); \
+     Assert(PointerIsValid(scan->relation->rd_am))
+
+#define GET_REL_PROCEDURE(x, y) \
+     procedure = relation->rd_am->y; \
+     if (! RegProcedureIsValid(procedure)) \
+     elog(WARN, "index_%s: invalid %s regproc", \
+          CppAsString(x), CppAsString(y))
+
+#define GET_SCAN_PROCEDURE(x, y) \
+     procedure = scan->relation->rd_am->y; \
+     if (! RegProcedureIsValid(procedure)) \
+     elog(WARN, "index_%s: invalid %s regproc", \
+          CppAsString(x), CppAsString(y))
+
+
 /* ----------------------------------------------------------------
  *		   index_ interface functions
  * ----------------------------------------------------------------
@@ -142,8 +142,7 @@ Assert(RelationIsValid(relation)); \
  * ----------------
  */
 Relation
-index_open(Oid relationId)
-{
+index_open(Oid relationId) {
     return RelationIdGetRelation(relationId);
 }
 
@@ -155,8 +154,7 @@ index_open(Oid relationId)
  * ----------------
  */
 Relation
-index_openr(char *relationName)
-{
+index_openr(char *relationName) {
     return RelationNameGetRelation(relationName);
 }
 
@@ -168,8 +166,7 @@ index_openr(char *relationName)
  * ----------------
  */
 void
-index_close(Relation relation)
-{
+index_close(Relation relation) {
     (void) RelationClose(relation);
 }
 
@@ -179,21 +176,20 @@ index_close(Relation relation)
  */
 InsertIndexResult
 index_insert(Relation relation,
-	     IndexTuple indexTuple)
-{
-    RegProcedure		procedure;
-    InsertIndexResult		specificResult;
-    
+             IndexTuple indexTuple) {
+    RegProcedure procedure;
+    InsertIndexResult specificResult;
+
     RELATION_CHECKS;
-    GET_REL_PROCEDURE(insert,aminsert);
-    
+    GET_REL_PROCEDURE(insert, aminsert);
+
     /* ----------------
      *	have the am's insert proc do all the work.  
      * ----------------
      */
     specificResult = (InsertIndexResult)
-	fmgr(procedure, relation, indexTuple, NULL);
-    
+            fmgr(procedure, relation, indexTuple, NULL);
+
     /* ----------------
      *	the insert proc is supposed to return a "specific result" and
      *  this routine has to return a "general result" so after we get
@@ -210,7 +206,7 @@ index_insert(Relation relation,
      *  this "general result" crap is now gone. -ay 3/6/95
      * ----------------
      */
-    
+
     return (specificResult);
 }
 
@@ -219,14 +215,13 @@ index_insert(Relation relation,
  * ----------------
  */
 void
-index_delete(Relation relation, ItemPointer indexItem)
-{
-    RegProcedure	procedure;
-    
+index_delete(Relation relation, ItemPointer indexItem) {
+    RegProcedure procedure;
+
     RELATION_CHECKS;
-    GET_REL_PROCEDURE(delete,amdelete);
-    
-    (void) fmgr(procedure, relation, indexItem);    
+    GET_REL_PROCEDURE(delete, amdelete);
+
+    (void) fmgr(procedure, relation, indexItem);
 }
 
 /* ----------------
@@ -235,21 +230,20 @@ index_delete(Relation relation, ItemPointer indexItem)
  */
 IndexScanDesc
 index_beginscan(Relation relation,
-		bool scanFromEnd,
-		uint16 numberOfKeys,
-		ScanKey key)
-{
-    IndexScanDesc	scandesc;
-    RegProcedure	procedure;
-    
+                bool scanFromEnd,
+                uint16 numberOfKeys,
+                ScanKey key) {
+    IndexScanDesc scandesc;
+    RegProcedure procedure;
+
     RELATION_CHECKS;
-    GET_REL_PROCEDURE(beginscan,ambeginscan);
-    
+    GET_REL_PROCEDURE(beginscan, ambeginscan);
+
     RelationSetRIntentLock(relation);
-    
+
     scandesc = (IndexScanDesc)
-	fmgr(procedure, relation, scanFromEnd, numberOfKeys, key);
-    
+            fmgr(procedure, relation, scanFromEnd, numberOfKeys, key);
+
     return scandesc;
 }
 
@@ -258,13 +252,12 @@ index_beginscan(Relation relation,
  * ----------------
  */
 void
-index_rescan(IndexScanDesc scan, bool scanFromEnd, ScanKey key)
-{
-    RegProcedure	procedure;
-    
+index_rescan(IndexScanDesc scan, bool scanFromEnd, ScanKey key) {
+    RegProcedure procedure;
+
     SCAN_CHECKS;
-    GET_SCAN_PROCEDURE(rescan,amrescan);
-    
+    GET_SCAN_PROCEDURE(rescan, amrescan);
+
     (void) fmgr(procedure, scan, scanFromEnd, key);
 }
 
@@ -273,15 +266,14 @@ index_rescan(IndexScanDesc scan, bool scanFromEnd, ScanKey key)
  * ----------------
  */
 void
-index_endscan(IndexScanDesc scan)
-{
-    RegProcedure	procedure;
-    
+index_endscan(IndexScanDesc scan) {
+    RegProcedure procedure;
+
     SCAN_CHECKS;
-    GET_SCAN_PROCEDURE(endscan,amendscan);
-    
+    GET_SCAN_PROCEDURE(endscan, amendscan);
+
     (void) fmgr(procedure, scan);
-    
+
     RelationUnsetRIntentLock(scan->relation);
 }
 
@@ -290,13 +282,12 @@ index_endscan(IndexScanDesc scan)
  * ----------------
  */
 void
-index_markpos(IndexScanDesc scan)
-{
-    RegProcedure	procedure;
-    
+index_markpos(IndexScanDesc scan) {
+    RegProcedure procedure;
+
     SCAN_CHECKS;
-    GET_SCAN_PROCEDURE(markpos,ammarkpos);
-    
+    GET_SCAN_PROCEDURE(markpos, ammarkpos);
+
     (void) fmgr(procedure, scan);
 }
 
@@ -305,13 +296,12 @@ index_markpos(IndexScanDesc scan)
  * ----------------
  */
 void
-index_restrpos(IndexScanDesc scan)
-{
-    RegProcedure	procedure;
-    
+index_restrpos(IndexScanDesc scan) {
+    RegProcedure procedure;
+
     SCAN_CHECKS;
-    GET_SCAN_PROCEDURE(restrpos,amrestrpos);
-    
+    GET_SCAN_PROCEDURE(restrpos, amrestrpos);
+
     (void) fmgr(procedure, scan);
 }
 
@@ -323,21 +313,20 @@ index_restrpos(IndexScanDesc scan)
  */
 RetrieveIndexResult
 index_getnext(IndexScanDesc scan,
-	      ScanDirection direction)
-{
-    RegProcedure		procedure;
-    RetrieveIndexResult		result;
-    
+              ScanDirection direction) {
+    RegProcedure procedure;
+    RetrieveIndexResult result;
+
     SCAN_CHECKS;
-    GET_SCAN_PROCEDURE(getnext,amgettuple);
-    
+    GET_SCAN_PROCEDURE(getnext, amgettuple);
+
     /* ----------------
      *	have the am's gettuple proc do all the work.  
      * ----------------
      */
     result = (RetrieveIndexResult)
-	fmgr(procedure, scan, direction);
-    
+            fmgr(procedure, scan, direction);
+
     return result;
 }
 
@@ -359,53 +348,51 @@ index_getnext(IndexScanDesc scan,
  */
 RegProcedure
 index_getprocid(Relation irel,
-		AttrNumber attnum,
-		uint16 procnum)
-{
+                AttrNumber attnum,
+                uint16 procnum) {
     RegProcedure *loc;
     int natts;
-    
+
     natts = irel->rd_rel->relnatts;
-    
+
     loc = irel->rd_support;
 
     Assert(loc != NULL);
-    
+
     return (loc[(natts * (procnum - 1)) + (attnum - 1)]);
 }
 
 Datum
 GetIndexValue(HeapTuple tuple,
-	      TupleDesc hTupDesc,
-	      int attOff,
-	      AttrNumber attrNums[],
-	      FuncIndexInfo *fInfo,
-	      bool *attNull,
-	      Buffer buffer)
-{
+              TupleDesc hTupDesc,
+              int attOff,
+              AttrNumber attrNums[],
+              FuncIndexInfo *fInfo,
+              bool *attNull,
+              Buffer buffer) {
     Datum returnVal;
-    bool	isNull;
-    
+    bool isNull;
+
     if (PointerIsValid(fInfo) && FIgetProcOid(fInfo) != InvalidOid) {
-	int i;
-	Datum *attData = (Datum *)palloc(FIgetnArgs(fInfo)*sizeof(Datum));
-	
-	for (i = 0; i < FIgetnArgs(fInfo); i++) {
-	    attData[i] = (Datum) heap_getattr(tuple, 
-					      buffer, 
-					      attrNums[i], 
-					      hTupDesc,
-					      attNull);
-	}
-	returnVal = (Datum)fmgr_array_args(FIgetProcOid(fInfo),
-					   FIgetnArgs(fInfo),
-					   (char **) attData,
-					   &isNull);
-	pfree(attData);
-	*attNull = FALSE;
-    }else {
-	returnVal = (Datum) heap_getattr(tuple, buffer, attrNums[attOff], 
-					 hTupDesc, attNull);
+        int i;
+        Datum *attData = (Datum *) palloc(FIgetnArgs(fInfo) * sizeof(Datum));
+
+        for (i = 0; i < FIgetnArgs(fInfo); i++) {
+            attData[i] = (Datum) heap_getattr(tuple,
+                                              buffer,
+                                              attrNums[i],
+                                              hTupDesc,
+                                              attNull);
+        }
+        returnVal = (Datum) fmgr_array_args(FIgetProcOid(fInfo),
+                                            FIgetnArgs(fInfo),
+                                            (char **) attData,
+                                            &isNull);
+        pfree(attData);
+        *attNull = FALSE;
+    } else {
+        returnVal = (Datum) heap_getattr(tuple, buffer, attrNums[attOff],
+                                         hTupDesc, attNull);
     }
     return returnVal;
 }

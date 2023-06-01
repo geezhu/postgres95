@@ -21,12 +21,12 @@
  *
  */
 typedef struct RewriteRule {
-    Oid			ruleId;
-    CmdType		event;
-    AttrNumber		attrno;
-    Node		*qual;
-    List		*actions;
-    bool		isInstead;
+    Oid ruleId;
+    CmdType event;
+    AttrNumber attrno;
+    Node *qual;
+    List *actions;
+    bool isInstead;
 } RewriteRule;
 
 /*
@@ -36,8 +36,8 @@ typedef struct RewriteRule {
  *    the name is kept for historical reasons.
  */
 typedef struct RuleLock {
-    int			numLocks;
-    RewriteRule		**rules;
+    int numLocks;
+    RewriteRule **rules;
 } RuleLock;
 
-#endif	/* REWRITE_H */
+#endif    /* REWRITE_H */

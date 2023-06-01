@@ -15,13 +15,13 @@
 
 #include "c.h"
 #include "access/ibit.h"
-#include "access/tupdesc.h"	/* for TupleDesc */
+#include "access/tupdesc.h"    /* for TupleDesc */
 #include "storage/itemptr.h"
 
-#define MaxIndexAttributeNumber	7
+#define MaxIndexAttributeNumber    7
 
 typedef struct IndexTupleData {
-    ItemPointerData		t_tid; /* reference TID to base tuple */
+    ItemPointerData t_tid; /* reference TID to base tuple */
 
     /*
      * t_info is layed out in the following fashion:
@@ -32,31 +32,31 @@ typedef struct IndexTupleData {
      * bits 12-0 bit: size of tuple.
      */
 
-    unsigned short		t_info; /* various info about tuple */
+    unsigned short t_info; /* various info about tuple */
 
     /*
      * please make sure sizeof(IndexTupleData) is MAXALIGN'ed.
      * See IndexInfoFindDataOffset() for the reason.
      */
-    
-} IndexTupleData;		/* MORE DATA FOLLOWS AT END OF STRUCT */
 
-typedef IndexTupleData	*IndexTuple;
+} IndexTupleData;        /* MORE DATA FOLLOWS AT END OF STRUCT */
+
+typedef IndexTupleData *IndexTuple;
 
 
 typedef struct InsertIndexResultData {
-    ItemPointerData	pointerData;
+    ItemPointerData pointerData;
 } InsertIndexResultData;
 
 typedef InsertIndexResultData *InsertIndexResult;
 
 
 typedef struct RetrieveIndexResultData {
-    ItemPointerData	index_iptr;
-    ItemPointerData	heap_iptr;
+    ItemPointerData index_iptr;
+    ItemPointerData heap_iptr;
 } RetrieveIndexResultData;
 
-typedef RetrieveIndexResultData	*RetrieveIndexResult;
+typedef RetrieveIndexResultData *RetrieveIndexResult;
 
 
 /*-----------------
@@ -65,8 +65,8 @@ typedef RetrieveIndexResultData	*RetrieveIndexResult;
  *-----------------
  */
 typedef struct PredInfo {
-    Node		*pred;
-    Node		*oldPred;
+    Node *pred;
+    Node *oldPred;
 } PredInfo;
 
 
@@ -89,16 +89,20 @@ typedef struct PredInfo {
 
 /* indextuple.h */
 extern IndexTuple index_formtuple(TupleDesc tupleDescriptor,
-				  Datum value[], char null[]);
+                                  Datum value[], char null[]);
+
 extern char *fastgetiattr(IndexTuple tup, int attnum,
-	TupleDesc att, bool *isnull);
+                          TupleDesc att, bool *isnull);
+
 extern Datum index_getattr(IndexTuple tuple, AttrNumber attNum,
-	TupleDesc tupDesc, bool *isNullOutP);
+                           TupleDesc tupDesc, bool *isNullOutP);
+
 extern RetrieveIndexResult
 FormRetrieveIndexResult(ItemPointer indexItemPointer,
-			ItemPointer heapItemPointer);
+                        ItemPointer heapItemPointer);
+
 extern void CopyIndexTuple(IndexTuple source, IndexTuple *target);
 
 
-#endif	/* ITUP_H */
+#endif    /* ITUP_H */
 

@@ -14,7 +14,7 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	BUFMGR_INTERNALS_H
+#ifndef    BUFMGR_INTERNALS_H
 #define BUFMGR_INTERNALS_H
 
 #include "postgres.h"
@@ -37,13 +37,13 @@ extern int Num_Descriptors;
 /*
  * Flags for buffer descriptors
  */
-#define BM_DIRTY   		(1 << 0)
-#define BM_PRIVATE 		(1 << 1)
-#define BM_VALID 		(1 << 2)
-#define BM_DELETED   		(1 << 3)
-#define BM_FREE			(1 << 4)
-#define BM_IO_IN_PROGRESS	(1 << 5)
-#define BM_IO_ERROR		(1 << 6)
+#define BM_DIRTY        (1 << 0)
+#define BM_PRIVATE        (1 << 1)
+#define BM_VALID        (1 << 2)
+#define BM_DELETED        (1 << 3)
+#define BM_FREE            (1 << 4)
+#define BM_IO_IN_PROGRESS    (1 << 5)
+#define BM_IO_ERROR        (1 << 6)
 
 typedef bits16 BufFlags;
 
@@ -53,9 +53,9 @@ typedef struct buftag BufferTag;
 /* long * so alignment will be correct */
 typedef long **BufferBlock;
 
-struct buftag{
-  LRelId	relId;
-  BlockNumber   blockNum;  /* blknum relative to begin of reln */
+struct buftag {
+    LRelId relId;
+    BlockNumber blockNum;  /* blknum relative to begin of reln */
 };
 
 #define CLEAR_BUFFERTAG(a)\
@@ -63,19 +63,19 @@ struct buftag{
   (a)->relId.relId = InvalidOid; \
   (a)->blockNum = InvalidBlockNumber
 
-#define INIT_BUFFERTAG(a,xx_reln,xx_blockNum) \
+#define INIT_BUFFERTAG(a, xx_reln, xx_blockNum) \
 { \
   (a)->blockNum = xx_blockNum;\
   (a)->relId = RelationGetLRelId(xx_reln); \
 }
 
-#define COPY_BUFFERTAG(a,b)\
+#define COPY_BUFFERTAG(a, b)\
 { \
   (a)->blockNum = (b)->blockNum;\
   LRelIdAssign(*(a),*(b));\
 }
 
-#define EQUAL_BUFFERTAG(a,b) \
+#define EQUAL_BUFFERTAG(a, b) \
   (((a)->blockNum == (b)->blockNum) &&\
    (OID_Equal((a)->relId.relId,(b)->relId.relId)))
 
@@ -90,7 +90,7 @@ struct buftag{
  *  and is used in the buffer manager code.  somebody with lots of
  *  spare time should do this for all the other modules, too.
  */
-#define BM_NAMESIZE	16
+#define BM_NAMESIZE    16
 
 /*
  *  struct sbufdesc -- shared buffer cache metadata for a single
@@ -106,20 +106,20 @@ struct buftag{
  */
 
 struct sbufdesc {
-    Buffer		freeNext;	/* link for freelist chain */
-    Buffer		freePrev;
-    SHMEM_OFFSET	data;		/* pointer to data in buf pool */
+    Buffer freeNext;    /* link for freelist chain */
+    Buffer freePrev;
+    SHMEM_OFFSET data;        /* pointer to data in buf pool */
 
     /* tag and id must be together for table lookup to work */
-    BufferTag		tag;		/* file/block identifier */
-    int			buf_id;		/* maps global desc to local desc */
+    BufferTag tag;        /* file/block identifier */
+    int buf_id;        /* maps global desc to local desc */
 
-    BufFlags		flags;    	/* described below */
-    int16		bufsmgr;	/* storage manager id for buffer */
-    unsigned		refcount;	/* # of times buffer is pinned */
+    BufFlags flags;        /* described below */
+    int16 bufsmgr;    /* storage manager id for buffer */
+    unsigned refcount;    /* # of times buffer is pinned */
 
-    char *sb_dbname;	/* name of db in which buf belongs */
-    char *sb_relname;	/* name of reln */
+    char *sb_dbname;    /* name of db in which buf belongs */
+    char *sb_relname;    /* name of reln */
 #ifdef HAS_TEST_AND_SET
     /* can afford a dedicated lock if test-and-set locks are available */
     slock_t	io_in_progress_lock;
@@ -182,27 +182,38 @@ typedef struct _bmtrace {
 
 /*freelist.c*/
 extern void AddBufferToFreelist(BufferDesc *bf);
+
 extern void PinBuffer(BufferDesc *buf);
+
 extern void PinBuffer_Debug(char *file, int line, BufferDesc *buf);
+
 extern void UnpinBuffer(BufferDesc *buf);
+
 extern void UnpinBuffer_Debug(char *file, int line, BufferDesc *buf);
+
 extern BufferDesc *GetFreeBuffer(void);
+
 extern void InitFreeList(bool init);
+
 extern void DBG_FreeListCheck(int nfree);
 
 /* buf_table.c */
 extern void InitBufTable(void);
+
 extern BufferDesc *BufTableLookup(BufferTag *tagPtr);
+
 extern bool BufTableDelete(BufferDesc *buf);
+
 extern bool BufTableInsert(BufferDesc *buf);
+
 extern void DBG_LookupListCheck(int nlookup);
 
 /* bufmgr.c */
-extern BufferDesc 	*BufferDescriptors;
-extern BufferBlock 	BufferBlocks;
-extern long		*PrivateRefCount;
-extern long		*LastRefCount;
-extern SPINLOCK		BufMgrLock;
+extern BufferDesc *BufferDescriptors;
+extern BufferBlock BufferBlocks;
+extern long *PrivateRefCount;
+extern long *LastRefCount;
+extern SPINLOCK BufMgrLock;
 
 /* localbuf.c */
 extern long *LocalRefCount;
@@ -210,11 +221,16 @@ extern BufferDesc *LocalBufferDescriptors;
 extern int NLocBuffer;
 
 extern BufferDesc *LocalBufferAlloc(Relation reln, BlockNumber blockNum,
-				    bool *foundPtr);
+                                    bool *foundPtr);
+
 extern int WriteLocalBuffer(Buffer buffer, bool release);
+
 extern int FlushLocalBuffer(Buffer buffer);
+
 extern void InitLocalBuffer();
+
 extern void LocalBufferSync();
+
 extern void ResetLocalBufferPool();
-     
-#endif	/* BUFMGR_INTERNALS_H */
+
+#endif    /* BUFMGR_INTERNALS_H */

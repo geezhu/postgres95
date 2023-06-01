@@ -10,7 +10,7 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	IQUAL_H
+#ifndef    IQUAL_H
 #define IQUAL_H
 
 #include "c.h"
@@ -27,6 +27,6 @@
 extern int NIndexTupleProcessed;
 
 extern bool index_keytest(IndexTuple tuple, TupleDesc tupdesc,
-			  int scanKeySize, ScanKey key);
+                          int scanKeySize, ScanKey key);
 
-#endif	/* IQUAL_H */
+#endif    /* IQUAL_H */

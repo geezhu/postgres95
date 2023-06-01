@@ -10,7 +10,7 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	VALID_H
+#ifndef    VALID_H
 #define VALID_H
 
 #include "c.h"
@@ -27,11 +27,11 @@
  */
 
 extern bool heap_keytest(HeapTuple t, TupleDesc tupdesc,
-			 int nkeys, ScanKey keys);
+                         int nkeys, ScanKey keys);
 
 extern HeapTuple heap_tuple_satisfies(ItemId itemId, Relation relation,
-       PageHeader disk_page, TimeQual qual, int nKeys, ScanKey key);
+                                      PageHeader disk_page, TimeQual qual, int nKeys, ScanKey key);
 
 extern bool TupleUpdatedByCurXactAndCmd(HeapTuple t);
 
-#endif	/* VALID_H */
+#endif    /* VALID_H */

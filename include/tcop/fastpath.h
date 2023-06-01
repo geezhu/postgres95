@@ -22,10 +22,10 @@
  *	fastpath #defines
  * ----------------
  */
-#define VAR_LENGTH_RESULT 	(-1)
-#define VAR_LENGTH_ARG 		(-5)
-#define MAX_STRING_LENGTH 	256
+#define VAR_LENGTH_RESULT    (-1)
+#define VAR_LENGTH_ARG        (-5)
+#define MAX_STRING_LENGTH    256
 
 extern int HandleFunctionRequest(void);
 
-#endif	/* FASTPATH_H */
+#endif    /* FASTPATH_H */

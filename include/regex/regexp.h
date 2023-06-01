@@ -37,8 +37,8 @@
  *	@(#)regexp.h	8.1 (Berkeley) 6/2/93
  */
 
-#ifndef	_REGEXP_H_
-#define	_REGEXP_H_
+#ifndef    _REGEXP_H_
+#define    _REGEXP_H_
 
 /*
  * Definitions etc. for regexp(3) routines.
@@ -48,13 +48,13 @@
  */
 #define NSUBEXP  10
 typedef struct regexp {
-	char *startp[NSUBEXP];
-	char *endp[NSUBEXP];
-	char regstart;		/* Internal use only. */
-	char reganch;		/* Internal use only. */
-	char *regmust;		/* Internal use only. */
-	int regmlen;		/* Internal use only. */
-	char program[1];	/* Unwarranted chumminess with compiler. */
+    char *startp[NSUBEXP];
+    char *endp[NSUBEXP];
+    char regstart;        /* Internal use only. */
+    char reganch;        /* Internal use only. */
+    char *regmust;        /* Internal use only. */
+    int regmlen;        /* Internal use only. */
+    char program[1];    /* Unwarranted chumminess with compiler. */
 } regexp;
 
 /* #include <sys/cdefs.h> */
@@ -63,9 +63,13 @@ typedef struct regexp {
 
 __BEGIN_DECLS
 regexp *pg95_regcomp __P((const char *));
-int pg95_regexec __P((const  regexp *, const char *));
-void pg95_regsub __P((const  regexp *, const char *, char *));
+
+int pg95_regexec __P((const regexp *, const char *));
+
+void pg95_regsub __P((const regexp *, const char *, char *));
+
 void pg95_regerror __P((const char *));
+
 __END_DECLS
 
 #endif /* !_REGEXP_H_ */

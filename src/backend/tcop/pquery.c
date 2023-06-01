@@ -36,7 +36,7 @@
 
 #include "commands/command.h"
 
-static char* CreateOperationTag(int operationType);
+static char *CreateOperationTag(int operationType);
 
 /* ----------------------------------------------------------------
  *	CreateQueryDesc
@@ -44,15 +44,14 @@ static char* CreateOperationTag(int operationType);
  */
 QueryDesc *
 CreateQueryDesc(Query *parsetree,
-		Plan *plantree,
-		CommandDest dest)
-{
-    QueryDesc *qd = (QueryDesc *)palloc(sizeof(QueryDesc));
-    
-    qd->operation = parsetree->commandType; 	/* operation */
-    qd->parsetree = parsetree;			/* parse tree */
-    qd->plantree  = plantree;			/* plan */
-    qd->dest      = dest;			/* output dest */
+                Plan *plantree,
+                CommandDest dest) {
+    QueryDesc *qd = (QueryDesc *) palloc(sizeof(QueryDesc));
+
+    qd->operation = parsetree->commandType;    /* operation */
+    qd->parsetree = parsetree;            /* parse tree */
+    qd->plantree = plantree;            /* plan */
+    qd->dest = dest;            /* output dest */
     return qd;
 }
 
@@ -63,18 +62,17 @@ CreateQueryDesc(Query *parsetree,
  * ----------------------------------------------------------------
  */
 EState *
-CreateExecutorState()
-{
-    EState		*state;
-    extern int		NBuffers;
-    long		*refcount;
-    
+CreateExecutorState() {
+    EState *state;
+    extern int NBuffers;
+    long *refcount;
+
     /* ----------------
      *	create a new executor state
      * ----------------
      */
     state = makeNode(EState);
-    
+
     /* ----------------
      *	initialize the Executor State structure
      * ----------------
@@ -84,18 +82,18 @@ CreateExecutorState()
 
     state->es_into_relation_descriptor = NULL;
     state->es_result_relation_info = NULL;
-    
+
     state->es_param_list_info = NULL;
-    
+
     state->es_BaseId = 0;
     state->es_tupleTable = NULL;
-    
+
     state->es_junkFilter = NULL;
-    
+
     refcount = (long *) palloc(NBuffers * sizeof(long));
     memset((char *) refcount, 0, NBuffers * sizeof(long));
     state->es_refcount = (int *) refcount;
-    
+
     /* ----------------
      *	return the executor state structure
      * ----------------
@@ -110,31 +108,30 @@ CreateExecutorState()
  *	query operation.
  * ----------------------------------------------------------------
  */
-static char*
-CreateOperationTag(int operationType)
-{
-    char* tag;
-    
+static char *
+CreateOperationTag(int operationType) {
+    char *tag;
+
     switch (operationType) {
-    case CMD_SELECT:
-	tag = "SELECT";
-	break;
-    case CMD_INSERT:
-	tag = "INSERT";
-	break;
-    case CMD_DELETE:
-	tag = "DELETE";
-	break;
-    case CMD_UPDATE:
-	tag = "UPDATE";
-	break;
-    default:
-	elog(DEBUG, "CreateOperationTag: unknown operation type %d", 
-	     operationType);
-	tag = NULL;
-	break;
+        case CMD_SELECT:
+            tag = "SELECT";
+            break;
+        case CMD_INSERT:
+            tag = "INSERT";
+            break;
+        case CMD_DELETE:
+            tag = "DELETE";
+            break;
+        case CMD_UPDATE:
+            tag = "UPDATE";
+            break;
+        default:
+            elog(DEBUG, "CreateOperationTag: unknown operation type %d",
+                 operationType);
+            tag = NULL;
+            break;
     }
-    
+
     return tag;
 }
 
@@ -144,35 +141,34 @@ CreateOperationTag(int operationType)
  */
 
 void
-ProcessPortal(char* portalName,
-	      Query *parseTree,
-	      Plan *plan,
-	      EState *state,
-	      TupleDesc attinfo, 
-	      CommandDest dest)
-{
-    Portal		portal;
-    MemoryContext 	portalContext;
-    
+ProcessPortal(char *portalName,
+              Query *parseTree,
+              Plan *plan,
+              EState *state,
+              TupleDesc attinfo,
+              CommandDest dest) {
+    Portal portal;
+    MemoryContext portalContext;
+
     /* ----------------
      *   convert the current blank portal into the user-specified
      *   portal and initialize the state and query descriptor.
      * ----------------
      */
-    
+
     if (PortalNameIsSpecial(portalName))
-	elog(WARN,
-	     "The portal name %s is reserved for internal use",
-	     portalName);
-    
+        elog(WARN,
+             "The portal name %s is reserved for internal use",
+             portalName);
+
     portal = BlankPortalAssignName(portalName);
-    
+
     PortalSetQuery(portal,
-		   CreateQueryDesc(parseTree, plan, dest),
-		   attinfo,
-		   state,
-		   PortalCleanup);
-    
+                   CreateQueryDesc(parseTree, plan, dest),
+                   attinfo,
+                   state,
+                   PortalCleanup);
+
     /* ----------------
      *	now create a new blank portal and switch to it. 
      *	Otherwise, the new named portal will be cleaned.
@@ -183,10 +179,10 @@ ProcessPortal(char* portalName,
      * ----------------
      */
     portalContext = (MemoryContext)
-	PortalGetHeapMemory(GetPortalByName(NULL));
-    
+            PortalGetHeapMemory(GetPortalByName(NULL));
+
     MemoryContextSwitchTo(portalContext);
-    
+
     StartPortalAllocMode(DefaultAllocMode, 0);
 }
 
@@ -198,57 +194,56 @@ ProcessPortal(char* portalName,
  * ----------------------------------------------------------------
  */
 void
-ProcessQueryDesc(QueryDesc *queryDesc)
-{
-    Query 	*parseTree;
-    Plan 	*plan;
-    int		operation;
-    char*	tag;
-    EState 	*state;
-    TupleDesc   attinfo;
-    
-    bool	isRetrieveIntoPortal;
-    bool	isRetrieveIntoRelation;
-    char*	intoName;
+ProcessQueryDesc(QueryDesc *queryDesc) {
+    Query *parseTree;
+    Plan *plan;
+    int operation;
+    char *tag;
+    EState *state;
+    TupleDesc attinfo;
+
+    bool isRetrieveIntoPortal;
+    bool isRetrieveIntoRelation;
+    char *intoName;
     CommandDest dest;
-    
+
     /* ----------------
      *	get info from the query desc
      * ----------------
      */
     parseTree = queryDesc->parsetree;
-    plan =	queryDesc->plantree;
-    
+    plan = queryDesc->plantree;
+
     operation = queryDesc->operation;
-    tag = 	CreateOperationTag(operation);
-    dest = 	queryDesc->dest;
-    
+    tag = CreateOperationTag(operation);
+    dest = queryDesc->dest;
+
     /* ----------------
      *	initialize portal/into relation status
      * ----------------
      */
-    isRetrieveIntoPortal =   false;
+    isRetrieveIntoPortal = false;
     isRetrieveIntoRelation = false;
-    
+
     if (operation == CMD_SELECT) {
-	if (parseTree->isPortal) {
-	    isRetrieveIntoPortal = true;
-	    intoName = parseTree->into;
-	    if (parseTree->isBinary) {
-		/*
-		 * For internal format portals, we change Remote
-		 * (externalized form) to RemoteInternal (internalized
-		 * form)
-		 */
-		dest = queryDesc->dest = RemoteInternal;
-	    }
-	} else if (parseTree->into != NULL) {
-	    /* select into table */
-	    isRetrieveIntoRelation = true;
-	}
+        if (parseTree->isPortal) {
+            isRetrieveIntoPortal = true;
+            intoName = parseTree->into;
+            if (parseTree->isBinary) {
+                /*
+                 * For internal format portals, we change Remote
+                 * (externalized form) to RemoteInternal (internalized
+                 * form)
+                 */
+                dest = queryDesc->dest = RemoteInternal;
+            }
+        } else if (parseTree->into != NULL) {
+            /* select into table */
+            isRetrieveIntoRelation = true;
+        }
 
     }
-    
+
     /* ----------------
      *	when performing a retrieve into, we override the normal
      *  communication destination during the processing of the
@@ -258,20 +253,20 @@ ProcessQueryDesc(QueryDesc *queryDesc)
      * ----------------
      */
     if (isRetrieveIntoRelation)
-    	queryDesc->dest = (int) None;
-    
+        queryDesc->dest = (int) None;
+
     /* ----------------
      *	create a default executor state.. 
      * ----------------
      */
     state = CreateExecutorState();
-    
+
     /* ----------------
      *	call ExecStart to prepare the plan for execution
      * ----------------
      */
     attinfo = ExecutorStart(queryDesc, state);
-    
+
     /* ----------------
      *   report the query's result type information
      *   back to the front end or to whatever destination
@@ -279,13 +274,13 @@ ProcessQueryDesc(QueryDesc *queryDesc)
      * ----------------
      */
     BeginCommand(NULL,
-		 operation,
-		 attinfo,
-		 isRetrieveIntoRelation,
-		 isRetrieveIntoPortal,
-		 tag,
-		 dest);
-    
+                 operation,
+                 attinfo,
+                 isRetrieveIntoRelation,
+                 isRetrieveIntoPortal,
+                 tag,
+                 dest);
+
     /* ----------------
      *  Named portals do not do a "fetch all" initially, so now
      *  we return since ExecMain has been called with EXEC_START
@@ -298,33 +293,33 @@ ProcessQueryDesc(QueryDesc *queryDesc)
      * ----------------
      */
     if (isRetrieveIntoPortal) {
-	PortalExecutorHeapMemory = NULL;
-	
-	ProcessPortal(intoName,
-		      parseTree,
-		      plan,
-		      state,
-		      attinfo,
-		      dest);
-	
-	EndCommand(tag, dest);
-	return;
+        PortalExecutorHeapMemory = NULL;
+
+        ProcessPortal(intoName,
+                      parseTree,
+                      plan,
+                      state,
+                      attinfo,
+                      dest);
+
+        EndCommand(tag, dest);
+        return;
     }
-    
+
     /* ----------------
      *   Now we get to the important call to ExecutorRun() where we
      *   actually run the plan..
      * ----------------
      */
     ExecutorRun(queryDesc, state, EXEC_RUN, 0);
-    
+
     /* ----------------
      *   now, we close down all the scans and free allocated resources...
      * with ExecutorEnd()
      * ----------------
      */
     ExecutorEnd(queryDesc, state);
-    
+
     /* ----------------
      *  Notify the destination of end of processing.
      * ----------------
@@ -341,22 +336,21 @@ ProcessQueryDesc(QueryDesc *queryDesc)
 
 void
 ProcessQuery(Query *parsetree,
-	     Plan *plan,
-	     char *argv[],
-	     Oid *typev,
-	     int nargs,
-	     CommandDest dest)
-{
+             Plan *plan,
+             char *argv[],
+             Oid *typev,
+             int nargs,
+             CommandDest dest) {
     QueryDesc *queryDesc;
     extern int dontExecute; /* from postgres.c */
-    extern void print_plan (Plan* p, Query* parsetree); /* from print.c */
+    extern void print_plan(Plan *p, Query *parsetree); /* from print.c */
 
     queryDesc = CreateQueryDesc(parsetree, plan, dest);
 
     if (dontExecute) {
-	/* don't execute it, just show the query plan */
-	print_plan(plan, parsetree);
+        /* don't execute it, just show the query plan */
+        print_plan(plan, parsetree);
     } else
-	ProcessQueryDesc(queryDesc);
+        ProcessQueryDesc(queryDesc);
 }
 

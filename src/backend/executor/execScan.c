@@ -40,37 +40,37 @@
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
-ExecScan(Scan *node, 
-	 TupleTableSlot* (*accessMtd)())	/* function returning a tuple */
+ExecScan(Scan *node,
+         TupleTableSlot *(*accessMtd)())    /* function returning a tuple */
 {
-    CommonScanState	*scanstate;
-    EState		*estate;
-    List		*qual;
-    bool		isDone;
+    CommonScanState *scanstate;
+    EState *estate;
+    List *qual;
+    bool isDone;
 
-    TupleTableSlot	*slot;
-    TupleTableSlot	*resultSlot;
-    HeapTuple 		newTuple;
+    TupleTableSlot *slot;
+    TupleTableSlot *resultSlot;
+    HeapTuple newTuple;
 
-    ExprContext		*econtext;
-    ProjectionInfo	*projInfo;
+    ExprContext *econtext;
+    ProjectionInfo *projInfo;
 
 
     /* ----------------
      *	initialize misc variables
      * ----------------
      */
-    newTuple = 	NULL;
-    slot =	NULL;
+    newTuple = NULL;
+    slot = NULL;
 
-    estate = 	node->plan.state;
-    scanstate =     	node->scanstate;
+    estate = node->plan.state;
+    scanstate = node->scanstate;
 
     /* ----------------
      *	get the expression context
      * ----------------
      */
-    econtext = 	scanstate->cstate.cs_ExprContext;
+    econtext = scanstate->cstate.cs_ExprContext;
 
     /* ----------------
      *	initialize fields in ExprContext which don't change
@@ -82,43 +82,43 @@ ExecScan(Scan *node,
     econtext->ecxt_relid = node->scanrelid;
 
     if (scanstate->cstate.cs_TupFromTlist) {
-	projInfo = scanstate->cstate.cs_ProjInfo;
-	resultSlot = ExecProject(projInfo, &isDone);
-	if (!isDone)
-	  return resultSlot;
+        projInfo = scanstate->cstate.cs_ProjInfo;
+        resultSlot = ExecProject(projInfo, &isDone);
+        if (!isDone)
+            return resultSlot;
     }
     /* 
      * get a tuple from the access method 
      * loop until we obtain a tuple which passes the qualification.
      */
-    for(;;) {
-	slot = (TupleTableSlot *) (*accessMtd)(node);
+    for (;;) {
+        slot = (TupleTableSlot *) (*accessMtd)(node);
 
-	/* ----------------
-	 *  if the slot returned by the accessMtd contains
-	 *  NULL, then it means there is nothing more to scan
-	 *  so we just return the empty slot.
-	 * ----------------
-	 */
-	if (TupIsNull(slot)) return slot;
-	
-	/* ----------------
-	 *   place the current tuple into the expr context
-	 * ----------------
-	 */
-	econtext->ecxt_scantuple = slot;
-	
-	/* ----------------
-	 *  check that the current tuple satisfies the qual-clause
-	 *  if our qualification succeeds then we
-	 *  leave the loop.
-	 * ----------------
-	 */
+        /* ----------------
+         *  if the slot returned by the accessMtd contains
+         *  NULL, then it means there is nothing more to scan
+         *  so we just return the empty slot.
+         * ----------------
+         */
+        if (TupIsNull(slot)) return slot;
 
-	/* add a check for non-nil qual here to avoid a
-	   function call to ExecQual() when the qual is nil */
-	if (!qual || ExecQual(qual, econtext) == true)
-	    break;
+        /* ----------------
+         *   place the current tuple into the expr context
+         * ----------------
+         */
+        econtext->ecxt_scantuple = slot;
+
+        /* ----------------
+         *  check that the current tuple satisfies the qual-clause
+         *  if our qualification succeeds then we
+         *  leave the loop.
+         * ----------------
+         */
+
+        /* add a check for non-nil qual here to avoid a
+           function call to ExecQual() when the qual is nil */
+        if (!qual || ExecQual(qual, econtext) == true)
+            break;
     }
 
     /* ----------------

@@ -14,66 +14,65 @@
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>		/* for sprintf() */
+#include <stdio.h>        /* for sprintf() */
 #include <errno.h>
 #include <math.h>
 #include "postgres.h"
-#include "utils/builtins.h"		/* where the declarations go */
+#include "utils/builtins.h"        /* where the declarations go */
 #include "utils/elog.h"
 
 int32
-pg_atoi(char *s, int size, int c)
-{
+pg_atoi(char *s, int size, int c) {
     long l;
     char *badp = (char *) NULL;
-    
+
     Assert(s);
-    
+
     errno = 0;
     l = strtol(s, &badp, 10);
-    if (errno)		/* strtol must set ERANGE */
-	elog(WARN, "pg_atoi: error reading \"%s\": %m", s);
+    if (errno)        /* strtol must set ERANGE */
+        elog(WARN, "pg_atoi: error reading \"%s\": %m", s);
     if (badp && *badp && (*badp != c))
-	elog(WARN, "pg_atoi: error in \"%s\": can\'t parse \"%s\"", s, badp);
-    
+        elog(WARN, "pg_atoi: error in \"%s\": can\'t parse \"%s\"", s, badp);
+
     switch (size) {
-    case sizeof(int32):
+        case sizeof(int32):
 #ifdef HAS_LONG_LONG
-	/* won't get ERANGE on these with 64-bit longs... */
-	if (l < -0x80000000L) {
-	    errno = ERANGE;
-	    elog(WARN, "pg_atoi: error reading \"%s\": %m", s);
-	}
-	if (l > 0x7fffffffL) {
-	    errno = ERANGE;
-	    elog(WARN, "pg_atoi: error reading \"%s\": %m", s);
-	}
+            /* won't get ERANGE on these with 64-bit longs... */
+            if (l < -0x80000000L) {
+                errno = ERANGE;
+                elog(WARN, "pg_atoi: error reading \"%s\": %m", s);
+            }
+            if (l > 0x7fffffffL) {
+                errno = ERANGE;
+                elog(WARN, "pg_atoi: error reading \"%s\": %m", s);
+            }
 #endif /* HAS_LONG_LONG */
-	break;
-    case sizeof(int16):
-	if (l < -0x8000) {
-	    errno = ERANGE;
-	    elog(WARN, "pg_atoi: error reading \"%s\": %m", s);
-	}
-	if (l > 0x7fff) {
-	    errno = ERANGE;
-	    elog(WARN, "pg_atoi: error reading \"%s\": %m", s);
-	}
-	break;
-    case sizeof(int8):
-	if (l < -0x80) {
-	    errno = ERANGE;
-	    elog(WARN, "pg_atoi: error reading \"%s\": %m", s);
-	}
-	if (l > 0x7f) {
-	    errno = ERANGE;
-	    elog(WARN, "pg_atoi: error reading \"%s\": %m", s);
-	}
-	break;
-    default:
-	elog(WARN, "pg_atoi: invalid result size: %d", size);
+            break;
+        case sizeof(int16):
+            if (l < -0x8000) {
+                errno = ERANGE;
+                elog(WARN, "pg_atoi: error reading \"%s\": %m", s);
+            }
+            if (l > 0x7fff) {
+                errno = ERANGE;
+                elog(WARN, "pg_atoi: error reading \"%s\": %m", s);
+            }
+            break;
+        case sizeof(int8):
+            if (l < -0x80) {
+                errno = ERANGE;
+                elog(WARN, "pg_atoi: error reading \"%s\": %m", s);
+            }
+            if (l > 0x7f) {
+                errno = ERANGE;
+                elog(WARN, "pg_atoi: error reading \"%s\": %m", s);
+            }
+            break;
+        default:
+            elog(WARN, "pg_atoi: invalid result size: %d", size);
     }
-    return((int32) l);
+    return ((int32) l);
 }
 
 /*
@@ -84,9 +83,8 @@ pg_atoi(char *s, int size, int c)
  *		now uses vendor's sprintf conversion
  */
 void
-itoa(int i, char *a)
-{
-    sprintf(a, "%hd", (short)i);
+itoa(int i, char *a) {
+    sprintf(a, "%hd", (short) i);
 }
 
 /*
@@ -97,8 +95,7 @@ itoa(int i, char *a)
  *		now uses vendor's sprintf conversion
  */
 void
-ltoa(int32 l, char *a)
-{
+ltoa(int32 l, char *a) {
     sprintf(a, "%d", l);
 }
 
@@ -130,151 +127,150 @@ ltoa(int32 l, char *a)
  **	of the output field (sometimes shorter than 'width').
  */
 int
-ftoa(double value, char *ascii, int width, int prec1, char format)
-{
+ftoa(double value, char *ascii, int width, int prec1, char format) {
 #if defined(PORTNAME_BSD44_derived) || defined(PORTNAME_bsdi)
-	char	out[256];
-	char	fmt[256];
-	int	ret;
+    char	out[256];
+    char	fmt[256];
+    int	ret;
 
-	(void) sprintf(fmt, "%%%d.%d%c", width, prec1, format);
-	(void) sprintf(out, fmt, value);
-	if ((ret = strlen(out)) > width) {
-		memset(ascii, '*', width - 2);
-		ascii[width] = 0;
-		return(0);
-	}
-	(void) strcpy(ascii, out);
-	return(ret);
+    (void) sprintf(fmt, "%%%d.%d%c", width, prec1, format);
+    (void) sprintf(out, fmt, value);
+    if ((ret = strlen(out)) > width) {
+        memset(ascii, '*', width - 2);
+        ascii[width] = 0;
+        return(0);
+    }
+    (void) strcpy(ascii, out);
+    return(ret);
 #else
-    auto int	expon;
-    auto int	sign;
-    register int	avail;
-    register char	*a;
-    register char	*p;
-    char		mode;
-    int		lowercase;
-    int		prec;
+    auto int expon;
+    auto int sign;
+    register int avail;
+    register char *a;
+    register char *p;
+    char mode;
+    int lowercase;
+    int prec;
 /*    extern char	*ecvt(), *fcvt();*/
-    
+
     prec = prec1;
     mode = format;
     lowercase = 'a' - 'A';
     if (mode >= 'a')
-	mode -= 'a' - 'A';
+        mode -= 'a' - 'A';
     else
-	lowercase = 0;
-    
+        lowercase = 0;
+
     if (mode != 'E') {
-	/* try 'F' style output */
-	p = fcvt(value, prec, &expon, &sign);
-	avail = width;
-	a = ascii;
-	
-	/* output sign */
-	if (sign) {
-	    avail--;
-	    *a++ = '-';
-	}
-	
-	/* output '0' before the decimal point */
-	if (expon <= 0) {
-	    *a++ = '0';
-	    avail--;
-	}
-	
-	/* compute space length left after dec pt and fraction */
-	avail -= prec + 1;
-	if (mode == 'G')
-	    avail -= 4;
-	
-	if (avail >= expon) {
-	    
-	    /* it fits.  output */
-	    while (expon > 0) {
-		/* output left of dp */
-		expon--;
-		if (*p) {
-		    *a++ = *p++;
-		} else
-		    *a++ = '0';
-	    }
-	    
-	    /* output fraction (right of dec pt) */
-	    avail = expon;
-	    goto frac_out;
-	}
-	/* won't fit; let's hope for G format */
+        /* try 'F' style output */
+        p = fcvt(value, prec, &expon, &sign);
+        avail = width;
+        a = ascii;
+
+        /* output sign */
+        if (sign) {
+            avail--;
+            *a++ = '-';
+        }
+
+        /* output '0' before the decimal point */
+        if (expon <= 0) {
+            *a++ = '0';
+            avail--;
+        }
+
+        /* compute space length left after dec pt and fraction */
+        avail -= prec + 1;
+        if (mode == 'G')
+            avail -= 4;
+
+        if (avail >= expon) {
+
+            /* it fits.  output */
+            while (expon > 0) {
+                /* output left of dp */
+                expon--;
+                if (*p) {
+                    *a++ = *p++;
+                } else
+                    *a++ = '0';
+            }
+
+            /* output fraction (right of dec pt) */
+            avail = expon;
+            goto frac_out;
+        }
+        /* won't fit; let's hope for G format */
     }
-    
+
     if (mode != 'F') {
-	/* try to do E style output */
-	p = ecvt(value, prec + 1, &expon, &sign);
-	avail = width - 5;
-	a = ascii;
-	
-	/* output the sign */
-	if (sign) {
-	    *a++ = '-';
-	    avail--;
-	}
+        /* try to do E style output */
+        p = ecvt(value, prec + 1, &expon, &sign);
+        avail = width - 5;
+        a = ascii;
+
+        /* output the sign */
+        if (sign) {
+            *a++ = '-';
+            avail--;
+        }
     }
-    
+
     /* check for field too small */
     if (mode == 'F' || avail < prec) {
-	/* sorry joker, you lose */
-	a = ascii;
-	for (avail = width; avail > 0; avail--)
-	    *a++ = '*';
-	*a = 0;
-	return (0);
+        /* sorry joker, you lose */
+        a = ascii;
+        for (avail = width; avail > 0; avail--)
+            *a++ = '*';
+        *a = 0;
+        return (0);
     }
-    
+
     /* it fits; output the number */
     mode = 'E';
-    
+
     /* output the LHS single digit */
     *a++ = *p++;
     expon--;
-    
+
     /* output the rhs */
     avail = 1;
-    
- frac_out:
+
+    frac_out:
     *a++ = '.';
     while (prec > 0) {
-	prec--;
-	if (avail < 0) {
-	    avail++;
-	    *a++ = '0';
-	} else {
-	    if (*p)
-		*a++ = *p++;
-	    else
-		*a++ = '0';
-	}
+        prec--;
+        if (avail < 0) {
+            avail++;
+            *a++ = '0';
+        } else {
+            if (*p)
+                *a++ = *p++;
+            else
+                *a++ = '0';
+        }
     }
-    
+
     /* output the exponent */
     if (mode == 'E') {
-	*a++ = 'E' + lowercase;
-	if (expon < 0) {
-	    *a++ = '-';
-	    expon = -expon;
-	} else
-	    *a++ = '+';
-	*a++ = (expon / 10) % 10 + '0';
-	*a++ = expon % 10 + '0';
+        *a++ = 'E' + lowercase;
+        if (expon < 0) {
+            *a++ = '-';
+            expon = -expon;
+        } else
+            *a++ = '+';
+        *a++ = (expon / 10) % 10 + '0';
+        *a++ = expon % 10 + '0';
     }
-    
+
     /* output spaces on the end in G format */
     if (mode == 'G') {
-	*a++ = ' ';
-	*a++ = ' ';
-	*a++ = ' ';
-	*a++ = ' ';
+        *a++ = ' ';
+        *a++ = ' ';
+        *a++ = ' ';
+        *a++ = ' ';
     }
-    
+
     /* finally, we can return */
     *a = 0;
     avail = a - ascii;
@@ -311,91 +307,90 @@ ftoa(double value, char *ascii, int width, int prec1, char format)
  **		clobbers *val.
  */
 int
-atof1(char *str, double *val)
-{
-    register char	*p;
-    double		v;
-    double		fact;
-    int		minus;
-    register char	c;
-    int		expon;
-    register int	gotmant;
-    
+atof1(char *str, double *val) {
+    register char *p;
+    double v;
+    double fact;
+    int minus;
+    register char c;
+    int expon;
+    register int gotmant;
+
     v = 0.0;
     p = str;
     minus = 0;
-    
+
     /* skip leading blanks */
     while ((c = *p) != '\0') {
-	if (c != ' ')
-	    break;
-	p++;
+        if (c != ' ')
+            break;
+        p++;
     }
-    
+
     /* handle possible sign */
     switch (c) {
-    case '-':
-	minus++;
-	
-    case '+':
-	p++;
+        case '-':
+            minus++;
+
+        case '+':
+            p++;
     }
-    
+
     /* skip blanks after sign */
     while ((c = *p) != '\0') {
-	if (c != ' ')
-	    break;
-	p++;
+        if (c != ' ')
+            break;
+        p++;
     }
-    
+
     /* start collecting the number to the decimal point */
     gotmant = 0;
     for (;;) {
-	c = *p;
-	if (c < '0' || c > '9')
-	    break;
-	v = v * 10.0 + (c - '0');
-	gotmant++;
-	p++;
+        c = *p;
+        if (c < '0' || c > '9')
+            break;
+        v = v * 10.0 + (c - '0');
+        gotmant++;
+        p++;
     }
-    
+
     /* check for fractional part */
     if (c == '.') {
-	fact = 1.0;
-	for (;;) {
-	    c = *++p;
-	    if (c < '0' || c > '9')
-		break;
-	    fact *= 0.1;
-	    v += (c - '0') * fact;
-	    gotmant++;
-	}
+        fact = 1.0;
+        for (;;) {
+            c = *++p;
+            if (c < '0' || c > '9')
+                break;
+            fact *= 0.1;
+            v += (c - '0') * fact;
+            gotmant++;
+        }
     }
-    
+
     /* skip blanks before possible exponent */
     while ((c = *p) != '\0') {
-	if (c != ' ')
-	    break;
-	p++;
+        if (c != ' ')
+            break;
+        p++;
     }
-    
+
     /* test for exponent */
     if (c == 'e' || c == 'E') {
-	p++;
-	expon = pg_atoi(p, sizeof(expon), '\0');
-	if (!gotmant)
-	    v = 1.0;
-	fact = expon;
-	v *= pow(10.0, fact);
+        p++;
+        expon = pg_atoi(p, sizeof(expon), '\0');
+        if (!gotmant)
+            v = 1.0;
+        fact = expon;
+        v *= pow(10.0, fact);
     } else {
-	/* if no exponent, then nothing */
-	if (c != 0)
-	    return (-1);
+        /* if no exponent, then nothing */
+        if (c != 0)
+            return (-1);
     }
-    
+
     /* store the result and exit */
     if (minus)
-	v = -v;
+        v = -v;
     *val = v;
     return (0);
 }

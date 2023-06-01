@@ -10,7 +10,7 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	SINVAL_H
+#ifndef    SINVAL_H
 #define SINVAL_H
 
 #include "c.h"
@@ -22,12 +22,16 @@
 extern SPINLOCK SInvalLock;
 
 extern void CreateSharedInvalidationState(IPCKey key);
+
 extern void AttachSharedInvalidationState(IPCKey key);
+
 extern void InitSharedInvalidationState();
+
 extern void RegisterSharedInvalid(int cacheId, Index hashIndex,
-				  ItemPointer pointer);
+                                  ItemPointer pointer);
+
 extern void InvalidateSharedInvalid(void (*invalFunction)(),
-				    void (*resetFunction)());
+                                    void (*resetFunction)());
 
 
 #endif /* SINVAL_H */

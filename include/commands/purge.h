@@ -10,11 +10,11 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	PURGE_H
-#define	PURGE_H
+#ifndef    PURGE_H
+#define    PURGE_H
 
 extern int32 RelationPurge(char *relationName,
-			   char *absoluteTimeString,
-			   char *relativeTimeString);
+                           char *absoluteTimeString,
+                           char *relativeTimeString);
 
-#endif	/* PURGE_H */
+#endif    /* PURGE_H */

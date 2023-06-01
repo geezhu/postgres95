@@ -30,15 +30,15 @@
  *	pg_rewrite definition.  cpp turns this into
  *	typedef struct FormData_pg_rewrite
  * ----------------
- */ 
+ */
 CATALOG(pg_rewrite) {
-    NameData 	rulename;
-    char 	ev_type;
-    Oid 	ev_class;
-    int2 	ev_attr;
-    bool 	is_instead;
-    text	ev_qual;	/* VARLENA */
-    text 	action;		/* VARLENA */
+    NameData rulename;
+    char ev_type;
+    Oid ev_class;
+    int2 ev_attr;
+    bool is_instead;
+    text ev_qual;    /* VARLENA */
+    text action;        /* VARLENA */
 } FormData_pg_rewrite;
 
 /* ----------------
@@ -52,13 +52,13 @@ typedef FormData_pg_rewrite *Form_pg_rewrite;
  *	compiler constants for pg_rewrite
  * ----------------
  */
-#define Natts_pg_rewrite		7
-#define Anum_pg_rewrite_rulename	1
-#define Anum_pg_rewrite_ev_type 	2
-#define Anum_pg_rewrite_ev_class	3
-#define Anum_pg_rewrite_ev_attr  	4
+#define Natts_pg_rewrite        7
+#define Anum_pg_rewrite_rulename    1
+#define Anum_pg_rewrite_ev_type    2
+#define Anum_pg_rewrite_ev_class    3
+#define Anum_pg_rewrite_ev_attr    4
 #define Anum_pg_rewrite_is_instead      5
-#define Anum_pg_rewrite_ev_qual		6
-#define Anum_pg_rewrite_action	        7
+#define Anum_pg_rewrite_ev_qual        6
+#define Anum_pg_rewrite_action            7
 
 #endif /* PG_REWRITE_H */

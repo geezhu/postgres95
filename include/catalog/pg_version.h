@@ -31,11 +31,11 @@
  *	pg_version definition.  cpp turns this into
  *	typedef struct FormData_pg_version
  * ----------------
- */ 
+ */
 CATALOG(pg_version) {
-    Oid 	verrelid;
-    Oid 	verbaseid;
-    int4	vertime;  /* really should be some abstime */
+    Oid verrelid;
+    Oid verbaseid;
+    int4 vertime;  /* really should be some abstime */
 } FormData_pg_version;
 
 /* ----------------
@@ -43,16 +43,16 @@ CATALOG(pg_version) {
  *	the format of pg_version relation.
  * ----------------
  */
-typedef FormData_pg_version	*VersionTupleForm;
+typedef FormData_pg_version *VersionTupleForm;
 
 /* ----------------
  *	compiler constants for pg_version
  * ----------------
  */
-#define Natts_pg_version		3
-#define Anum_pg_version_verrelid	1
-#define Anum_pg_version_verbaseid	2
-#define Anum_pg_version_vertime		3
+#define Natts_pg_version        3
+#define Anum_pg_version_verrelid    1
+#define Anum_pg_version_verbaseid    2
+#define Anum_pg_version_vertime        3
 
 
 #endif /* PG_VERSION_H */

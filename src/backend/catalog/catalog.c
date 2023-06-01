@@ -11,7 +11,7 @@
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>	/* XXX */
+#include <string.h>    /* XXX */
 #include "postgres.h"
 #include "miscadmin.h"  /* for DataDir */
 #include "access/htup.h"
@@ -20,7 +20,7 @@
 #include "utils/palloc.h"
 
 #include "utils/syscache.h"
-#include "catalog/catname.h"	/* NameIs{,Shared}SystemRelationName */
+#include "catalog/catname.h"    /* NameIs{,Shared}SystemRelationName */
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_type.h"
 #include "catalog/catalog.h"
@@ -28,8 +28,8 @@
 #include "access/transam.h"
 
 
-#ifndef	MAXPATHLEN
-#define	MAXPATHLEN	80
+#ifndef    MAXPATHLEN
+#define    MAXPATHLEN    80
 #endif
 
 /*
@@ -37,16 +37,15 @@
  *	Perhaps this should be in-line code in relopen().
  */
 char *
-relpath(char relname[])
-{
-    char    *path;
-    
+relpath(char relname[]) {
+    char *path;
+
     if (IsSharedSystemRelationName(relname)) {
-	path = (char *) palloc(strlen(DataDir) + sizeof(NameData) + 2);
-	sprintf(path, "%s/%.*s", DataDir, NAMEDATALEN, relname);
-	return (path);
+        path = (char *) palloc(strlen(DataDir) + sizeof(NameData) + 2);
+        sprintf(path, "%s/%.*s", DataDir, NAMEDATALEN, relname);
+        return (path);
     }
-    return(relname);
+    return (relname);
 }
 
 /*
@@ -59,14 +58,13 @@ relpath(char relname[])
  *	XXX this is way bogus. -- pma
  */
 bool
-issystem(char relname[])
-{
+issystem(char relname[]) {
     if (relname[0] && relname[1] && relname[2])
-	return (relname[0] == 'p' && 
-		relname[1] == 'g' && 
-		relname[2] == '_');
+        return (relname[0] == 'p' &&
+                relname[1] == 'g' &&
+                relname[2] == '_');
     else
-	return FALSE;
+        return FALSE;
 }
 
 /*
@@ -80,14 +78,13 @@ issystem(char relname[])
  *	XXX this is way bogus. -- pma
  */
 bool
-IsSystemRelationName(char *relname)
-{
+IsSystemRelationName(char *relname) {
     if (relname[0] && relname[1] && relname[2])
-	return (relname[0] == 'p' && 
-		relname[1] == 'g' && 
-		relname[2] == '_');
+        return (relname[0] == 'p' &&
+                relname[1] == 'g' &&
+                relname[2] == '_');
     else
-	return FALSE;
+        return FALSE;
 }
 
 /*
@@ -95,22 +92,21 @@ IsSystemRelationName(char *relname)
  *	True iff name is the name of a shared system catalog relation.
  */
 bool
-IsSharedSystemRelationName(char *relname)
-{
+IsSharedSystemRelationName(char *relname) {
     int i;
-    
+
     /*
      * Quick out: if it's not a system relation, it can't be a shared
      * system relation.
      */
     if (!IsSystemRelationName(relname))
-	return FALSE;
-    
+        return FALSE;
+
     i = 0;
-    while ( SharedSystemRelationNames[i] != NULL) {
-         if (strcmp(SharedSystemRelationNames[i],relname) == 0)
-	     return TRUE;
-	 i++;
+    while (SharedSystemRelationNames[i] != NULL) {
+        if (strcmp(SharedSystemRelationNames[i], relname) == 0)
+            return TRUE;
+        i++;
     }
     return FALSE;
 }
@@ -130,13 +126,12 @@ IsSharedSystemRelationName(char *relname)
  *	for a block of OID's to be declared as invalid ones to allow
  *	user programs to use them for temporary object identifiers.
  */
-Oid newoid()
-{
-    Oid	 lastoid;
-    
+Oid newoid() {
+    Oid lastoid;
+
     GetNewObjectId(&lastoid);
-    if (! OidIsValid(lastoid))
-	elog(WARN, "newoid: GetNewObjectId returns invalid oid");
+    if (!OidIsValid(lastoid))
+        elog(WARN, "newoid: GetNewObjectId returns invalid oid");
     return lastoid;
 }
 
@@ -156,50 +151,49 @@ Oid newoid()
  *	of index tuples.
  */
 void
-fillatt(TupleDesc tupleDesc)
-{
-    AttributeTupleForm	*attributeP;
-    register TypeTupleForm	typp;
-    HeapTuple		tuple;
-    int			i;
+fillatt(TupleDesc tupleDesc) {
+    AttributeTupleForm *attributeP;
+    register TypeTupleForm typp;
+    HeapTuple tuple;
+    int i;
     int natts = tupleDesc->natts;
     AttributeTupleForm *att = tupleDesc->attrs;
 
     if (natts < 0 || natts > MaxHeapAttributeNumber)
-	elog(WARN, "fillatt: %d attributes is too large", natts);
+        elog(WARN, "fillatt: %d attributes is too large", natts);
     if (natts == 0) {
-	elog(DEBUG, "fillatt: called with natts == 0");
-	return;
+        elog(DEBUG, "fillatt: called with natts == 0");
+        return;
     }
-    
-    attributeP = &att[0];
-    
-    for (i = 0; i < natts;) {
-	tuple = SearchSysCacheTuple(TYPOID,
-				    Int32GetDatum((*attributeP)->atttypid),
-				    0,0,0);
-	if (!HeapTupleIsValid(tuple)) {
-	    elog(WARN, "fillatt: unknown atttypid %ld",
-		 (*attributeP)->atttypid);
-	} else {
-	    (*attributeP)->attnum = (int16) ++i;
-	    /* Check if the attr is a set before messing with the length
-	       and byval, since those were already set in 
-	       TupleDescInitEntry.  In fact, this seems redundant 
-	       here, but who knows what I'll break if I take it out...
 
-	       same for char() and varchar() stuff. I share the same
-	       sentiments. This function is poorly written anyway. -ay 6/95
-	       */
-	    if (!(*attributeP)->attisset &&
-		(*attributeP)->atttypid!=BPCHAROID &&
-		(*attributeP)->atttypid!=VARCHAROID) {
-		
-		typp = (TypeTupleForm) GETSTRUCT(tuple);  /* XXX */
-		(*attributeP)->attlen = typp->typlen;
-		(*attributeP)->attbyval = typp->typbyval;
-	    }
-	}
-	attributeP += 1;
+    attributeP = &att[0];
+
+    for (i = 0; i < natts;) {
+        tuple = SearchSysCacheTuple(TYPOID,
+                                    Int32GetDatum((*attributeP)->atttypid),
+                                    0, 0, 0);
+        if (!HeapTupleIsValid(tuple)) {
+            elog(WARN, "fillatt: unknown atttypid %ld",
+                 (*attributeP)->atttypid);
+        } else {
+            (*attributeP)->attnum = (int16) ++i;
+            /* Check if the attr is a set before messing with the length
+               and byval, since those were already set in 
+               TupleDescInitEntry.  In fact, this seems redundant 
+               here, but who knows what I'll break if I take it out...
+    
+               same for char() and varchar() stuff. I share the same
+               sentiments. This function is poorly written anyway. -ay 6/95
+               */
+            if (!(*attributeP)->attisset &&
+                (*attributeP)->atttypid != BPCHAROID &&
+                (*attributeP)->atttypid != VARCHAROID) {
+
+                typp = (TypeTupleForm) GETSTRUCT(tuple);  /* XXX */
+                (*attributeP)->attlen = typp->typlen;
+                (*attributeP)->attbyval = typp->typbyval;
+            }
+        }
+        attributeP += 1;
     }
 }

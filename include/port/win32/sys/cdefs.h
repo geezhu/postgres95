@@ -36,15 +36,15 @@
  *	@(#)cdefs.h	8.7 (Berkeley) 1/21/94
  */
 
-#ifndef	_CDEFS_H_
-#define	_CDEFS_H_
+#ifndef    _CDEFS_H_
+#define    _CDEFS_H_
 
 #if defined(__cplusplus)
 #define	__BEGIN_DECLS	extern "C" {
 #define	__END_DECLS	};
 #else
-#define	__BEGIN_DECLS
-#define	__END_DECLS
+#define    __BEGIN_DECLS
+#define    __END_DECLS
 #endif
 
 /*
@@ -71,15 +71,15 @@
 #endif /* !__cplusplus */
 
 #else	/* !(__STDC__ || __cplusplus) */
-#define	__P(protos)	()		/* traditional C preprocessor */
-#define	__CONCAT(x,y)	x/**/y
-#define	__STRING(x)	"x"
+#define    __P(protos)    ()        /* traditional C preprocessor */
+#define    __CONCAT(x, y)    x/**/y
+#define    __STRING(x)    "x"
 
 #ifndef __GNUC__
-#define	__const				/* delete pseudo-ANSI C keywords */
-#define	__inline
-#define	__signed
-#define	__volatile
+#define    __const                /* delete pseudo-ANSI C keywords */
+#define    __inline
+#define    __signed
+#define    __volatile
 /*
  * In non-ANSI C environments, new programs will want ANSI-only C keywords
  * deleted from the program and old programs will want them left alone.
@@ -88,14 +88,14 @@
  * When using "gcc -traditional", we assume that this is the intent; if
  * __GNUC__ is defined but __STDC__ is not, we leave the new keywords alone.
  */
-#ifndef	NO_ANSI_KEYWORDS
-#define	const				/* delete ANSI C keywords */
-#define	inline
-#define	signed
-#define	volatile
+#ifndef    NO_ANSI_KEYWORDS
+#define    const                /* delete ANSI C keywords */
+#define    inline
+#define    signed
+#define    volatile
 #endif
-#endif	/* !__GNUC__ */
-#endif	/* !(__STDC__ || __cplusplus) */
+#endif    /* !__GNUC__ */
+#endif    /* !(__STDC__ || __cplusplus) */
 
 /*
  * GCC1 and some versions of GCC2 declare dead (non-returning) and
@@ -106,7 +106,7 @@
  * in the distribution version of 2.5.5).
  */
 #if !defined(__GNUC__) || __GNUC__ < 2 || __GNUC_MINOR__ < 5
-#define	__attribute__(x)	/* delete __attribute__ if non-gcc or gcc1 */
+#define    __attribute__(x)    /* delete __attribute__ if non-gcc or gcc1 */
 #if defined(__GNUC__) && !defined(__STRICT_ANSI__)
 #define	__dead		__volatile
 #define	__pure		__const
@@ -115,8 +115,8 @@
 
 /* Delete pseudo-keywords wherever they are not available or needed. */
 #ifndef __dead
-#define	__dead
-#define	__pure
+#define    __dead
+#define    __pure
 #endif
 
 typedef long off_t;

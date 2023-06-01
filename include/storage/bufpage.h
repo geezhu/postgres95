@@ -10,11 +10,11 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	BUFPAGE_H
+#ifndef    BUFPAGE_H
 #define BUFPAGE_H
 
 #include "c.h"
-#include "machine.h"		/* for BLCKSZ */
+#include "machine.h"        /* for BLCKSZ */
 
 #include "storage/buf.h"
 #include "storage/item.h"
@@ -75,13 +75,13 @@
  * initialize its pages with PageInit and then set its own opaque
  * fields.
  */
-typedef Pointer	Page;
+typedef Pointer Page;
 
 /*
  * PageIsValid --
  *	True iff page is valid.
  */
-#define	PageIsValid(page) PointerIsValid(page)
+#define    PageIsValid(page) PointerIsValid(page)
 
 
 /*
@@ -90,7 +90,7 @@ typedef Pointer	Page;
  * note that this is actually limited to 2^13 because we have limited
  * ItemIdData.lp_off and ItemIdData.lp_len to 13 bits (see itemid.h).
  */
-typedef uint16	LocationIndex;
+typedef uint16 LocationIndex;
 
 
 /*
@@ -105,22 +105,22 @@ typedef uint16	LocationIndex;
 typedef struct OpaqueData {
     uint16 od_pagesize;
 } OpaqueData;
-    
-typedef OpaqueData	*Opaque;
+
+typedef OpaqueData *Opaque;
 
 
 /*
  * disk page organization
  */
 typedef struct PageHeaderData {
-    LocationIndex	pd_lower;	/* offset to start of free space */
-    LocationIndex	pd_upper;	/* offset to end of free space */
-    LocationIndex	pd_special;	/* offset to start of special space */
-    OpaqueData       	pd_opaque;	/* AM-generic information */
-    ItemIdData		pd_linp[1];	/* line pointers */
+    LocationIndex pd_lower;    /* offset to start of free space */
+    LocationIndex pd_upper;    /* offset to end of free space */
+    LocationIndex pd_special;    /* offset to start of special space */
+    OpaqueData pd_opaque;    /* AM-generic information */
+    ItemIdData pd_linp[1];    /* line pointers */
 } PageHeaderData;
 
-typedef PageHeaderData	*PageHeader;
+typedef PageHeaderData *PageHeader;
 
 typedef enum {
     ShufflePageManagerMode,
@@ -137,7 +137,7 @@ typedef enum {
  * AM-specific opaque space at the end of the page (as in btrees), ...
  * however, it at least serves as an upper bound for heap pages.
  */
-#define MAXTUPLEN	(BLCKSZ - sizeof (PageHeaderData))
+#define MAXTUPLEN    (BLCKSZ - sizeof (PageHeaderData))
 
 /* ----------------------------------------------------------------
  *			page support macros
@@ -237,20 +237,32 @@ typedef enum {
  */
 
 extern Size BufferGetPageSize(Buffer buffer);
+
 extern Page BufferGetPage(Buffer buffer);
+
 extern void PageInit(Page page, Size pageSize, Size specialSize);
+
 extern Item PageGetItem(Page page, ItemId itemId);
+
 extern OffsetNumber PageAddItem(Page page, Item item, Size size,
-			 OffsetNumber offsetNumber, ItemIdFlags flags);
+                                OffsetNumber offsetNumber, ItemIdFlags flags);
+
 extern Page PageGetTempPage(Page page, Size specialSize);
+
 extern void PageRestoreTempPage(Page tempPage, Page oldPage);
+
 extern OffsetNumber PageGetMaxOffsetNumber(Page page);
+
 extern void PageRepairFragmentation(Page page);
+
 extern Size PageGetFreeSpace(Page page);
+
 extern void PageManagerModeSet(PageManagerMode mode);
+
 extern void PageIndexTupleDelete(Page page, OffsetNumber offset);
+
 extern void PageIndexTupleDeleteAdjustLinePointers(PageHeader phdr,
-				       char *location, Size size);
+                                                   char *location, Size size);
 
 
-#endif	/* BUFPAGE_H */
+#endif    /* BUFPAGE_H */

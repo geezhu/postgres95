@@ -101,97 +101,96 @@
  * ------------------------------------------------------------------------
  */
 bool
-ExecInitNode(Plan *node, EState *estate, Plan *parent)
-{
-    bool	   	result;
-    
+ExecInitNode(Plan *node, EState *estate, Plan *parent) {
+    bool result;
+
     /* ----------------
      *	do nothing when we get to the end
      *  of a leaf on tree.
      * ----------------
-     */   
+     */
     if (node == NULL)
-	return FALSE;
-    
-    switch(nodeTag(node)) {
-	/* ----------------
-	 *	control nodes
-	 * ----------------
-	 */
-    case T_Result:
-	result = ExecInitResult((Result *)node, estate, parent);	
-	break;
-	
-    case T_Append:
-	result = ExecInitAppend((Append *)node, estate, parent);
-	break;
-	
-	/* ----------------
-	 *	scan nodes
-	 * ----------------
-	 */
-    case T_SeqScan:
-	result = ExecInitSeqScan((SeqScan *)node, estate, parent);	
-	break;
-	
-    case T_IndexScan:
-	result = ExecInitIndexScan((IndexScan *)node, estate, parent);
-	break;
-	
-	/* ----------------
-	 *	join nodes
-	 * ----------------
-	 */
-    case T_NestLoop:
-	result = ExecInitNestLoop((NestLoop *)node, estate, parent);
-	break;
-	
-    case T_MergeJoin:
-	result = ExecInitMergeJoin((MergeJoin *)node, estate, parent);
-	break;
-	
-	/* ----------------
-	 *	materialization nodes
-	 * ----------------
-	 */
-    case T_Material:
-	result = ExecInitMaterial((Material *)node, estate, parent);
-	break;
-	
-    case T_Sort:
-	result = ExecInitSort((Sort *)node, estate, parent);
-	break;
-	
-    case T_Unique:
-	result = ExecInitUnique((Unique *)node, estate, parent);
-	break;
-	
-    case T_Group:    
-	result = ExecInitGroup((Group *)node, estate, parent);
-	break;
+        return FALSE;
 
-    case T_Agg:
-	result = ExecInitAgg((Agg *)node, estate, parent);
-	break;
-	
-    case T_Hash:
-	result = ExecInitHash((Hash *)node, estate, parent);
-	break;
-	
-    case T_HashJoin:
-	result = ExecInitHashJoin((HashJoin *)node, estate, parent);
-	break;
-	
-    case T_Tee:
-	result = ExecInitTee((Tee*)node, estate, parent);
-	break;
+    switch (nodeTag(node)) {
+        /* ----------------
+         *	control nodes
+         * ----------------
+         */
+        case T_Result:
+            result = ExecInitResult((Result *) node, estate, parent);
+            break;
 
-    default:
-	elog(DEBUG, "ExecInitNode: node not yet supported: %d",
-	     nodeTag(node));
-	result = FALSE;
+        case T_Append:
+            result = ExecInitAppend((Append *) node, estate, parent);
+            break;
+
+            /* ----------------
+             *	scan nodes
+             * ----------------
+             */
+        case T_SeqScan:
+            result = ExecInitSeqScan((SeqScan *) node, estate, parent);
+            break;
+
+        case T_IndexScan:
+            result = ExecInitIndexScan((IndexScan *) node, estate, parent);
+            break;
+
+            /* ----------------
+             *	join nodes
+             * ----------------
+             */
+        case T_NestLoop:
+            result = ExecInitNestLoop((NestLoop *) node, estate, parent);
+            break;
+
+        case T_MergeJoin:
+            result = ExecInitMergeJoin((MergeJoin *) node, estate, parent);
+            break;
+
+            /* ----------------
+             *	materialization nodes
+             * ----------------
+             */
+        case T_Material:
+            result = ExecInitMaterial((Material *) node, estate, parent);
+            break;
+
+        case T_Sort:
+            result = ExecInitSort((Sort *) node, estate, parent);
+            break;
+
+        case T_Unique:
+            result = ExecInitUnique((Unique *) node, estate, parent);
+            break;
+
+        case T_Group:
+            result = ExecInitGroup((Group *) node, estate, parent);
+            break;
+
+        case T_Agg:
+            result = ExecInitAgg((Agg *) node, estate, parent);
+            break;
+
+        case T_Hash:
+            result = ExecInitHash((Hash *) node, estate, parent);
+            break;
+
+        case T_HashJoin:
+            result = ExecInitHashJoin((HashJoin *) node, estate, parent);
+            break;
+
+        case T_Tee:
+            result = ExecInitTee((Tee *) node, estate, parent);
+            break;
+
+        default:
+            elog(DEBUG, "ExecInitNode: node not yet supported: %d",
+                 nodeTag(node));
+            result = FALSE;
     }
-    
+
     return result;
 }
 
@@ -204,168 +203,166 @@ ExecInitNode(Plan *node, EState *estate, Plan *parent)
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
-ExecProcNode(Plan *node, Plan *parent)
-{
-    TupleTableSlot	*result;
-    
+ExecProcNode(Plan *node, Plan *parent) {
+    TupleTableSlot *result;
+
     /* ----------------
      *	deal with NULL nodes..
      * ----------------
      */
     if (node == NULL)
-	return NULL;
-    
-    switch(nodeTag(node)) {
-	/* ----------------
-	 *	control nodes
-	 * ----------------
-	 */
-    case T_Result:
-	result = ExecResult((Result *)node);
-	break;
-	
-    case T_Append:
-	result = ExecProcAppend((Append *)node);
-	break;
-	
-	/* ----------------
-	 *	scan nodes
-	 * ----------------
-	 */
-    case T_SeqScan:
-	result = ExecSeqScan((SeqScan *)node);
-	break;
+        return NULL;
 
-    case T_IndexScan:
-	result = ExecIndexScan((IndexScan *)node);
-	break;
-	
-	/* ----------------
-	 *	join nodes
-	 * ----------------
-	 */
-    case T_NestLoop:
-	result = ExecNestLoop((NestLoop *)node, parent);
-	break;
-	
-    case T_MergeJoin:
-	result = ExecMergeJoin((MergeJoin *)node);
-	break;
-	
-	/* ----------------
-	 *	materialization nodes
-	 * ----------------
-	 */
-    case T_Material:
-	result = ExecMaterial((Material *)node);
-	break;
-	
-    case T_Sort:
-	result = ExecSort((Sort *)node);
-	break;
-	
-    case T_Unique:
-	result = ExecUnique((Unique *)node);
-	break;
-	
-    case T_Group:
-	result = ExecGroup((Group *)node);
-	break;
+    switch (nodeTag(node)) {
+        /* ----------------
+         *	control nodes
+         * ----------------
+         */
+        case T_Result:
+            result = ExecResult((Result *) node);
+            break;
 
-    case T_Agg:
-	result = ExecAgg((Agg *)node);
-	break;
-	
-    case T_Hash:
-	result = ExecHash((Hash *)node);
-	break;
-	
-    case T_HashJoin:
-	result = ExecHashJoin((HashJoin *)node);
-	break;
-	
-    case T_Tee:
-	result = ExecTee((Tee*)node, parent);
-	break;
+        case T_Append:
+            result = ExecProcAppend((Append *) node);
+            break;
 
-    default:
-	elog(DEBUG, "ExecProcNode: node not yet supported: %d",
-	     nodeTag(node));
-	result = FALSE;
+            /* ----------------
+             *	scan nodes
+             * ----------------
+             */
+        case T_SeqScan:
+            result = ExecSeqScan((SeqScan *) node);
+            break;
+
+        case T_IndexScan:
+            result = ExecIndexScan((IndexScan *) node);
+            break;
+
+            /* ----------------
+             *	join nodes
+             * ----------------
+             */
+        case T_NestLoop:
+            result = ExecNestLoop((NestLoop *) node, parent);
+            break;
+
+        case T_MergeJoin:
+            result = ExecMergeJoin((MergeJoin *) node);
+            break;
+
+            /* ----------------
+             *	materialization nodes
+             * ----------------
+             */
+        case T_Material:
+            result = ExecMaterial((Material *) node);
+            break;
+
+        case T_Sort:
+            result = ExecSort((Sort *) node);
+            break;
+
+        case T_Unique:
+            result = ExecUnique((Unique *) node);
+            break;
+
+        case T_Group:
+            result = ExecGroup((Group *) node);
+            break;
+
+        case T_Agg:
+            result = ExecAgg((Agg *) node);
+            break;
+
+        case T_Hash:
+            result = ExecHash((Hash *) node);
+            break;
+
+        case T_HashJoin:
+            result = ExecHashJoin((HashJoin *) node);
+            break;
+
+        case T_Tee:
+            result = ExecTee((Tee *) node, parent);
+            break;
+
+        default:
+            elog(DEBUG, "ExecProcNode: node not yet supported: %d",
+                 nodeTag(node));
+            result = FALSE;
     }
-    
+
     return result;
 }
 
 int
-ExecCountSlotsNode(Plan *node)
-{
-    if (node == (Plan *)NULL)
-	return 0;
-    
-    switch(nodeTag(node)) {
-	/* ----------------
-	 *	control nodes
-	 * ----------------
-	 */
-    case T_Result:
-	return ExecCountSlotsResult((Result *)node);
-	
-    case T_Append:
-	return ExecCountSlotsAppend((Append *)node);
-	
-	/* ----------------
-	 *	scan nodes
-	 * ----------------
-	 */
-    case T_SeqScan:
-	return ExecCountSlotsSeqScan((SeqScan *)node);
+ExecCountSlotsNode(Plan *node) {
+    if (node == (Plan *) NULL)
+        return 0;
 
-    case T_IndexScan:
-	return ExecCountSlotsIndexScan((IndexScan *)node);
-	
-	/* ----------------
-	 *	join nodes
-	 * ----------------
-	 */
-    case T_NestLoop:
-	return ExecCountSlotsNestLoop((NestLoop *)node);
-	
-    case T_MergeJoin:
-	return ExecCountSlotsMergeJoin((MergeJoin *)node);
-	
-	/* ----------------
-	 *	materialization nodes
-	 * ----------------
-	 */
-    case T_Material:
-	return ExecCountSlotsMaterial((Material *)node);
-	
-    case T_Sort:
-	return ExecCountSlotsSort((Sort *)node);
-	
-    case T_Unique:
-	return ExecCountSlotsUnique((Unique *)node);
-	
-    case T_Group:
-	return ExecCountSlotsGroup((Group *)node);
+    switch (nodeTag(node)) {
+        /* ----------------
+         *	control nodes
+         * ----------------
+         */
+        case T_Result:
+            return ExecCountSlotsResult((Result *) node);
 
-    case T_Agg:
-	return ExecCountSlotsAgg((Agg *)node);
-	
-    case T_Hash:
-	return ExecCountSlotsHash((Hash *)node);
-	
-    case T_HashJoin:
-	return ExecCountSlotsHashJoin((HashJoin *)node);
-	
-    case T_Tee:
-	return ExecCountSlotsTee((Tee*)node);
+        case T_Append:
+            return ExecCountSlotsAppend((Append *) node);
 
-    default:
-	elog(WARN, "ExecCountSlotsNode: node not yet supported: %d",
-	     nodeTag(node));
-	break;
+            /* ----------------
+             *	scan nodes
+             * ----------------
+             */
+        case T_SeqScan:
+            return ExecCountSlotsSeqScan((SeqScan *) node);
+
+        case T_IndexScan:
+            return ExecCountSlotsIndexScan((IndexScan *) node);
+
+            /* ----------------
+             *	join nodes
+             * ----------------
+             */
+        case T_NestLoop:
+            return ExecCountSlotsNestLoop((NestLoop *) node);
+
+        case T_MergeJoin:
+            return ExecCountSlotsMergeJoin((MergeJoin *) node);
+
+            /* ----------------
+             *	materialization nodes
+             * ----------------
+             */
+        case T_Material:
+            return ExecCountSlotsMaterial((Material *) node);
+
+        case T_Sort:
+            return ExecCountSlotsSort((Sort *) node);
+
+        case T_Unique:
+            return ExecCountSlotsUnique((Unique *) node);
+
+        case T_Group:
+            return ExecCountSlotsGroup((Group *) node);
+
+        case T_Agg:
+            return ExecCountSlotsAgg((Agg *) node);
+
+        case T_Hash:
+            return ExecCountSlotsHash((Hash *) node);
+
+        case T_HashJoin:
+            return ExecCountSlotsHashJoin((HashJoin *) node);
+
+        case T_Tee:
+            return ExecCountSlotsTee((Tee *) node);
+
+        default:
+            elog(WARN, "ExecCountSlotsNode: node not yet supported: %d",
+                 nodeTag(node));
+            break;
     }
     return 0;
 }
@@ -382,96 +379,95 @@ ExecCountSlotsNode(Plan *node)
  * ----------------------------------------------------------------  
  */
 void
-ExecEndNode(Plan *node, Plan *parent)
-{
+ExecEndNode(Plan *node, Plan *parent) {
     /* ----------------
      *	do nothing when we get to the end
      *  of a leaf on tree.
      * ----------------
      */
-    if (node == NULL) 
-	return;
-    
-    switch(nodeTag(node)) {
-	/* ----------------
-	 *  control nodes
-	 * ----------------
-	 */
-    case T_Result:
-	ExecEndResult((Result *)node);
-	break;
-	
-    case T_Append:
-	ExecEndAppend((Append *)node);
-	break;
-	
-	/* ----------------
-	 *	scan nodes
-	 * ----------------
-	 */
-    case T_SeqScan:
-	ExecEndSeqScan((SeqScan *)node);
-	break;
+    if (node == NULL)
+        return;
 
-    case T_IndexScan:
-	ExecEndIndexScan((IndexScan *)node);
-	break;
-	
-	/* ----------------
-	 *	join nodes
-	 * ----------------
-	 */
-    case T_NestLoop:
-	ExecEndNestLoop((NestLoop *)node);
-	break;
-	
-    case T_MergeJoin:
-	ExecEndMergeJoin((MergeJoin *)node);
-	break;
-	
-	/* ----------------
-	 *	materialization nodes
-	 * ----------------
-	 */
-    case T_Material:
-	ExecEndMaterial((Material *)node);
-	break;
-	
-    case T_Sort:
-	ExecEndSort((Sort *)node);
-	break;
-	
-    case T_Unique:
-	ExecEndUnique((Unique *)node);
-	break;
-	
-    case T_Group:
-	ExecEndGroup((Group *)node);
-	break;
+    switch (nodeTag(node)) {
+        /* ----------------
+         *  control nodes
+         * ----------------
+         */
+        case T_Result:
+            ExecEndResult((Result *) node);
+            break;
 
-    case T_Agg:
-	ExecEndAgg((Agg *)node);
-	break;
-	
-	/* ----------------
-	 *	XXX add hooks to these
-	 * ----------------
-	 */
-    case T_Hash:
-	ExecEndHash((Hash *) node);
-	break;
-	
-    case T_HashJoin:
-	ExecEndHashJoin((HashJoin *) node);
-	break;
-	
-    case T_Tee:
-        ExecEndTee((Tee*) node, parent);
-	break;
+        case T_Append:
+            ExecEndAppend((Append *) node);
+            break;
 
-    default:
-	elog(DEBUG, "ExecEndNode: node not yet supported",
-	     nodeTag(node));
-	break;
+            /* ----------------
+             *	scan nodes
+             * ----------------
+             */
+        case T_SeqScan:
+            ExecEndSeqScan((SeqScan *) node);
+            break;
+
+        case T_IndexScan:
+            ExecEndIndexScan((IndexScan *) node);
+            break;
+
+            /* ----------------
+             *	join nodes
+             * ----------------
+             */
+        case T_NestLoop:
+            ExecEndNestLoop((NestLoop *) node);
+            break;
+
+        case T_MergeJoin:
+            ExecEndMergeJoin((MergeJoin *) node);
+            break;
+
+            /* ----------------
+             *	materialization nodes
+             * ----------------
+             */
+        case T_Material:
+            ExecEndMaterial((Material *) node);
+            break;
+
+        case T_Sort:
+            ExecEndSort((Sort *) node);
+            break;
+
+        case T_Unique:
+            ExecEndUnique((Unique *) node);
+            break;
+
+        case T_Group:
+            ExecEndGroup((Group *) node);
+            break;
+
+        case T_Agg:
+            ExecEndAgg((Agg *) node);
+            break;
+
+            /* ----------------
+             *	XXX add hooks to these
+             * ----------------
+             */
+        case T_Hash:
+            ExecEndHash((Hash *) node);
+            break;
+
+        case T_HashJoin:
+            ExecEndHashJoin((HashJoin *) node);
+            break;
+
+        case T_Tee:
+            ExecEndTee((Tee *) node, parent);
+            break;
+
+        default:
+            elog(DEBUG, "ExecEndNode: node not yet supported",
+                 nodeTag(node));
+            break;
     }
 }

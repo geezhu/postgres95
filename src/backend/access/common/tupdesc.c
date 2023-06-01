@@ -15,7 +15,7 @@
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>	/* for sprintf() */
+#include <stdio.h>    /* for sprintf() */
 #include <ctype.h>
 #include <string.h>
 
@@ -29,7 +29,7 @@
 #include "access/tupdesc.h"
 
 #include "utils/builtins.h"
-#include "utils/elog.h"		/* XXX generate exceptions instead */
+#include "utils/elog.h"        /* XXX generate exceptions instead */
 #include "utils/palloc.h"
 
 #include "utils/syscache.h"
@@ -46,26 +46,25 @@
  * ----------------------------------------------------------------
  */
 TupleDesc
-CreateTemplateTupleDesc(int natts)
-{
-    uint32	size;
+CreateTemplateTupleDesc(int natts) {
+    uint32 size;
     TupleDesc desc;
-    
+
     /* ----------------
      *	sanity checks
      * ----------------
      */
     AssertArg(natts >= 1);
-    
+
     /* ----------------
      *  allocate enough memory for the tuple descriptor and
      *  zero it as TupleDescInitEntry assumes that the descriptor
      *  is filled with NULL pointers.
      * ----------------
      */
-    size = natts * sizeof (AttributeTupleForm);
+    size = natts * sizeof(AttributeTupleForm);
     desc = (TupleDesc) palloc(sizeof(struct tupleDesc));
-    desc->attrs = (AttributeTupleForm*) palloc(size);
+    desc->attrs = (AttributeTupleForm *) palloc(size);
     memset(desc->attrs, 0, size);
 
     desc->natts = natts;
@@ -80,19 +79,18 @@ CreateTemplateTupleDesc(int natts)
  * ----------------------------------------------------------------
  */
 TupleDesc
-CreateTupleDesc(int natts, AttributeTupleForm* attrs)
-{
+CreateTupleDesc(int natts, AttributeTupleForm *attrs) {
     TupleDesc desc;
-    
+
     /* ----------------
      *	sanity checks
      * ----------------
      */
     AssertArg(natts >= 1);
-    
+
     desc = (TupleDesc) palloc(sizeof(struct tupleDesc));
     desc->attrs = attrs;
-    desc->natts = natts;    
+    desc->natts = natts;
 
 
     return (desc);
@@ -107,21 +105,20 @@ CreateTupleDesc(int natts, AttributeTupleForm* attrs)
  * ----------------------------------------------------------------
  */
 TupleDesc
-CreateTupleDescCopy(TupleDesc tupdesc)
-{
+CreateTupleDescCopy(TupleDesc tupdesc) {
     TupleDesc desc;
     int i, size;
 
     desc = (TupleDesc) palloc(sizeof(struct tupleDesc));
     desc->natts = tupdesc->natts;
-    size = desc->natts * sizeof (AttributeTupleForm);
-    desc->attrs = (AttributeTupleForm*) palloc(size);
-    for (i=0;i<desc->natts;i++) {
-	desc->attrs[i] = 
-	    (AttributeTupleForm)palloc(ATTRIBUTE_TUPLE_SIZE);
-	memmove(desc->attrs[i],
-		tupdesc->attrs[i],
-		ATTRIBUTE_TUPLE_SIZE);
+    size = desc->natts * sizeof(AttributeTupleForm);
+    desc->attrs = (AttributeTupleForm *) palloc(size);
+    for (i = 0; i < desc->natts; i++) {
+        desc->attrs[i] =
+                (AttributeTupleForm) palloc(ATTRIBUTE_TUPLE_SIZE);
+        memmove(desc->attrs[i],
+                tupdesc->attrs[i],
+                ATTRIBUTE_TUPLE_SIZE);
     }
     return desc;
 }
@@ -135,16 +132,15 @@ CreateTupleDescCopy(TupleDesc tupdesc)
  */
 bool
 TupleDescInitEntry(TupleDesc desc,
-		   AttrNumber attributeNumber,
-		   char *attributeName,
-		   char *typeName,
-		   int attdim,
-		   bool attisset)
-{
-    HeapTuple		tuple;
-    TypeTupleForm	typeForm;
-    AttributeTupleForm	att;
-    
+                   AttrNumber attributeNumber,
+                   char *attributeName,
+                   char *typeName,
+                   int attdim,
+                   bool attisset) {
+    HeapTuple tuple;
+    TypeTupleForm typeForm;
+    AttributeTupleForm att;
+
     /* ----------------
      *	sanity checks
      * ----------------
@@ -155,9 +151,9 @@ TupleDescInitEntry(TupleDesc desc,
        from resdom's.  I don't know why that is, though -- Jolly */
 /*    AssertArg(NameIsValid(attributeName));*/
 /*    AssertArg(NameIsValid(typeName));*/
-    
+
     AssertArg(!PointerIsValid(desc->attrs[attributeNumber - 1]));
-    
+
 
     /* ----------------
      *	allocate storage for this attribute
@@ -171,26 +167,26 @@ TupleDescInitEntry(TupleDesc desc,
      *	initialize some of the attribute fields
      * ----------------
      */
-    att->attrelid  = 0;				/* dummy value */
-    
-    if (attributeName != NULL)
-	namestrcpy(&(att->attname), attributeName);
-    else
-	memset(att->attname.data,0,NAMEDATALEN);
+    att->attrelid = 0;                /* dummy value */
 
-    
-    att->attdefrel = 	0;			/* dummy value */
-    att->attnvals  = 	0;			/* dummy value */
-    att->atttyparg = 	0;			/* dummy value */
-    att->attbound = 	0;			/* dummy value */
-    att->attcanindex = 	0;			/* dummy value */
-    att->attproc = 	0;			/* dummy value */
-    att->attcacheoff = 	-1;
-    
+    if (attributeName != NULL)
+        namestrcpy(&(att->attname), attributeName);
+    else
+        memset(att->attname.data, 0, NAMEDATALEN);
+
+
+    att->attdefrel = 0;            /* dummy value */
+    att->attnvals = 0;            /* dummy value */
+    att->atttyparg = 0;            /* dummy value */
+    att->attbound = 0;            /* dummy value */
+    att->attcanindex = 0;            /* dummy value */
+    att->attproc = 0;            /* dummy value */
+    att->attcacheoff = -1;
+
     att->attnum = attributeNumber;
     att->attnelems = attdim;
     att->attisset = attisset;
-    
+
     /* ----------------
      *	search the system cache for the type tuple of the attribute
      *  we are creating so that we can get the typeid and some other
@@ -209,30 +205,30 @@ TupleDescInitEntry(TupleDesc desc,
      * ----------------
      */
     tuple = SearchSysCacheTuple(TYPNAME, PointerGetDatum(typeName),
-				0,0,0);
-    if (! HeapTupleIsValid(tuple)) {
-	/* ----------------
-	 *   here type info does not exist yet so we just fill
-	 *   the attribute with dummy information and return false.
-	 * ----------------
-	 */
-	att->atttypid = InvalidOid;
-	att->attlen   = (int16)	0;
-	att->attbyval = (bool) 0;
-	att->attalign = 'i';
-	return false;
+                                0, 0, 0);
+    if (!HeapTupleIsValid(tuple)) {
+        /* ----------------
+         *   here type info does not exist yet so we just fill
+         *   the attribute with dummy information and return false.
+         * ----------------
+         */
+        att->atttypid = InvalidOid;
+        att->attlen = (int16) 0;
+        att->attbyval = (bool) 0;
+        att->attalign = 'i';
+        return false;
     }
-    
+
     /* ----------------
      *	type info exists so we initialize our attribute
      *  information from the type tuple we found..
      * ----------------
      */
     typeForm = (TypeTupleForm) GETSTRUCT(tuple);
-    
+
     att->atttypid = tuple->t_oid;
     att->attalign = typeForm->typalign;
-    
+
     /* ------------------------
        If this attribute is a set, what is really stored in the
        attribute is the OID of a tuple in the pg_proc catalog.
@@ -258,15 +254,15 @@ TupleDescInitEntry(TupleDesc desc,
        -----------------------------------------
        */
     if (attisset) {
-	Type t = type("oid");
-	att->attlen = tlen(t);
-	att->attbyval = tbyval(t);
+        Type t = type("oid");
+        att->attlen = tlen(t);
+        att->attbyval = tbyval(t);
     } else {
-	att->attlen   = typeForm->typlen;
-	att->attbyval = typeForm->typbyval;
+        att->attlen = typeForm->typlen;
+        att->attbyval = typeForm->typbyval;
     }
-    
-    
+
+
     return true;
 }
 
@@ -284,15 +280,14 @@ TupleDescInitEntry(TupleDesc desc,
  */
 static void
 TupleDescMakeSelfReference(TupleDesc desc,
-			   AttrNumber attnum,
-			   char *relname)
-{
+                           AttrNumber attnum,
+                           char *relname) {
     AttributeTupleForm att;
     Type t = type("oid");
-    
-    att = desc->attrs[attnum-1];
+
+    att = desc->attrs[attnum - 1];
     att->atttypid = TypeShellMake(relname);
-    att->attlen   = tlen(t);
+    att->attlen = tlen(t);
     att->attbyval = tbyval(t);
     att->attnelems = 0;
 }
@@ -314,84 +309,83 @@ TupleDescMakeSelfReference(TupleDesc desc,
  * ----------------------------------------------------------------
  */
 TupleDesc
-BuildDescForRelation(List *schema, char *relname)
-{
-    int			natts;
-    AttrNumber		attnum;
-    List		*p;
-    TupleDesc		desc;
-    char               *attname;
-    char               *typename;
-    int			attdim;
-    bool                attisset;
-    
+BuildDescForRelation(List *schema, char *relname) {
+    int natts;
+    AttrNumber attnum;
+    List *p;
+    TupleDesc desc;
+    char *attname;
+    char *typename;
+    int attdim;
+    bool attisset;
+
     /* ----------------
      *	allocate a new tuple descriptor
      * ----------------
      */
-    natts = 	length(schema);
-    desc = 	CreateTemplateTupleDesc(natts);
-    
+    natts = length(schema);
+    desc = CreateTemplateTupleDesc(natts);
+
     attnum = 0;
-    
-    typename = palloc(NAMEDATALEN+1);
+
+    typename = palloc(NAMEDATALEN + 1);
 
     foreach(p, schema) {
-	ColumnDef *entry;
-	List	*arry;
+        ColumnDef *entry;
+        List *arry;
 
-	/* ----------------
-	 *	for each entry in the list, get the name and type
-	 *      information from the list and have TupleDescInitEntry
-	 *	fill in the attribute information we need.
-	 * ----------------
-	 */	
-	attnum++;
-	
-	entry = 	lfirst(p);
-	attname = 	entry->colname;
-	arry = entry->typename->arrayBounds;
-	attisset = entry->typename->setof;
+        /* ----------------
+         *	for each entry in the list, get the name and type
+         *      information from the list and have TupleDescInitEntry
+         *	fill in the attribute information we need.
+         * ----------------
+         */
+        attnum++;
 
-	if (arry != NIL) {
-	    char buf[20];
-	    
-	    attdim = length(arry);
-	    
-	    /* array of XXX is _XXX (inherited from release 3) */
-	    sprintf(buf, "_%.*s", NAMEDATALEN, entry->typename->name);
-	    strcpy(typename, buf);
-	} else {
-	    strcpy(typename, entry->typename->name);
-	    attdim = 0;
-	}
-	
-	if (! TupleDescInitEntry(desc, attnum, attname, 
-				 typename, attdim, attisset)) {
-	    /* ----------------
-	     *	if TupleDescInitEntry() fails, it means there is
-	     *  no type in the system catalogs.  So now we check if
-	     *  the type name equals the relation name.  If so we
-	     *  have a self reference, otherwise it's an error.
-	     * ----------------
-	     */
-	    if (!strcmp(typename, relname)) {
-		TupleDescMakeSelfReference(desc, attnum, relname);
-	    } else
-		elog(WARN, "DefineRelation: no such type %.*s", 
-		     NAMEDATALEN, typename);
-	}
+        entry = lfirst(p);
+        attname = entry->colname;
+        arry = entry->typename->arrayBounds;
+        attisset = entry->typename->setof;
 
-	/*
-	 * this is for char() and varchar(). When an entry is of type
-	 * char() or varchar(), typlen is set to the appropriate length,
-	 * which we'll use here instead. (The catalog lookup only returns
-	 * the length of bpchar and varchar which is not what we want!)
-	 *						- ay 6/95
-	 */
-	if (entry->typename->typlen > 0) {
-	    desc->attrs[attnum - 1]->attlen = entry->typename->typlen;
-	}
+        if (arry != NIL) {
+            char buf[20];
+
+            attdim = length(arry);
+
+            /* array of XXX is _XXX (inherited from release 3) */
+            sprintf(buf, "_%.*s", NAMEDATALEN, entry->typename->name);
+            strcpy(typename, buf);
+        } else {
+            strcpy(typename, entry->typename->name);
+            attdim = 0;
+        }
+
+        if (!TupleDescInitEntry(desc, attnum, attname,
+                                typename, attdim, attisset)) {
+            /* ----------------
+             *	if TupleDescInitEntry() fails, it means there is
+             *  no type in the system catalogs.  So now we check if
+             *  the type name equals the relation name.  If so we
+             *  have a self reference, otherwise it's an error.
+             * ----------------
+             */
+            if (!strcmp(typename, relname)) {
+                TupleDescMakeSelfReference(desc, attnum, relname);
+            } else
+                elog(WARN, "DefineRelation: no such type %.*s",
+                     NAMEDATALEN, typename);
+        }
+
+        /*
+         * this is for char() and varchar(). When an entry is of type
+         * char() or varchar(), typlen is set to the appropriate length,
+         * which we'll use here instead. (The catalog lookup only returns
+         * the length of bpchar and varchar which is not what we want!)
+         *						- ay 6/95
+         */
+        if (entry->typename->typlen > 0) {
+            desc->attrs[attnum - 1]->attlen = entry->typename->typlen;
+        }
     }
     return desc;
 }

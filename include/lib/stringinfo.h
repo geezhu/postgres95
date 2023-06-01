@@ -13,7 +13,7 @@
 #ifndef STRINGINFO_H
 #define STRINGINFO_H
 
-/*#include "c.h"		*/	/* for 'String' */
+/*#include "c.h"		*/    /* for 'String' */
 
 /*-------------------------
  * StringInfoData holds information about a string.

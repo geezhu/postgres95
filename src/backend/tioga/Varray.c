@@ -17,18 +17,18 @@ Varray *NewVarray(size_t nobj, size_t size)
  *              returns NULL otherwise.
  */
 {
-  Varray *result;
+    Varray *result;
 
-  if (nobj == 0)
-    nobj = VARRAY_INITIAL_SIZE;
-  result = (Varray *) malloc(sizeof(Varray));
-  result->val = (void *) calloc(nobj, size);
-  if (result == NULL)
-    return NULL;
-  result->size = size;
-  result->nobj = 0;
-  result->maxObj = nobj;
-  return result;
+    if (nobj == 0)
+        nobj = VARRAY_INITIAL_SIZE;
+    result = (Varray *) malloc(sizeof(Varray));
+    result->val = (void *) calloc(nobj, size);
+    if (result == NULL)
+        return NULL;
+    result->size = size;
+    result->nobj = 0;
+    result->maxObj = nobj;
+    return result;
 }
 
 int AppendVarray(Varray *array, void *value, CopyingFunct copy)
@@ -38,11 +38,11 @@ int AppendVarray(Varray *array, void *value, CopyingFunct copy)
  *                 the new element.
  */
 {
-  copy(value, VARRAY_NTH(array->val, array->size, array->nobj));
-  array->nobj++;
-  if (array->nobj >= array->maxObj) {
-    ENLARGE_VARRAY(array, array->maxObj / 2);
-  }
-  return array->nobj;
+    copy(value, VARRAY_NTH(array->val, array->size, array->nobj));
+    array->nobj++;
+    if (array->nobj >= array->maxObj) {
+        ENLARGE_VARRAY(array, array->maxObj / 2);
+    }
+    return array->nobj;
 }
 

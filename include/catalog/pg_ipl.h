@@ -30,11 +30,11 @@
  *	pg_ipl definition.  cpp turns this into
  *	typedef struct FormData_pg_ipl
  * ----------------
- */ 
+ */
 CATALOG(pg_ipl) {
-     Oid 	iplrel;
-     Oid 	iplipl;
-     int4 	iplseqno;
+    Oid iplrel;
+    Oid iplipl;
+    int4 iplseqno;
 } FormData_pg_ipl;
 
 /* ----------------
@@ -42,16 +42,16 @@ CATALOG(pg_ipl) {
  *	the format of pg_ipl relation.
  * ----------------
  */
-typedef FormData_pg_ipl	*Form_pg_ipl;
+typedef FormData_pg_ipl *Form_pg_ipl;
 
 /* ----------------
  *	compiler constants for pg_ipl
  * ----------------
  */
-#define Natts_pg_ipl		3
-#define Anum_pg_ipl_iplrel	1
-#define Anum_pg_ipl_iplipl	2
-#define Anum_pg_ipl_iplseqno	3
+#define Natts_pg_ipl        3
+#define Anum_pg_ipl_iplrel    1
+#define Anum_pg_ipl_iplipl    2
+#define Anum_pg_ipl_iplseqno    3
 
 
 #endif /* PG_IPL_H */

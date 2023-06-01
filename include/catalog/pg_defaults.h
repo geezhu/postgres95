@@ -30,26 +30,28 @@
  *	pg_defaults definition.  cpp turns this into
  *	typedef struct FormData_pg_defaults
  * ----------------
- */ 
-CATALOG(pg_defaults) BOOTSTRAP {
-    NameData 	defname;
-    NameData 	defvalue;
-} FormData_pg_defaults;
+ */
+CATALOG(pg_defaults)
+BOOTSTRAP {
+NameData defname;
+NameData defvalue;
+}
+FormData_pg_defaults;
 
 /* ----------------
  *	Form_pg_defaults corresponds to a pointer to a tuple with
  *	the format of pg_defaults relation.
  * ----------------
  */
-typedef FormData_pg_defaults	*Form_pg_defaults;
+typedef FormData_pg_defaults *Form_pg_defaults;
 
 /* ----------------
  *	compiler constants for pg_defaults
  * ----------------
  */
-#define Natts_pg_defaults		2
-#define Anum_pg_defaults_defname	1
-#define Anum_pg_defaults_defvalue	2
+#define Natts_pg_defaults        2
+#define Anum_pg_defaults_defname    1
+#define Anum_pg_defaults_defvalue    2
 
 
 #endif /* PG_DEFAULTS_H */

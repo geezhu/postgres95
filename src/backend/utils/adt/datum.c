@@ -48,41 +48,40 @@
  *-------------------------------------------------------------------------
  */
 Size
-datumGetSize(Datum value, Oid type, bool byVal, Size len)
-{
-    
+datumGetSize(Datum value, Oid type, bool byVal, Size len) {
+
     struct varlena *s;
     Size size;
-    
+
     if (byVal) {
-	if (len >= 0 && len <= sizeof(Datum)) {
-	    size = len;
-	} else {
-	    elog(WARN,
-		 "datumGetSize: Error: type=%ld, byVaL with len=%d",
-		 (long) type, len);
-	}
+        if (len >= 0 && len <= sizeof(Datum)) {
+            size = len;
+        } else {
+            elog(WARN,
+                 "datumGetSize: Error: type=%ld, byVaL with len=%d",
+                 (long) type, len);
+        }
     } else { /*  not byValue */
-	if (len == -1) {
-	    /*
-	     * variable length type
-	     * Look at the varlena struct for its real length...
-	     */
-	    s = (struct varlena *) DatumGetPointer(value);
-	    if (!PointerIsValid(s)) {
-		elog(WARN,
-		     "datumGetSize: Invalid Datum Pointer");
-	    }
-	    size = (Size) VARSIZE(s);
-	} else {
-	    /*
-	     * fixed length type
-	     */
-	    size = len;
-	}
+        if (len == -1) {
+            /*
+             * variable length type
+             * Look at the varlena struct for its real length...
+             */
+            s = (struct varlena *) DatumGetPointer(value);
+            if (!PointerIsValid(s)) {
+                elog(WARN,
+                     "datumGetSize: Invalid Datum Pointer");
+            }
+            size = (Size) VARSIZE(s);
+        } else {
+            /*
+             * fixed length type
+             */
+            size = len;
+        }
     }
-    
-    return(size);
+
+    return (size);
 }
 
 /*-------------------------------------------------------------------------
@@ -96,31 +95,30 @@ datumGetSize(Datum value, Oid type, bool byVal, Size len)
  *-------------------------------------------------------------------------
  */
 Datum
-datumCopy(Datum value, Oid type, bool byVal, Size len)
-{
-    
+datumCopy(Datum value, Oid type, bool byVal, Size len) {
+
     Size realSize;
     Datum res;
     char *s;
-    
-    
+
+
     if (byVal) {
-	res = value;
+        res = value;
     } else {
-	if (value == 0) return((Datum)NULL);
-	realSize = datumGetSize(value, type, byVal, len);
-	/*
-	 * the value is a pointer. Allocate enough space
-	 * and copy the pointed data.
-	 */
-	s = (char *) palloc(realSize);
-	if (s == NULL) {
-	    elog(WARN,"datumCopy: out of memory\n");
-	}
-	memmove(s, DatumGetPointer(value), realSize);
-	res = (Datum)s;
+        if (value == 0) return ((Datum) NULL);
+        realSize = datumGetSize(value, type, byVal, len);
+        /*
+         * the value is a pointer. Allocate enough space
+         * and copy the pointed data.
+         */
+        s = (char *) palloc(realSize);
+        if (s == NULL) {
+            elog(WARN, "datumCopy: out of memory\n");
+        }
+        memmove(s, DatumGetPointer(value), realSize);
+        res = (Datum) s;
     }
-    return(res);
+    return (res);
 }
 
 /*-------------------------------------------------------------------------
@@ -133,20 +131,19 @@ datumCopy(Datum value, Oid type, bool byVal, Size len)
  *-------------------------------------------------------------------------
  */
 void
-datumFree(Datum value, Oid type, bool byVal, Size len)
-{
-    
+datumFree(Datum value, Oid type, bool byVal, Size len) {
+
     Size realSize;
     Pointer s;
-    
+
     realSize = datumGetSize(value, type, byVal, len);
-    
+
     if (!byVal) {
-	/*
-	 * free the space palloced by "datumCopy()"
-	 */
-	s = DatumGetPointer(value);
-	pfree(s);
+        /*
+         * free the space palloced by "datumCopy()"
+         */
+        s = DatumGetPointer(value);
+        pfree(s);
     }
 }
 
@@ -164,38 +161,37 @@ datumFree(Datum value, Oid type, bool byVal, Size len)
  *-------------------------------------------------------------------------
  */
 bool
-datumIsEqual(Datum value1, Datum value2, Oid type, bool byVal, Size len)
-{
+datumIsEqual(Datum value1, Datum value2, Oid type, bool byVal, Size len) {
     Size size1, size2;
     char *s1, *s2;
-    
+
     if (byVal) {
-	/*
-	 * just compare the two datums.
-	 * NOTE: just comparing "len" bytes will not do the
-	 * work, because we do not know how these bytes
-	 * are aligned inside the "Datum".
-	 */
-	if (value1 == value2)
-	    return(true);
-	else
-	    return(false);
+        /*
+         * just compare the two datums.
+         * NOTE: just comparing "len" bytes will not do the
+         * work, because we do not know how these bytes
+         * are aligned inside the "Datum".
+         */
+        if (value1 == value2)
+            return (true);
+        else
+            return (false);
     } else {
-	/*
-	 * byVal = false
-	 * Compare the bytes pointed by the pointers stored in the
-	 * datums.
-	 */
-	size1 = datumGetSize(value1, type, byVal, len);
-	size2 = datumGetSize(value2, type, byVal, len);
-	if (size1 != size2)
-	    return(false);
-	s1 = (char *) DatumGetPointer(value1);
-	s2 = (char *) DatumGetPointer(value2);
-	if (!memcmp(s1, s2, size1))
-	    return(true);
-	else
-	    return(false);
+        /*
+         * byVal = false
+         * Compare the bytes pointed by the pointers stored in the
+         * datums.
+         */
+        size1 = datumGetSize(value1, type, byVal, len);
+        size2 = datumGetSize(value2, type, byVal, len);
+        if (size1 != size2)
+            return (false);
+        s1 = (char *) DatumGetPointer(value1);
+        s2 = (char *) DatumGetPointer(value2);
+        if (!memcmp(s1, s2, size1))
+            return (true);
+        else
+            return (false);
     }
 }
 

@@ -22,9 +22,9 @@
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>		/* for sprintf() */
+#include <stdio.h>        /* for sprintf() */
 #include "postgres.h"
-#include "storage/shmem.h"	/* where the declarations go */
+#include "storage/shmem.h"    /* where the declarations go */
 #include "utils/elog.h"
 
 /*#define SHMQUEUE_DEBUG*/
@@ -40,8 +40,7 @@
  * 	to itself
  */
 void
-SHMQueueInit(SHM_QUEUE *queue)
-{
+SHMQueueInit(SHM_QUEUE *queue) {
     Assert(SHM_PTR_VALID(queue));
     (queue)->prev = (queue)->next = MAKE_OFFSET(queue);
 }
@@ -51,8 +50,7 @@ SHMQueueInit(SHM_QUEUE *queue)
  *	in a queue.
  */
 bool
-SHMQueueIsDetached(SHM_QUEUE *queue)
-{
+SHMQueueIsDetached(SHM_QUEUE *queue) {
     Assert(SHM_PTR_VALID(queue));
     return ((queue)->prev == INVALID_OFFSET);
 }
@@ -61,8 +59,7 @@ SHMQueueIsDetached(SHM_QUEUE *queue)
  * SHMQueueElemInit -- clear an element's links
  */
 void
-SHMQueueElemInit(SHM_QUEUE *queue)
-{
+SHMQueueElemInit(SHM_QUEUE *queue) {
     Assert(SHM_PTR_VALID(queue));
     (queue)->prev = (queue)->next = INVALID_OFFSET;
 }
@@ -72,22 +69,21 @@ SHMQueueElemInit(SHM_QUEUE *queue)
  * 	close the links
  */
 void
-SHMQueueDelete(SHM_QUEUE *queue)
-{
+SHMQueueDelete(SHM_QUEUE *queue) {
     SHM_QUEUE *nextElem = (SHM_QUEUE *) MAKE_PTR((queue)->next);
     SHM_QUEUE *prevElem = (SHM_QUEUE *) MAKE_PTR((queue)->prev);
-    
+
     Assert(SHM_PTR_VALID(queue));
     Assert(SHM_PTR_VALID(nextElem));
     Assert(SHM_PTR_VALID(prevElem));
-    
+
 #ifdef SHMQUEUE_DEBUG_DEL
     dumpQ(queue, "in SHMQueueDelete: begin");
 #endif /* SHMQUEUE_DEBUG_DEL */
-    
-    prevElem->next =  (queue)->next;
-    nextElem->prev =  (queue)->prev;
-    
+
+    prevElem->next = (queue)->next;
+    nextElem->prev = (queue)->prev;
+
 #ifdef SHMQUEUE_DEBUG_DEL
     dumpQ((SHM_QUEUE *)MAKE_PTR(queue->prev), "in SHMQueueDelete: end");
 #endif /* SHMQUEUE_DEBUG_DEL */
@@ -105,18 +101,18 @@ dumpQ(SHM_QUEUE *q, char *s)
     sprintf(buf, "q prevs: %x", MAKE_OFFSET(q));
     q = (SHM_QUEUE *)MAKE_PTR(q->prev);
     while (q != start)
-	{
-	    sprintf(elem, "--->%x", MAKE_OFFSET(q));
-	    strcat(buf, elem);
-	    q = (SHM_QUEUE *)MAKE_PTR(q->prev);
-	    if (q->prev == MAKE_OFFSET(q))
-		break;
-	    if (count++ > 40)
-		{
-		    strcat(buf, "BAD PREV QUEUE!!");
-		    break;
-		}
-	}
+    {
+        sprintf(elem, "--->%x", MAKE_OFFSET(q));
+        strcat(buf, elem);
+        q = (SHM_QUEUE *)MAKE_PTR(q->prev);
+        if (q->prev == MAKE_OFFSET(q))
+        break;
+        if (count++ > 40)
+        {
+            strcat(buf, "BAD PREV QUEUE!!");
+            break;
+        }
+    }
     sprintf(elem, "--->%x", MAKE_OFFSET(q));
     strcat(buf, elem);
     elog(SHMQUEUE_DEBUG_ELOG, "%s: %s", s, buf);
@@ -125,18 +121,18 @@ dumpQ(SHM_QUEUE *q, char *s)
     count = 0;
     q = (SHM_QUEUE *)MAKE_PTR(q->next);
     while (q != start)
-	{
-	    sprintf(elem, "--->%x", MAKE_OFFSET(q));
-	    strcat(buf, elem);
-	    q = (SHM_QUEUE *)MAKE_PTR(q->next);
-	    if (q->next == MAKE_OFFSET(q))
-		break;
-	    if (count++ > 10)
-		{
-		    strcat(buf, "BAD NEXT QUEUE!!");
-		    break;
-		}
-	}
+    {
+        sprintf(elem, "--->%x", MAKE_OFFSET(q));
+        strcat(buf, elem);
+        q = (SHM_QUEUE *)MAKE_PTR(q->next);
+        if (q->next == MAKE_OFFSET(q))
+        break;
+        if (count++ > 10)
+        {
+            strcat(buf, "BAD NEXT QUEUE!!");
+            break;
+        }
+    }
     sprintf(elem, "--->%x", MAKE_OFFSET(q));
     strcat(buf, elem);
     elog(SHMQUEUE_DEBUG_ELOG, "%s: %s", s, buf);
@@ -148,46 +144,44 @@ dumpQ(SHM_QUEUE *q, char *s)
  *	and its "prev" element.
  */
 void
-SHMQueueInsertHD(SHM_QUEUE *queue, SHM_QUEUE *elem)
-{
+SHMQueueInsertHD(SHM_QUEUE *queue, SHM_QUEUE *elem) {
     SHM_QUEUE *prevPtr = (SHM_QUEUE *) MAKE_PTR((queue)->prev);
-    SHMEM_OFFSET	elemOffset = MAKE_OFFSET(elem);
-    
+    SHMEM_OFFSET elemOffset = MAKE_OFFSET(elem);
+
     Assert(SHM_PTR_VALID(queue));
     Assert(SHM_PTR_VALID(elem));
-    
+
 #ifdef SHMQUEUE_DEBUG_HD
     dumpQ(queue, "in SHMQueueInsertHD: begin");
 #endif /* SHMQUEUE_DEBUG_HD */
-    
+
     (elem)->next = prevPtr->next;
     (elem)->prev = queue->prev;
     (queue)->prev = elemOffset;
     prevPtr->next = elemOffset;
-    
+
 #ifdef SHMQUEUE_DEBUG_HD
     dumpQ(queue, "in SHMQueueInsertHD: end");
 #endif /* SHMQUEUE_DEBUG_HD */
 }
 
 void
-SHMQueueInsertTL(SHM_QUEUE *queue, SHM_QUEUE *elem)
-{
+SHMQueueInsertTL(SHM_QUEUE *queue, SHM_QUEUE *elem) {
     SHM_QUEUE *nextPtr = (SHM_QUEUE *) MAKE_PTR((queue)->next);
-    SHMEM_OFFSET	elemOffset = MAKE_OFFSET(elem);
-    
+    SHMEM_OFFSET elemOffset = MAKE_OFFSET(elem);
+
     Assert(SHM_PTR_VALID(queue));
     Assert(SHM_PTR_VALID(elem));
-    
+
 #ifdef SHMQUEUE_DEBUG_TL
     dumpQ(queue, "in SHMQueueInsertTL: begin");
 #endif /* SHMQUEUE_DEBUG_TL */
-    
+
     (elem)->prev = nextPtr->prev;
     (elem)->next = queue->next;
     (queue)->next = elemOffset;
     nextPtr->prev = elemOffset;
-    
+
 #ifdef SHMQUEUE_DEBUG_TL
     dumpQ(queue, "in SHMQueueInsertTL: end");
 #endif /* SHMQUEUE_DEBUG_TL */
@@ -216,14 +210,13 @@ SHMQueueInsertTL(SHM_QUEUE *queue, SHM_QUEUE *elem)
  * next.
  */
 void
-SHMQueueFirst(SHM_QUEUE *queue, Pointer *nextPtrPtr, SHM_QUEUE *nextQueue)
-{
+SHMQueueFirst(SHM_QUEUE *queue, Pointer *nextPtrPtr, SHM_QUEUE *nextQueue) {
     SHM_QUEUE *elemPtr = (SHM_QUEUE *) MAKE_PTR((queue)->next);
-    
+
     Assert(SHM_PTR_VALID(queue));
     *nextPtrPtr = (Pointer) (((unsigned long) *nextPtrPtr) +
-			  ((unsigned long) elemPtr) - ((unsigned long) nextQueue)); 
-    
+                             ((unsigned long) elemPtr) - ((unsigned long) nextQueue));
+
     /*
       nextPtrPtr a ptr to a structure linked in the queue
       nextQueue is the SHMQueue field of the structure
@@ -238,14 +231,12 @@ SHMQueueFirst(SHM_QUEUE *queue, Pointer *nextPtrPtr, SHM_QUEUE *nextQueue)
  * SHMQueueEmpty -- TRUE if queue head is only element, FALSE otherwise
  */
 bool
-SHMQueueEmpty(SHM_QUEUE *queue)
-{
+SHMQueueEmpty(SHM_QUEUE *queue) {
     Assert(SHM_PTR_VALID(queue));
-    
-    if (queue->prev == MAKE_OFFSET(queue)) 
-	{
-	    Assert(queue->next = MAKE_OFFSET(queue));
-	    return(TRUE);
-	}
-    return(FALSE);
+
+    if (queue->prev == MAKE_OFFSET(queue)) {
+        Assert(queue->next = MAKE_OFFSET(queue));
+        return (TRUE);
+    }
+    return (FALSE);
 }

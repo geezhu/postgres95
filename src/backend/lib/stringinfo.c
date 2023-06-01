@@ -28,21 +28,20 @@
  *---------------------------------------------------------------------
  */
 StringInfo
-makeStringInfo()
-{
+makeStringInfo() {
     StringInfo res;
     long size;
-    
+
     res = (StringInfo) palloc(sizeof(StringInfoData));
     if (res == NULL) {
-	elog(WARN, "makeStringInfo: Out of memory!");
+        elog(WARN, "makeStringInfo: Out of memory!");
     }
-    
+
     size = 100;
     res->data = palloc(size);
     if (res->data == NULL) {
-	elog(WARN,
-	     "makeStringInfo: Out of memory! (%ld bytes requested)", size);
+        elog(WARN,
+             "makeStringInfo: Out of memory! (%ld bytes requested)", size);
     }
     res->maxlen = size;
     res->len = 0;
@@ -52,8 +51,8 @@ makeStringInfo()
      * expects a null terminated string.
      */
     res->data[0] = '\0';
-    
-    return(res);
+
+    return (res);
 }
 
 /*---------------------------------------------------------------------
@@ -67,44 +66,43 @@ makeStringInfo()
  *---------------------------------------------------------------------
  */
 void
-appendStringInfo(StringInfo str, char *buffer)
-{
+appendStringInfo(StringInfo str, char *buffer) {
     int buflen, newlen;
     char *s;
-    
-    Assert((str!=NULL));
-    
+
+    Assert((str != NULL));
+
     /*
      * do we have enough space to append the new string?
      * (don't forget to count the null string terminating char!)
      * If no, then reallocate some more.
      */
     buflen = strlen(buffer);
-    if (buflen + str->len >= str->maxlen-1) {
-	/*
-	 * how much more space to allocate ?
-	 * Let's say double the current space...
-	 * However we must check if this is enough!
-	 */
-	newlen = 2 * str->len;
-	while (buflen + str->len >= newlen-1) {
-	    newlen = 2 * newlen;
-	}
-	/*
-	 * allocate enough space.
-	 */
-	s = palloc(newlen);
-	if (s==NULL) {
-	    elog(WARN,
-		 "appendStringInfo: Out of memory (%d bytes requested)",
-		 newlen);
-	}
-	memmove(s, str->data, str->len+1);
-	pfree(str->data);
-	str->maxlen = newlen;
-	str->data = s;
+    if (buflen + str->len >= str->maxlen - 1) {
+        /*
+         * how much more space to allocate ?
+         * Let's say double the current space...
+         * However we must check if this is enough!
+         */
+        newlen = 2 * str->len;
+        while (buflen + str->len >= newlen - 1) {
+            newlen = 2 * newlen;
+        }
+        /*
+         * allocate enough space.
+         */
+        s = palloc(newlen);
+        if (s == NULL) {
+            elog(WARN,
+                 "appendStringInfo: Out of memory (%d bytes requested)",
+                 newlen);
+        }
+        memmove(s, str->data, str->len + 1);
+        pfree(str->data);
+        str->maxlen = newlen;
+        str->data = s;
     }
-    
+
     /*
      * OK, we have enough space now, append 'buffer' at the
      * end of the string & update the string length.

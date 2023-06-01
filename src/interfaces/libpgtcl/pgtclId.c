@@ -25,27 +25,24 @@
 
 /* convert a pointer into a string */
 void
-PgSetId(char *id, void *ptr)
-{
-  (void) sprintf(id, "pgp%lx", (long) ptr);
+PgSetId(char *id, void *ptr) {
+    (void) sprintf(id, "pgp%lx", (long) ptr);
 }
 
 
 /* get back a pointer from a string */
 void *
-PgGetId(char *id)
-{
-  long ptr; 
-  ptr = strtol(id+3, NULL, 16);
-  return (void *) ptr;
+PgGetId(char *id) {
+    long ptr;
+    ptr = strtol(id + 3, NULL, 16);
+    return (void *) ptr;
 }
 
 /* check to see if the string is a valid pgtcl pointer */
-int 
-PgValidId(char* id)
-{
-    if ( (strlen(id) > 3) && id[0]=='p' && id[1] == 'g' && id[2] == 'p')
-	return 1;
+int
+PgValidId(char *id) {
+    if ((strlen(id) > 3) && id[0] == 'p' && id[1] == 'g' && id[2] == 'p')
+        return 1;
     else
-	return 0;
+        return 0;
 }

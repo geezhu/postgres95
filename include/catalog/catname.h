@@ -10,7 +10,7 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	CATNAME_H
+#ifndef    CATNAME_H
 #define CATNAME_H
 
 #include "postgres.h"
@@ -49,4 +49,4 @@
 
 extern char *SharedSystemRelationNames[];
 
-#endif	/* CATNAME_H */
+#endif    /* CATNAME_H */

@@ -64,11 +64,11 @@
 #include "utils/palloc.h"
 #include "fmgr.h"
 #include "utils/elog.h"
-#include "utils/builtins.h"	/* for oideq */
+#include "utils/builtins.h"    /* for oideq */
 #include "tcop/fastpath.h"
 #include "libpq/libpq.h"
 
-#include "access/xact.h"	/* for TransactionId/CommandId protos */
+#include "access/xact.h"    /* for TransactionId/CommandId protos */
 
 #include "utils/syscache.h"
 #include "catalog/pg_proc.h"
@@ -80,28 +80,27 @@
  * ----------------
  */
 static void
-SendFunctionResult(Oid fid,	/* function id */
-		   char *retval, /* actual return value */
-		   bool retbyval,
-		   int retlen	/* the length according to the catalogs */
-		   )
-{
+SendFunctionResult(Oid fid,    /* function id */
+                   char *retval, /* actual return value */
+                   bool retbyval,
+                   int retlen    /* the length according to the catalogs */
+) {
     pq_putnchar("V", 1);
-    
-    if (retlen != 0) { 
-	pq_putnchar("G", 1);
-	if (retbyval) {		/* by-value */
-	    pq_putint(retlen, 4);
-	    pq_putint((int)retval, retlen); 
-	} else {		/* by-reference ... */
-	    if (retlen < 0) {		/* ... varlena */
-		pq_putint(VARSIZE(retval) - VARHDRSZ, 4);
-		pq_putnchar(VARDATA(retval), VARSIZE(retval) - VARHDRSZ);
-	    } else {			/* ... fixed */
-		pq_putint(retlen, 4);
-		pq_putnchar(retval, retlen);
-	    }
-	}
+
+    if (retlen != 0) {
+        pq_putnchar("G", 1);
+        if (retbyval) {        /* by-value */
+            pq_putint(retlen, 4);
+            pq_putint((int) retval, retlen);
+        } else {        /* by-reference ... */
+            if (retlen < 0) {        /* ... varlena */
+                pq_putint(VARSIZE(retval) - VARHDRSZ, 4);
+                pq_putnchar(VARDATA(retval), VARSIZE(retval) - VARHDRSZ);
+            } else {            /* ... fixed */
+                pq_putint(retlen, 4);
+                pq_putnchar(retval, retlen);
+            }
+        }
     }
 
     pq_putnchar("0", 1);
@@ -119,14 +118,14 @@ SendFunctionResult(Oid fid,	/* function id */
  * the price of catalog lookups.
  */
 struct fp_info {
-    Oid		funcid;
-    int			nargs;
-    bool		argbyval[MAXFMGRARGS];
-    int32		arglen[MAXFMGRARGS];	/* signed (for varlena) */
-    bool		retbyval;
-    int32		retlen;			/* signed (for varlena) */
-    TransactionId	xid;
-    CommandId		cid;
+    Oid funcid;
+    int nargs;
+    bool argbyval[MAXFMGRARGS];
+    int32 arglen[MAXFMGRARGS];    /* signed (for varlena) */
+    bool retbyval;
+    int32 retlen;            /* signed (for varlena) */
+    TransactionId xid;
+    CommandId cid;
 };
 
 /*
@@ -134,7 +133,7 @@ struct fp_info {
  * Most routines in tight loops (like PQfswrite -> F_LOWRITE) will do
  * the same thing repeatedly.
  */
-static struct fp_info last_fp = { InvalidOid };
+static struct fp_info last_fp = {InvalidOid};
 
 /*
  * valid_fp_info
@@ -151,15 +150,14 @@ static struct fp_info last_fp = { InvalidOid };
  * scheme...).
  */
 static int
-valid_fp_info(Oid func_id, struct fp_info *fip)
-{
+valid_fp_info(Oid func_id, struct fp_info *fip) {
     Assert(OidIsValid(func_id));
     Assert(fip != (struct fp_info *) NULL);
-    
-    return(OidIsValid(fip->funcid) &&
-	   oideq(func_id, fip->funcid) &&
-	   TransactionIdIsCurrentTransactionId(fip->xid) &&
-	   CommandIdIsCurrentCommandId(fip->cid));
+
+    return (OidIsValid(fip->funcid) &&
+            oideq(func_id, fip->funcid) &&
+            TransactionIdIsCurrentTransactionId(fip->xid) &&
+            CommandIdIsCurrentCommandId(fip->cid));
 }
 
 /*
@@ -173,15 +171,14 @@ valid_fp_info(Oid func_id, struct fp_info *fip)
  *	InvalidOid if an exception occurs.
  */
 static void
-update_fp_info(Oid func_id, struct fp_info *fip)
-{
-    Oid		*argtypes;	/* an oid8 */
-    Oid		rettype;
-    HeapTuple		func_htp, type_htp;
-    TypeTupleForm	tp;
-    Form_pg_proc	pp;
-    int			i;
-    
+update_fp_info(Oid func_id, struct fp_info *fip) {
+    Oid *argtypes;    /* an oid8 */
+    Oid rettype;
+    HeapTuple func_htp, type_htp;
+    TypeTupleForm tp;
+    Form_pg_proc pp;
+    int i;
+
     Assert(OidIsValid(func_id));
     Assert(fip != (struct fp_info *) NULL);
 
@@ -196,10 +193,10 @@ update_fp_info(Oid func_id, struct fp_info *fip)
     fip->funcid = InvalidOid;
 
     func_htp = SearchSysCacheTuple(PROOID, ObjectIdGetDatum(func_id),
-				   0,0,0);
+                                   0, 0, 0);
     if (!HeapTupleIsValid(func_htp)) {
-	elog(WARN, "update_fp_info: cache lookup for function %d failed",
-	     func_id);
+        elog(WARN, "update_fp_info: cache lookup for function %d failed",
+             func_id);
     }
     pp = (Form_pg_proc) GETSTRUCT(func_htp);
     fip->nargs = pp->pronargs;
@@ -207,30 +204,30 @@ update_fp_info(Oid func_id, struct fp_info *fip)
     argtypes = pp->proargtypes;
 
     for (i = 0; i < fip->nargs; ++i) {
-	if (OidIsValid(argtypes[i])) {
-	    type_htp = SearchSysCacheTuple(TYPOID, 
-					   ObjectIdGetDatum(argtypes[i]),
-					   0,0,0);
-	    if (!HeapTupleIsValid(type_htp)) {
-		elog(WARN, "update_fp_info: bad argument type %d for %d",
-		     argtypes[i], func_id);
-	    }
-	    tp = (TypeTupleForm) GETSTRUCT(type_htp);
-	    fip->argbyval[i] = tp->typbyval;
-	    fip->arglen[i] = tp->typlen;
-	} /* else it had better be VAR_LENGTH_ARG */
+        if (OidIsValid(argtypes[i])) {
+            type_htp = SearchSysCacheTuple(TYPOID,
+                                           ObjectIdGetDatum(argtypes[i]),
+                                           0, 0, 0);
+            if (!HeapTupleIsValid(type_htp)) {
+                elog(WARN, "update_fp_info: bad argument type %d for %d",
+                     argtypes[i], func_id);
+            }
+            tp = (TypeTupleForm) GETSTRUCT(type_htp);
+            fip->argbyval[i] = tp->typbyval;
+            fip->arglen[i] = tp->typlen;
+        } /* else it had better be VAR_LENGTH_ARG */
     }
 
     if (OidIsValid(rettype)) {
-	type_htp = SearchSysCacheTuple(TYPOID, ObjectIdGetDatum(rettype),
-				       0,0,0);
-	if (!HeapTupleIsValid(type_htp)) {
-	    elog(WARN, "update_fp_info: bad return type %d for %d",
-		 rettype, func_id);
-	}
-	tp = (TypeTupleForm) GETSTRUCT(type_htp);
-	fip->retbyval = tp->typbyval;
-	fip->retlen = tp->typlen;
+        type_htp = SearchSysCacheTuple(TYPOID, ObjectIdGetDatum(rettype),
+                                       0, 0, 0);
+        if (!HeapTupleIsValid(type_htp)) {
+            elog(WARN, "update_fp_info: bad return type %d for %d",
+                 rettype, func_id);
+        }
+        tp = (TypeTupleForm) GETSTRUCT(type_htp);
+        fip->retbyval = tp->typbyval;
+        fip->retlen = tp->typlen;
     } /* else it had better by VAR_LENGTH_RESULT */
 
     fip->xid = GetCurrentTransactionId();
@@ -241,7 +238,7 @@ update_fp_info(Oid func_id, struct fp_info *fip)
      */
     fip->funcid = func_id;
 }
-	
+
 
 /*
  * HandleFunctionRequest
@@ -254,20 +251,19 @@ update_fp_info(Oid func_id, struct fp_info *fip)
  *	All errors result in elog(WARN,...).
  */
 int
-HandleFunctionRequest()
-{
-    Oid		fid;
-    int		argsize;
-    int		nargs;
-    char	*arg[8];
-    char	*retval;
-    int			i;
-    uint32		palloced;
-    char		*p;
-    struct fp_info	*fip;
+HandleFunctionRequest() {
+    Oid fid;
+    int argsize;
+    int nargs;
+    char *arg[8];
+    char *retval;
+    int i;
+    uint32 palloced;
+    char *p;
+    struct fp_info *fip;
 
-    fid = (Oid) pq_getint(4);	/* function oid */
-    nargs = pq_getint(4);	/* # of arguments */
+    fid = (Oid) pq_getint(4);    /* function oid */
+    nargs = pq_getint(4);    /* # of arguments */
 
     /*
      * This is where the one-back caching is done.
@@ -275,12 +271,12 @@ HandleFunctionRequest()
      */
     fip = &last_fp;
     if (!valid_fp_info(fid, fip)) {
-	update_fp_info(fid, fip);
+        update_fp_info(fid, fip);
     }
 
     if (fip->nargs != nargs) {
-	elog(WARN, "HandleFunctionRequest: actual arguments (%d) != registered arguments (%d)",
-	     nargs, fip->nargs);
+        elog(WARN, "HandleFunctionRequest: actual arguments (%d) != registered arguments (%d)",
+             nargs, fip->nargs);
     }
 
     /*
@@ -289,39 +285,39 @@ HandleFunctionRequest()
      */
     palloced = 0x0;
     for (i = 0; i < 8; ++i) {
-	if (i >= nargs) {
-	    arg[i] = (char *) NULL;
-	} else {
-	    argsize = pq_getint(4);
-	    
-	    Assert(argsize > 0);
-	    if (fip->argbyval[i]) {		/* by-value */
-		Assert(argsize <= 4);
-		arg[i] = (char *) pq_getint(argsize);
-	    } else {			/* by-reference ... */
-		if (fip->arglen[i] < 0) {		/* ... varlena */
-		    if (!(p = palloc(argsize + VARHDRSZ))) {
-			elog(WARN, "HandleFunctionRequest: palloc failed");
-		    }
-		    VARSIZE(p) = argsize + VARHDRSZ;
-		    pq_getnchar(VARDATA(p), 0, argsize);
-		} else {				/* ... fixed */
-			/* XXX cross our fingers and trust "argsize" */
-			if (!(p = palloc(argsize))) {
-			    elog(WARN, "HandleFunctionRequest: palloc failed");
-			}
-			pq_getnchar(p, 0, argsize);
-		    }
-		palloced |= (1 << i);
-		arg[i] = p;
-	    }
-	}
+        if (i >= nargs) {
+            arg[i] = (char *) NULL;
+        } else {
+            argsize = pq_getint(4);
+
+            Assert(argsize > 0);
+            if (fip->argbyval[i]) {        /* by-value */
+                Assert(argsize <= 4);
+                arg[i] = (char *) pq_getint(argsize);
+            } else {            /* by-reference ... */
+                if (fip->arglen[i] < 0) {        /* ... varlena */
+                    if (!(p = palloc(argsize + VARHDRSZ))) {
+                        elog(WARN, "HandleFunctionRequest: palloc failed");
+                    }
+                    VARSIZE(p) = argsize + VARHDRSZ;
+                    pq_getnchar(VARDATA(p), 0, argsize);
+                } else {                /* ... fixed */
+                    /* XXX cross our fingers and trust "argsize" */
+                    if (!(p = palloc(argsize))) {
+                        elog(WARN, "HandleFunctionRequest: palloc failed");
+                    }
+                    pq_getnchar(p, 0, argsize);
+                }
+                palloced |= (1 << i);
+                arg[i] = p;
+            }
+        }
     }
 
 #ifndef NO_FASTPATH
     retval = fmgr(fid,
-		  arg[0], arg[1], arg[2], arg[3],
-		  arg[4], arg[5], arg[6], arg[7]);
+                  arg[0], arg[1], arg[2], arg[3],
+                  arg[4], arg[5], arg[6], arg[7]);
 
 #else
     retval = NULL;
@@ -329,8 +325,8 @@ HandleFunctionRequest()
 
     /* free palloc'ed arguments */
     for (i = 0; i < nargs; ++i) {
-	if (palloced & (1 << i))
-	    pfree(arg[i]);
+        if (palloced & (1 << i))
+            pfree(arg[i]);
     }
 
     /*
@@ -345,9 +341,8 @@ HandleFunctionRequest()
 #endif /* NO_FASTPATH */
 
     if (!fip->retbyval)
-	pfree(retval);
+        pfree(retval);
 
-    
-    
-    return(0);
+
+    return (0);
 }

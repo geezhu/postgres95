@@ -34,11 +34,14 @@
 extern int Quiet;
 
 static void add_clause_to_rels(Query *root, List *clause);
+
 static void add_join_clause_info_to_rels(Query *root, CInfo *clauseinfo,
-					 List *join_relids);
+                                         List *join_relids);
+
 static void add_vars_to_rels(Query *root, List *vars, List *join_relids);
 
 static MergeOrder *mergesortop(Expr *clause);
+
 static Oid hashjoinop(Expr *clause);
 
 
@@ -58,29 +61,28 @@ static Oid hashjoinop(Expr *clause);
  *    Returns nothing.
  */
 void
-initialize_base_rels_list(Query *root, List *tlist)
-{
+initialize_base_rels_list(Query *root, List *tlist) {
     List *tlist_vars = NIL;
     List *l = NIL;
     List *tvar = NIL;
-    
-    foreach (l, tlist) {
-	TargetEntry *entry = (TargetEntry *) lfirst(l);
 
-        tlist_vars = append(tlist_vars, pull_var_clause(entry->expr)); 
+    foreach (l, tlist) {
+        TargetEntry *entry = (TargetEntry *) lfirst(l);
+
+        tlist_vars = append(tlist_vars, pull_var_clause(entry->expr));
     }
 
     /* now, the target list only contains Var nodes */
     foreach (tvar, tlist_vars) {
-	Var 	*var;
-	Index   varno;
-	Rel	*result;
-	
-	var = (Var*)lfirst(tvar);
-	varno = var->varno;
-	result = get_base_rel(root, varno);
+        Var *var;
+        Index varno;
+        Rel *result;
 
-	add_tl_element(result, var);
+        var = (Var *) lfirst(tvar);
+        varno = var->varno;
+        result = get_base_rel(root, varno);
+
+        add_tl_element(result, var);
     }
 }
 
@@ -93,29 +95,28 @@ initialize_base_rels_list(Query *root, List *tlist)
  *    into a join.
  */
 void
-add_missing_vars_to_base_rels(Query *root, List *tlist)
-{
+add_missing_vars_to_base_rels(Query *root, List *tlist) {
     List *l;
     int varno;
-    
+
     varno = 1;
     foreach (l, root->rtable) {
-	RangeTblEntry *rte = (RangeTblEntry *)lfirst(l);
-	List *relids;
-	Rel *result;
-	Var *var;
+        RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
+        List *relids;
+        Rel *result;
+        Var *var;
 
-	relids = lconsi(varno, NIL);
-	if (rte->inFromCl &&
-	    !rel_member(relids, root->base_relation_list_)) {
+        relids = lconsi(varno, NIL);
+        if (rte->inFromCl &&
+            !rel_member(relids, root->base_relation_list_)) {
 
-	    var = makeVar(varno, -2 , 26, varno, -2);
-	    /* add it to base_relation_list_ */
-	    result = get_base_rel(root, varno);
-	    add_tl_element(result, var);
-	}
-	pfree(relids);
-	varno++;
+            var = makeVar(varno, -2, 26, varno, -2);
+            /* add it to base_relation_list_ */
+            result = get_base_rel(root, varno);
+            add_tl_element(result, var);
+        }
+        pfree(relids);
+        varno++;
     }
 
     return;
@@ -138,12 +139,11 @@ add_missing_vars_to_base_rels(Query *root, List *tlist)
  *    Returns nothing of interest.
  */
 void
-initialize_base_rels_jinfo(Query *root, List *clauses)
-{
+initialize_base_rels_jinfo(Query *root, List *clauses) {
     List *clause;
 
     foreach (clause, clauses) {
-	add_clause_to_rels(root, lfirst(clause));
+        add_clause_to_rels(root, lfirst(clause));
     }
     return;
 }
@@ -158,8 +158,7 @@ initialize_base_rels_jinfo(Query *root, List *clauses)
  *    Returns nothing of interest.
  */
 static void
-add_clause_to_rels(Query *root, List *clause)
-{
+add_clause_to_rels(Query *root, List *clause) {
     List *relids;
     List *vars;
     CInfo *clauseinfo = makeNode(CInfo);
@@ -167,66 +166,59 @@ add_clause_to_rels(Query *root, List *clause)
     /*
      * Retrieve all relids and vars contained within the clause.
      */
-    clause_relids_vars((Node*)clause, &relids, &vars);
+    clause_relids_vars((Node *) clause, &relids, &vars);
 
 
-    clauseinfo->clause = (Expr*)clause;
-    clauseinfo->notclause = contains_not((Node*)clause);
+    clauseinfo->clause = (Expr *) clause;
+    clauseinfo->notclause = contains_not((Node *) clause);
     clauseinfo->selectivity = 0;
     clauseinfo->indexids = NIL;
-    clauseinfo->mergesortorder = (MergeOrder*)NULL;
-    clauseinfo->hashjoinoperator = (Oid)0;
-	
+    clauseinfo->mergesortorder = (MergeOrder *) NULL;
+    clauseinfo->hashjoinoperator = (Oid) 0;
 
 
-    if(length(relids) == 1) {
-	Rel *rel = get_base_rel(root, lfirsti(relids));
-	
-	/*
-	 * There is only one relation participating in 'clause',
-	 * so 'clause' must be a restriction clause.
-	 */
+    if (length(relids) == 1) {
+        Rel *rel = get_base_rel(root, lfirsti(relids));
 
-	/* the selectivity of the clause must be computed
-	   regardless of whether it's a restriction or a join clause */
-	if (is_funcclause((Node*)clause))
-	    {
-		/*
-		 * XXX If we have a func clause set selectivity to 1/3, 
-		 *     really need a true selectivity function.
-		 */
-		clauseinfo->selectivity = (Cost)0.3333333;
-	    }
-	else
-	    {
-		clauseinfo->selectivity =
-		    compute_clause_selec(root, (Node*)clause,
-					 NIL);
-	    }
-	rel->clauseinfo = lcons(clauseinfo,
-			       rel->clauseinfo);
+        /*
+         * There is only one relation participating in 'clause',
+         * so 'clause' must be a restriction clause.
+         */
+
+        /* the selectivity of the clause must be computed
+           regardless of whether it's a restriction or a join clause */
+        if (is_funcclause((Node *) clause)) {
+            /*
+             * XXX If we have a func clause set selectivity to 1/3, 
+             *     really need a true selectivity function.
+             */
+            clauseinfo->selectivity = (Cost) 0.3333333;
+        } else {
+            clauseinfo->selectivity =
+                    compute_clause_selec(root, (Node *) clause,
+                                         NIL);
+        }
+        rel->clauseinfo = lcons(clauseinfo,
+                                rel->clauseinfo);
     } else {
-	/*
-	 * 'clause' is a join clause, since there is more than one
-	 * atom in the relid list.
-	 */
-	
-	if (is_funcclause((Node*)clause))
-	    {
-		/*
-		 * XXX If we have a func clause set selectivity to 1/3, 
-		 *     really need a true selectivity function.
-		 */
-		clauseinfo->selectivity = (Cost)0.3333333;
-	    }
-	else
-	    {
-		clauseinfo->selectivity =
-		    compute_clause_selec(root, (Node*)clause,
-					 NIL);
-	    }
-	add_join_clause_info_to_rels(root, clauseinfo, relids);
-	add_vars_to_rels(root,vars, relids);
+        /*
+         * 'clause' is a join clause, since there is more than one
+         * atom in the relid list.
+         */
+
+        if (is_funcclause((Node *) clause)) {
+            /*
+             * XXX If we have a func clause set selectivity to 1/3, 
+             *     really need a true selectivity function.
+             */
+            clauseinfo->selectivity = (Cost) 0.3333333;
+        } else {
+            clauseinfo->selectivity =
+                    compute_clause_selec(root, (Node *) clause,
+                                         NIL);
+        }
+        add_join_clause_info_to_rels(root, clauseinfo, relids);
+        add_vars_to_rels(root, vars, relids);
     }
 }
 
@@ -243,17 +235,16 @@ add_clause_to_rels(Query *root, List *clause)
  *    
  */
 static void
-add_join_clause_info_to_rels(Query *root, CInfo *clauseinfo, List *join_relids)
-{
+add_join_clause_info_to_rels(Query *root, CInfo *clauseinfo, List *join_relids) {
     List *join_relid;
 
     foreach (join_relid, join_relids) {
-	JInfo *joininfo = 
-	    find_joininfo_node(get_base_rel(root, lfirsti(join_relid)),
-			       intLispRemove((int)lfirst(join_relid),
-					     join_relids));
-	joininfo->jinfoclauseinfo =
-	    lcons(clauseinfo, joininfo->jinfoclauseinfo);	
+        JInfo *joininfo =
+                find_joininfo_node(get_base_rel(root, lfirsti(join_relid)),
+                                   intLispRemove((int) lfirst(join_relid),
+                                                 join_relids));
+        joininfo->jinfoclauseinfo =
+                lcons(clauseinfo, joininfo->jinfoclauseinfo);
 
     }
 }
@@ -274,20 +265,19 @@ add_join_clause_info_to_rels(Query *root, CInfo *clauseinfo, List *join_relids)
  *    Returns nothing.
  */
 static void
-add_vars_to_rels(Query *root, List *vars, List *join_relids)
-{
+add_vars_to_rels(Query *root, List *vars, List *join_relids) {
     Var *var;
     List *temp = NIL;
-    Rel *rel = (Rel*)NULL;
+    Rel *rel = (Rel *) NULL;
     TargetEntry *tlistentry;
-    
+
     foreach (temp, vars) {
-	var = (Var*)lfirst(temp);
-	rel = get_base_rel(root, var->varno);
-	tlistentry = tlistentry_member(var, rel->targetlist);
-	if(tlistentry==NULL)
-	    /*   add a new entry */
-	    add_tl_element(rel, var);
+        var = (Var *) lfirst(temp);
+        rel = get_base_rel(root, var->varno);
+        tlistentry = tlistentry_member(var, rel->targetlist);
+        if (tlistentry == NULL)
+            /*   add a new entry */
+            add_tl_element(rel, var);
     }
 }
 
@@ -307,8 +297,7 @@ add_vars_to_rels(Query *root, List *vars, List *join_relids)
  *    Returns nothing.
  */
 void
-initialize_join_clause_info(List *rel_list)
-{
+initialize_join_clause_info(List *rel_list) {
     List *x, *y, *z;
     Rel *rel;
     JInfo *joininfo;
@@ -316,32 +305,32 @@ initialize_join_clause_info(List *rel_list)
     Expr *clause;
 
     foreach (x, rel_list) {
-	rel = (Rel*)lfirst(x);
-	foreach (y, rel->joininfo) {
-	    joininfo = (JInfo*)lfirst(y);
-	    foreach (z, joininfo->jinfoclauseinfo) {
-		clauseinfo = (CInfo*)lfirst(z);
-		clause = clauseinfo->clause;
-		if(join_clause_p((Node*)clause)) {
-		    MergeOrder *sortop = (MergeOrder*)NULL;
-		    Oid hashop = (Oid)NULL;
+        rel = (Rel *) lfirst(x);
+        foreach (y, rel->joininfo) {
+            joininfo = (JInfo *) lfirst(y);
+            foreach (z, joininfo->jinfoclauseinfo) {
+                clauseinfo = (CInfo *) lfirst(z);
+                clause = clauseinfo->clause;
+                if (join_clause_p((Node *) clause)) {
+                    MergeOrder *sortop = (MergeOrder *) NULL;
+                    Oid hashop = (Oid) NULL;
 
-		    if (_enable_mergesort_) 
-			sortop = mergesortop(clause);
-		    if (_enable_hashjoin_) 
-			hashop = hashjoinop(clause);
+                    if (_enable_mergesort_)
+                        sortop = mergesortop(clause);
+                    if (_enable_hashjoin_)
+                        hashop = hashjoinop(clause);
 
-		    if (sortop) {
-			clauseinfo->mergesortorder = sortop;
-			joininfo->mergesortable = true;
-		    }
-		    if (hashop) {
-			clauseinfo->hashjoinoperator = hashop;
-			joininfo->hashjoinable = true;
-		    }
-		}
-	    }
-	}
+                    if (sortop) {
+                        clauseinfo->mergesortorder = sortop;
+                        joininfo->mergesortable = true;
+                    }
+                    if (hashop) {
+                        clauseinfo->hashjoinoperator = hashop;
+                        joininfo->hashjoinable = true;
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -352,28 +341,27 @@ initialize_join_clause_info(List *rel_list)
  *    a mergesortable operator.
  */
 static MergeOrder *
-mergesortop(Expr *clause)
-{
+mergesortop(Expr *clause) {
     Oid leftOp, rightOp;
     bool sortable;
 
-    sortable = op_mergesortable(((Oper*)clause->oper)->opno,
-				(get_leftop(clause))->vartype,
-				(get_rightop(clause))->vartype,
-				&leftOp,
-				&rightOp);
-    
-    if (sortable) {
-	MergeOrder *morder = makeNode(MergeOrder);
+    sortable = op_mergesortable(((Oper *) clause->oper)->opno,
+                                (get_leftop(clause))->vartype,
+                                (get_rightop(clause))->vartype,
+                                &leftOp,
+                                &rightOp);
 
-	morder->join_operator = ((Oper*)clause->oper)->opno;
-	morder->left_operator = leftOp;
-	morder->right_operator = rightOp;
-	morder->left_type = (get_leftop(clause))->vartype;
-	morder->right_type = (get_rightop(clause))->vartype;
-	return (morder);
-    } else 
-	return(NULL);
+    if (sortable) {
+        MergeOrder *morder = makeNode(MergeOrder);
+
+        morder->join_operator = ((Oper *) clause->oper)->opno;
+        morder->left_operator = leftOp;
+        morder->right_operator = rightOp;
+        morder->left_type = (get_leftop(clause))->vartype;
+        morder->right_type = (get_rightop(clause))->vartype;
+        return (morder);
+    } else
+        return (NULL);
 }
 
 /*    
@@ -383,9 +371,8 @@ mergesortop(Expr *clause)
  *    a hashjoinable operator.
  */
 static Oid
-hashjoinop(Expr *clause)
-{
-    return(op_hashjoinable(((Oper*)clause->oper)->opno,
-			   (get_leftop(clause))->vartype,
-			   (get_rightop(clause))->vartype));
+hashjoinop(Expr *clause) {
+    return (op_hashjoinable(((Oper *) clause->oper)->opno,
+                            (get_leftop(clause))->vartype,
+                            (get_rightop(clause))->vartype));
 }

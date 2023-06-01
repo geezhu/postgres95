@@ -10,7 +10,7 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	SDIR_H
+#ifndef    SDIR_H
 #define SDIR_H
 
 #include "c.h"
@@ -31,7 +31,7 @@ typedef enum ScanDirection {
  */
 #define ScanDirectionIsValid(direction) \
     ((bool) (BackwardScanDirection <= direction && \
-	     direction <= ForwardScanDirection))
+         direction <= ForwardScanDirection))
 
 /*
  * ScanDirectionIsBackward --
@@ -54,4 +54,4 @@ typedef enum ScanDirection {
 #define ScanDirectionIsForward(direction) \
     ((bool) (direction == ForwardScanDirection))
 
-#endif	/* SDIR_H */
+#endif    /* SDIR_H */

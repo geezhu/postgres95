@@ -14,37 +14,37 @@
 #define RTREE_H
 
 /* see rtstrat.c for what all this is about */
-#define RTNStrategies			8
-#define RTLeftStrategyNumber		1
-#define RTOverLeftStrategyNumber	2
-#define RTOverlapStrategyNumber		3
-#define RTOverRightStrategyNumber	4
-#define RTRightStrategyNumber		5
-#define RTSameStrategyNumber		6
-#define RTContainsStrategyNumber	7
-#define RTContainedByStrategyNumber	8
+#define RTNStrategies            8
+#define RTLeftStrategyNumber        1
+#define RTOverLeftStrategyNumber    2
+#define RTOverlapStrategyNumber        3
+#define RTOverRightStrategyNumber    4
+#define RTRightStrategyNumber        5
+#define RTSameStrategyNumber        6
+#define RTContainsStrategyNumber    7
+#define RTContainedByStrategyNumber    8
 
-#define RTNProcs			3
-#define RT_UNION_PROC			1
-#define RT_INTER_PROC			2
-#define RT_SIZE_PROC			3
+#define RTNProcs            3
+#define RT_UNION_PROC            1
+#define RT_INTER_PROC            2
+#define RT_SIZE_PROC            3
 
-#define F_LEAF		(1 << 0)
+#define F_LEAF        (1 << 0)
 
 typedef struct RTreePageOpaqueData {
-	uint32		flags;
+    uint32 flags;
 } RTreePageOpaqueData;
 
-typedef RTreePageOpaqueData	*RTreePageOpaque;
+typedef RTreePageOpaqueData *RTreePageOpaque;
 
 /*
  *  When we descend a tree, we keep a stack of parent pointers.
  */
 
 typedef struct RTSTACK {
-	struct RTSTACK	*rts_parent;
-	OffsetNumber	rts_child;
-	BlockNumber	rts_blk;
+    struct RTSTACK *rts_parent;
+    OffsetNumber rts_child;
+    BlockNumber rts_blk;
 } RTSTACK;
 
 /*
@@ -58,14 +58,14 @@ typedef struct RTSTACK {
  */
 
 typedef struct RTreeScanOpaqueData {
-	struct RTSTACK	*s_stack;
-	struct RTSTACK	*s_markstk;
-	uint16		s_flags;
-	uint16		s_internalNKey;
-	ScanKey		s_internalKey;
+    struct RTSTACK *s_stack;
+    struct RTSTACK *s_markstk;
+    uint16 s_flags;
+    uint16 s_internalNKey;
+    ScanKey s_internalKey;
 } RTreeScanOpaqueData;
 
-typedef RTreeScanOpaqueData	*RTreeScanOpaque;
+typedef RTreeScanOpaqueData *RTreeScanOpaque;
 
 /*
  *  When we're doing a scan and updating a tree at the same time, the
@@ -74,11 +74,11 @@ typedef RTreeScanOpaqueData	*RTreeScanOpaque;
  *  that we can't handle simply by adjusting pointers.
  */
 
-#define RTS_CURBEFORE	((uint16) (1 << 0))
-#define RTS_MRKBEFORE	((uint16) (1 << 1))
+#define RTS_CURBEFORE    ((uint16) (1 << 0))
+#define RTS_MRKBEFORE    ((uint16) (1 << 1))
 
 /* root page of an rtree */
-#define P_ROOT		0
+#define P_ROOT        0
 
 /*
  *  When we update a relation on which we're doing a scan, we need to
@@ -89,8 +89,8 @@ typedef RTreeScanOpaqueData	*RTreeScanOpaque;
  *  of operation changed the index.
  */
 
-#define	RTOP_DEL	0
-#define	RTOP_SPLIT	1
+#define    RTOP_DEL    0
+#define    RTOP_SPLIT    1
 
 /* defined in rtree.c */
 extern void freestack(RTSTACK *s);

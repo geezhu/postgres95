@@ -41,13 +41,13 @@
  * ----------------
  */
 typedef struct TupleTableSlot {
-    NodeTag		type;
-    HeapTuple		val;
-    bool		ttc_shouldFree;
-    bool		ttc_descIsNew;
-    TupleDesc		ttc_tupleDescriptor;
-    Buffer		ttc_buffer;
-    int			ttc_whichplan;
+    NodeTag type;
+    HeapTuple val;
+    bool ttc_shouldFree;
+    bool ttc_descIsNew;
+    TupleDesc ttc_tupleDescriptor;
+    Buffer ttc_buffer;
+    int ttc_whichplan;
 } TupleTableSlot;
 
 /* ----------------
@@ -55,9 +55,9 @@ typedef struct TupleTableSlot {
  * ----------------
  */
 typedef struct TupleTableData {
-    int		size;		/* size of the table */
-    int		next;		/* next available slot number */
-    TupleTableSlot *array;	/* array of TupleTableSlot's */
+    int size;        /* size of the table */
+    int next;        /* next available slot number */
+    TupleTableSlot *array;    /* array of TupleTableSlot's */
 } TupleTableData;
 
 typedef TupleTableData *TupleTable;

@@ -30,11 +30,13 @@
 #include <errno.h>
 
 /* XXX - the following  dependency should be moved into the defaults.mk file */
-#ifndef	_IPC_
+#ifndef    _IPC_
 #define _IPC_
+
 #include <sys/ipc.h>
 #include <sys/sem.h>
 #include <sys/shm.h>
+
 #endif
 
 #include "storage/ipc.h"
@@ -64,8 +66,9 @@ union semun {
 
 static struct ONEXIT {
     void (*function)();
+
     caddr_t arg;
-} onexit_list[ MAX_ON_EXITS ];
+} onexit_list[MAX_ON_EXITS];
 
 static int onexit_index;
 
@@ -78,25 +81,23 @@ PrivateMem IpcPrivateMem[16];
 
 static int
 PrivateMemoryCreate(IpcMemoryKey memKey,
-		    uint32 size)
-{
+                    uint32 size) {
     static int memid = 0;
-    
+
     UsePrivateMemory = 1;
-    
+
     IpcPrivateMem[memid].id = memid;
     IpcPrivateMem[memid].memptr = malloc(size);
     if (IpcPrivateMem[memid].memptr == NULL)
-	elog(WARN, "PrivateMemoryCreate: not enough memory to malloc");
-    memset(IpcPrivateMem[memid].memptr, 0, size);	/* XXX PURIFY */
-    
+        elog(WARN, "PrivateMemoryCreate: not enough memory to malloc");
+    memset(IpcPrivateMem[memid].memptr, 0, size);    /* XXX PURIFY */
+
     return (memid++);
 }
 
 static char *
-PrivateMemoryAttach(IpcMemoryId memid)
-{
-    return ( IpcPrivateMem[memid].memptr );
+PrivateMemoryAttach(IpcMemoryId memid) {
+    return (IpcPrivateMem[memid].memptr);
 }
 
 
@@ -112,10 +113,9 @@ PrivateMemoryAttach(IpcMemoryId memid)
 static int exitpg_inprogress = 0;
 
 void
-exitpg(int code)
-{
+exitpg(int code) {
     int i;
-    
+
     /* ----------------
      *	if exitpg_inprocess is true, then it means that we
      *  are being invoked from within an on_exit() handler
@@ -123,17 +123,17 @@ exitpg(int code)
      * ----------------
      */
     if (exitpg_inprogress)
-	return;
-    
+        return;
+
     exitpg_inprogress = 1;
-    
+
     /* ----------------
      *	call all the callbacks registered before calling exit().
      * ----------------
      */
     for (i = onexit_index - 1; i >= 0; --i)
-	(*onexit_list[i].function)(code, onexit_list[i].arg);
-    
+        (*onexit_list[i].function)(code, onexit_list[i].arg);
+
     exit(code);
 }
 
@@ -144,10 +144,9 @@ exitpg(int code)
  * ------------------
  */
 void
-quasi_exitpg()
-{
+quasi_exitpg() {
     int i;
-    
+
     /* ----------------
      *	if exitpg_inprocess is true, then it means that we
      *  are being invoked from within an on_exit() handler
@@ -155,17 +154,17 @@ quasi_exitpg()
      * ----------------
      */
     if (exitpg_inprogress)
-	return;
-    
+        return;
+
     exitpg_inprogress = 1;
-    
+
     /* ----------------
      *	call all the callbacks registered before calling exit().
      * ----------------
      */
     for (i = onexit_index - 1; i >= 0; --i)
-	(*onexit_list[i].function)(0, onexit_list[i].arg);
-    
+        (*onexit_list[i].function)(0, onexit_list[i].arg);
+
     onexit_index = 0;
     exitpg_inprogress = 0;
 }
@@ -178,17 +177,16 @@ quasi_exitpg()
  * ----------------------------------------------------------------
  */
 int
-on_exitpg(void (*function)(), caddr_t arg)
-{
+on_exitpg(void (*function)(), caddr_t arg) {
     if (onexit_index >= MAX_ON_EXITS)
-	return(-1);
-    
-    onexit_list[ onexit_index ].function = function;
-    onexit_list[ onexit_index ].arg = arg;
-    
+        return (-1);
+
+    onexit_list[onexit_index].function = function;
+    onexit_list[onexit_index].arg = arg;
+
     ++onexit_index;
-    
-    return(0);
+
+    return (0);
 }
 
 /****************************************************************************/
@@ -197,9 +195,9 @@ on_exitpg(void (*function)(), caddr_t arg)
 /****************************************************************************/
 static void
 IPCPrivateSemaphoreKill(int status,
-			int semId) /* caddr_t */
+                        int semId) /* caddr_t */
 {
-    union semun	semun;
+    union semun semun;
     semctl(semId, 0, IPC_RMID, semun);
 }
 
@@ -210,16 +208,16 @@ IPCPrivateSemaphoreKill(int status,
 /****************************************************************************/
 static void
 IPCPrivateMemoryKill(int status,
-		     int shmId)	/* caddr_t */
+                     int shmId)    /* caddr_t */
 {
-    if ( UsePrivateMemory ) {
-	/* free ( IpcPrivateMem[shmId].memptr ); */
+    if (UsePrivateMemory) {
+        /* free ( IpcPrivateMem[shmId].memptr ); */
     } else {
-	if (shmctl(shmId, IPC_RMID, (struct shmid_ds *) NULL) < 0) {
-	    elog(NOTICE, "IPCPrivateMemoryKill: shmctl(%d, %d, 0) failed: %m",
-		 shmId, IPC_RMID);
-	}
-    } 
+        if (shmctl(shmId, IPC_RMID, (struct shmid_ds *) NULL) < 0) {
+            elog(NOTICE, "IPCPrivateMemoryKill: shmctl(%d, %d, 0) failed: %m",
+                 shmId, IPC_RMID);
+        }
+    }
 }
 
 
@@ -247,66 +245,65 @@ IPCPrivateMemoryKill(int status,
 
 IpcSemaphoreId
 IpcSemaphoreCreate(IpcSemaphoreKey semKey,
-		   int semNum,
-		   int permission,
-		   int semStartValue,
-		   int removeOnExit,
-		   int *status)
-{
-    int		i;
-    int		errStatus;
-    int		semId;
-    u_short	array[IPC_NMAXSEM];
-    union semun	semun;
+                   int semNum,
+                   int permission,
+                   int semStartValue,
+                   int removeOnExit,
+                   int *status) {
+    int i;
+    int errStatus;
+    int semId;
+    u_short array[IPC_NMAXSEM];
+    union semun semun;
 
     /* get a semaphore if non-existent */
     /* check arguments	*/
-    if (semNum > IPC_NMAXSEM || semNum <= 0)  {
-	*status = IpcInvalidArgument;
-	return(2);	/* returns the number of the invalid argument	*/
+    if (semNum > IPC_NMAXSEM || semNum <= 0) {
+        *status = IpcInvalidArgument;
+        return (2);    /* returns the number of the invalid argument	*/
     }
-    
+
     semId = semget(semKey, 0, 0);
 
     if (semId == -1) {
-	*status = IpcSemIdNotExist;	/* there doesn't exist a semaphore */
+        *status = IpcSemIdNotExist;    /* there doesn't exist a semaphore */
 #ifdef DEBUG_IPC
-	fprintf(stderr,"calling semget with %d, %d , %d\n",
-		semKey,
-		semNum,
-		IPC_CREAT|permission );
+        fprintf(stderr,"calling semget with %d, %d , %d\n",
+            semKey,
+            semNum,
+            IPC_CREAT|permission );
 #endif
-	semId = semget(semKey, semNum, IPC_CREAT|permission);
+        semId = semget(semKey, semNum, IPC_CREAT | permission);
 
-	if (semId < 0) {
-	    perror("semget");
-	    exitpg(3);
-	}
-	for (i = 0; i < semNum; i++) {
-	    array[i] = semStartValue;
-	}
-	semun.array = array;
-	errStatus = semctl(semId, 0, SETALL, semun);
-	if (errStatus == -1) {
-	    perror("semctl");
-	}
-	
-	if (removeOnExit)
-	    on_exitpg(IPCPrivateSemaphoreKill, (caddr_t)semId);
-	
+        if (semId < 0) {
+            perror("semget");
+            exitpg(3);
+        }
+        for (i = 0; i < semNum; i++) {
+            array[i] = semStartValue;
+        }
+        semun.array = array;
+        errStatus = semctl(semId, 0, SETALL, semun);
+        if (errStatus == -1) {
+            perror("semctl");
+        }
+
+        if (removeOnExit)
+            on_exitpg(IPCPrivateSemaphoreKill, (caddr_t) semId);
+
     } else {
-	/* there is a semaphore id for this key */
-	*status = IpcSemIdExist;
+        /* there is a semaphore id for this key */
+        *status = IpcSemIdExist;
     }
-    
+
 #ifdef DEBUG_IPC
     fprintf(stderr,"\nIpcSemaphoreCreate, status %d, returns %d\n",
-	    *status,
-	    semId );
+        *status,
+        semId );
     fflush(stdout);
     fflush(stderr);
 #endif
-    return(semId);
+    return (semId);
 }
 
 
@@ -318,17 +315,16 @@ IpcSemaphoreCreate(IpcSemaphoreKey semKey,
 static int IpcSemaphoreSet_return;
 
 void
-IpcSemaphoreSet(int semId, int semno, int value)
-{
-    int		errStatus;
-    union semun	semun;
-    
+IpcSemaphoreSet(int semId, int semno, int value) {
+    int errStatus;
+    union semun semun;
+
     semun.val = value;
     errStatus = semctl(semId, semno, SETVAL, semun);
     IpcSemaphoreSet_return = errStatus;
-    
+
     if (errStatus == -1)
-	perror("semctl");
+        perror("semctl");
 }
 
 /****************************************************************************/
@@ -336,16 +332,15 @@ IpcSemaphoreSet(int semId, int semno, int value)
 /*									    */
 /****************************************************************************/
 void
-IpcSemaphoreKill(IpcSemaphoreKey key)
-{
-    int 	semId;
-    union semun	semun;
-    
+IpcSemaphoreKill(IpcSemaphoreKey key) {
+    int semId;
+    union semun semun;
+
     /* kill semaphore if existent */
-    
+
     semId = semget(key, 0, 0);
     if (semId != -1)
-	semctl(semId, 0, IPC_RMID, semun);
+        semctl(semId, 0, IPC_RMID, semun);
 }
 
 /****************************************************************************/
@@ -356,16 +351,15 @@ IpcSemaphoreKill(IpcSemaphoreKey key)
 static int IpcSemaphoreLock_return;
 
 void
-IpcSemaphoreLock(IpcSemaphoreId semId, int sem, int lock)
-{
-    extern int		errno;
-    int			errStatus;
-    struct sembuf	sops;
-    
+IpcSemaphoreLock(IpcSemaphoreId semId, int sem, int lock) {
+    extern int        errno;
+    int errStatus;
+    struct sembuf sops;
+
     sops.sem_op = lock;
     sops.sem_flg = 0;
     sops.sem_num = sem;
-    
+
     /* ----------------
      *	Note: if errStatus is -1 and errno == EINTR then it means we
      *        returned from the operation prematurely because we were
@@ -378,14 +372,14 @@ IpcSemaphoreLock(IpcSemaphoreId semId, int sem, int lock)
      * ----------------
      */
     do {
-	errStatus = semop(semId, &sops, 1);
+        errStatus = semop(semId, &sops, 1);
     } while (errStatus == -1 && errno == EINTR);
-    
+
     IpcSemaphoreLock_return = errStatus;
-    
+
     if (errStatus == -1) {
-	perror("semop");
-	exitpg(255);
+        perror("semop");
+        exitpg(255);
     }
 }
 
@@ -397,17 +391,16 @@ IpcSemaphoreLock(IpcSemaphoreId semId, int sem, int lock)
 static int IpcSemaphoreUnlock_return;
 
 void
-IpcSemaphoreUnlock(IpcSemaphoreId semId, int sem, int lock)
-{
-    extern int		errno;
-    int			errStatus;
-    struct sembuf	sops;
-    
+IpcSemaphoreUnlock(IpcSemaphoreId semId, int sem, int lock) {
+    extern int        errno;
+    int errStatus;
+    struct sembuf sops;
+
     sops.sem_op = -lock;
     sops.sem_flg = 0;
     sops.sem_num = sem;
-    
-    
+
+
     /* ----------------
      *	Note: if errStatus is -1 and errno == EINTR then it means we
      *        returned from the operation prematurely because we were
@@ -420,33 +413,31 @@ IpcSemaphoreUnlock(IpcSemaphoreId semId, int sem, int lock)
      * ----------------
      */
     do {
-	errStatus = semop(semId, &sops, 1);
+        errStatus = semop(semId, &sops, 1);
     } while (errStatus == -1 && errno == EINTR);
-    
+
     IpcSemaphoreUnlock_return = errStatus;
-    
+
     if (errStatus == -1) {
-	perror("semop");
-	exitpg(255);
+        perror("semop");
+        exitpg(255);
     }
 }
 
 int
-IpcSemaphoreGetCount(IpcSemaphoreId	semId, int sem)
-{
+IpcSemaphoreGetCount(IpcSemaphoreId semId, int sem) {
     int semncnt;
     union semun dummy; /* for Solaris */
-    
+
     semncnt = semctl(semId, sem, GETNCNT, dummy);
     return semncnt;
 }
 
 int
-IpcSemaphoreGetValue(IpcSemaphoreId	semId, int sem)
-{
+IpcSemaphoreGetValue(IpcSemaphoreId semId, int sem) {
     int semval;
     union semun dummy; /* for Solaris */
-    
+
     semval = semctl(semId, sem, GETVAL, dummy);
     return semval;
 }
@@ -459,28 +450,27 @@ IpcSemaphoreGetValue(IpcSemaphoreId	semId, int sem)
 /****************************************************************************/
 
 IpcMemoryId
-IpcMemoryCreate(IpcMemoryKey memKey, uint32 size, int permission)
-{
-    IpcMemoryId	 shmid;
-    
+IpcMemoryCreate(IpcMemoryKey memKey, uint32 size, int permission) {
+    IpcMemoryId shmid;
+
     if (memKey == PrivateIPCKey) {
-	/* private */
-	shmid = PrivateMemoryCreate(memKey, size);
-    }else {
-    	shmid = shmget(memKey, size, IPC_CREAT|permission); 
+        /* private */
+        shmid = PrivateMemoryCreate(memKey, size);
+    } else {
+        shmid = shmget(memKey, size, IPC_CREAT | permission);
     }
 
     if (shmid < 0) {
-	fprintf(stderr,"IpcMemoryCreate: memKey=%d , size=%d , permission=%d", 
-		memKey, size , permission );
-	perror("IpcMemoryCreate: shmget(..., create, ...) failed");
-	return(IpcMemCreationFailed);
+        fprintf(stderr, "IpcMemoryCreate: memKey=%d , size=%d , permission=%d",
+                memKey, size, permission);
+        perror("IpcMemoryCreate: shmget(..., create, ...) failed");
+        return (IpcMemCreationFailed);
     }
-    
+
     /* if (memKey == PrivateIPCKey) */
-    on_exitpg(IPCPrivateMemoryKill, (caddr_t)shmid);
-    
-    return(shmid);
+    on_exitpg(IPCPrivateMemoryKill, (caddr_t) shmid);
+
+    return (shmid);
 }
 
 /****************************************************************************/
@@ -488,20 +478,19 @@ IpcMemoryCreate(IpcMemoryKey memKey, uint32 size, int permission)
 /*				    or IpcMemIdGetFailed	            */
 /****************************************************************************/
 IpcMemoryId
-IpcMemoryIdGet(IpcMemoryKey memKey, uint32 size)
-{
-    IpcMemoryId	shmid;
-    
+IpcMemoryIdGet(IpcMemoryKey memKey, uint32 size) {
+    IpcMemoryId shmid;
+
     shmid = shmget(memKey, size, 0);
-    
+
     if (shmid < 0) {
-	fprintf(stderr,"IpcMemoryIdGet: memKey=%d , size=%d , permission=%d", 
-		memKey, size , 0 );
-	perror("IpcMemoryIdGet:  shmget() failed");
-	return(IpcMemIdGetFailed);
+        fprintf(stderr, "IpcMemoryIdGet: memKey=%d , size=%d , permission=%d",
+                memKey, size, 0);
+        perror("IpcMemoryIdGet:  shmget() failed");
+        return (IpcMemIdGetFailed);
     }
-    
-    return(shmid);
+
+    return (shmid);
 }
 
 /****************************************************************************/
@@ -510,10 +499,9 @@ IpcMemoryIdGet(IpcMemoryKey memKey, uint32 size)
 /*  (only called by backends running under the postmaster)		    */
 /****************************************************************************/
 void
-IpcMemoryDetach(int status, char *shmaddr)
-{
+IpcMemoryDetach(int status, char *shmaddr) {
     if (shmdt(shmaddr) < 0) {
-	elog(NOTICE, "IpcMemoryDetach: shmdt(0x%x): %m", shmaddr);
+        elog(NOTICE, "IpcMemoryDetach: shmdt(0x%x): %m", shmaddr);
     }
 }
 
@@ -525,26 +513,25 @@ IpcMemoryDetach(int status, char *shmaddr)
 /*									    */
 /****************************************************************************/
 char *
-IpcMemoryAttach(IpcMemoryId memId)
-{
-    char	*memAddress;
-    
+IpcMemoryAttach(IpcMemoryId memId) {
+    char *memAddress;
+
     if (UsePrivateMemory) {
-	memAddress = (char *) PrivateMemoryAttach(memId);
+        memAddress = (char *) PrivateMemoryAttach(memId);
     } else {
-	memAddress = (char *) shmat(memId, 0, 0);
+        memAddress = (char *) shmat(memId, 0, 0);
     }
-    
+
     /*	if ( *memAddress == -1) { XXX ??? */
-    if ( memAddress == (char *)-1) {
-	perror("IpcMemoryAttach: shmat() failed");
-	return(IpcMemAttachFailed);
+    if (memAddress == (char *) -1) {
+        perror("IpcMemoryAttach: shmat() failed");
+        return (IpcMemAttachFailed);
     }
-    
+
     if (!UsePrivateMemory)
-	on_exitpg(IpcMemoryDetach, (caddr_t) memAddress);
-    
-    return((char *) memAddress);
+        on_exitpg(IpcMemoryDetach, (caddr_t) memAddress);
+
+    return ((char *) memAddress);
 }
 
 
@@ -553,17 +540,16 @@ IpcMemoryAttach(IpcMemoryId memId)
 /*  (only called by the postmaster and standalone backends)		    */
 /****************************************************************************/
 void
-IpcMemoryKill(IpcMemoryKey memKey)
-{	
-    IpcMemoryId		shmid;
-    
+IpcMemoryKill(IpcMemoryKey memKey) {
+    IpcMemoryId shmid;
+
     if (!UsePrivateMemory && (shmid = shmget(memKey, 0, 0)) >= 0) {
-	if (shmctl(shmid, IPC_RMID, (struct shmid_ds *) NULL) < 0) {
-	    elog(NOTICE, "IpcMemoryKill: shmctl(%d, %d, 0) failed: %m",
-		 shmid, IPC_RMID);
-	}
+        if (shmctl(shmid, IPC_RMID, (struct shmid_ds *) NULL) < 0) {
+            elog(NOTICE, "IpcMemoryKill: shmctl(%d, %d, 0) failed: %m",
+                 shmid, IPC_RMID);
+        }
     }
-} 
+}
 
 #ifdef HAS_TEST_AND_SET
 /* ------------------
@@ -593,20 +579,20 @@ CreateAndInitSLockMemory(IPCKey key)
     SLock *slckP;
     
     SLockMemoryId = IpcMemoryCreate(key,
-				    SLockMemorySize,
-				    0700);
+                    SLockMemorySize,
+                    0700);
     AttachSLockMemory(key);
     *FreeSLockPP = NULL;
     *UnusedSLockIP = (int)FIRSTFREELOCKID;
     for (id=0; id<(int)FIRSTFREELOCKID; id++) {
-	slckP = &(SLockArray[id]);
-	S_INIT_LOCK(&(slckP->locklock));
-	slckP->flag = NOLOCK;
-	slckP->nshlocks = 0;
-	S_INIT_LOCK(&(slckP->shlock));
-	S_INIT_LOCK(&(slckP->exlock));
-	S_INIT_LOCK(&(slckP->comlock));
-	slckP->next = NULL;
+    slckP = &(SLockArray[id]);
+    S_INIT_LOCK(&(slckP->locklock));
+    slckP->flag = NOLOCK;
+    slckP->nshlocks = 0;
+    S_INIT_LOCK(&(slckP->shlock));
+    S_INIT_LOCK(&(slckP->exlock));
+    S_INIT_LOCK(&(slckP->comlock));
+    slckP->next = NULL;
     }
     return;
 }
@@ -617,12 +603,12 @@ AttachSLockMemory(IPCKey key)
     struct ipcdummy *slockM;
     
     if (SLockMemoryId == -1)
-	SLockMemoryId = IpcMemoryIdGet(key,SLockMemorySize);
+    SLockMemoryId = IpcMemoryIdGet(key,SLockMemorySize);
     if (SLockMemoryId == -1)
-	elog(FATAL, "SLockMemory not in shared memory");
+    elog(FATAL, "SLockMemory not in shared memory");
     slockM = (struct ipcdummy *) IpcMemoryAttach(SLockMemoryId);
     if (slockM == IpcMemAttachFailed)
-	elog(FATAL, "AttachSLockMemory: could not attach segment");
+    elog(FATAL, "AttachSLockMemory: could not attach segment");
     FreeSLockPP = (SLock **) &(slockM->free);
     UnusedSLockIP = (int *) &(slockM->unused);
     SLockMemoryLock = (slock_t *) &(slockM->memlock);
@@ -635,8 +621,8 @@ AttachSLockMemory(IPCKey key)
 #ifdef LOCKDEBUG
 #define PRINT_LOCK(LOCK) printf("(locklock = %d, flag = %d, nshlocks = %d, \
 shlock = %d, exlock =%d)\n", LOCK->locklock, \
-				LOCK->flag, LOCK->nshlocks, LOCK->shlock, \
-				LOCK->exlock)
+                LOCK->flag, LOCK->nshlocks, LOCK->shlock, \
+                LOCK->exlock)
 #endif
 
 void
@@ -653,21 +639,21 @@ ExclusiveLock(int lockid)
     S_LOCK(&(slckP->locklock));
     switch (slckP->flag) {
     case NOLOCK:
-	slckP->flag = EXCLUSIVELOCK;
-	S_LOCK(&(slckP->exlock));
-	S_LOCK(&(slckP->shlock));
-	S_UNLOCK(&(slckP->locklock));
+    slckP->flag = EXCLUSIVELOCK;
+    S_LOCK(&(slckP->exlock));
+    S_LOCK(&(slckP->shlock));
+    S_UNLOCK(&(slckP->locklock));
 #ifdef LOCKDEBUG
-	printf("OUT: ");
-	PRINT_LOCK(slckP);
+    printf("OUT: ");
+    PRINT_LOCK(slckP);
 #endif
-	return;
+    return;
     case SHAREDLOCK:
     case EXCLUSIVELOCK:
-	S_UNLOCK(&(slckP->locklock));
-	S_LOCK(&(slckP->exlock));
-	S_UNLOCK(&(slckP->exlock));
-	goto ex_try_again;
+    S_UNLOCK(&(slckP->locklock));
+    S_LOCK(&(slckP->exlock));
+    S_UNLOCK(&(slckP->exlock));
+    goto ex_try_again;
     }
 }
 
@@ -689,14 +675,14 @@ ExclusiveUnlock(int lockid)
      */
     slckP->flag = NOLOCK;
     if (slckP->nshlocks > 0) {
-	while (slckP->nshlocks > 0) {
-	    S_UNLOCK(&(slckP->shlock));
-	    S_LOCK(&(slckP->comlock));
-	}
-	S_UNLOCK(&(slckP->shlock));
+    while (slckP->nshlocks > 0) {
+        S_UNLOCK(&(slckP->shlock));
+        S_LOCK(&(slckP->comlock));
+    }
+    S_UNLOCK(&(slckP->shlock));
     }
     else {
-	S_UNLOCK(&(slckP->shlock));
+    S_UNLOCK(&(slckP->shlock));
     }
     S_UNLOCK(&(slckP->exlock));
     S_UNLOCK(&(slckP->locklock));

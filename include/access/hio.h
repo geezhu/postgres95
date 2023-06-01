@@ -10,7 +10,7 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	HIO_H
+#ifndef    HIO_H
 #define HIO_H
 
 #include "c.h"
@@ -20,7 +20,8 @@
 #include "utils/rel.h"
 
 extern void RelationPutHeapTuple(Relation relation, BlockNumber blockIndex,
-				 HeapTuple tuple);
+                                 HeapTuple tuple);
+
 extern void RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple);
 
-#endif	/* HIO_H */
+#endif    /* HIO_H */

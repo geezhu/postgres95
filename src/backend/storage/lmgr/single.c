@@ -18,7 +18,7 @@
  *-------------------------------------------------------------------------
  */
 #include <string.h>
-#include "storage/lmgr.h"	/* where the declarations go */
+#include "storage/lmgr.h"    /* where the declarations go */
 #include "storage/lock.h"
 #include "storage/multilev.h"
 #include "utils/rel.h"
@@ -29,25 +29,24 @@
  * Returns: TRUE if the lock can be set, FALSE otherwise.
  */
 bool
-SingleLockReln(LockInfo linfo, LOCKT lockt, int action)
-{
-    LOCKTAG	tag;
-    
+SingleLockReln(LockInfo linfo, LOCKT lockt, int action) {
+    LOCKTAG tag;
+
     /* 
      * LOCKTAG has two bytes of padding, unfortunately.  The
      * hash function will return miss if the padding bytes aren't
      * zero'd.
      */
-    memset(&tag,0,sizeof(tag));
+    memset(&tag, 0, sizeof(tag));
     tag.relId = linfo->lRelId.relId;
     tag.dbId = linfo->lRelId.dbId;
     BlockIdSet(&(tag.tupleId.ip_blkid), InvalidBlockNumber);
     tag.tupleId.ip_posid = InvalidOffsetNumber;
-    
+
     if (action == UNLOCK)
-	return(LockRelease(MultiTableId, &tag, lockt));
+        return (LockRelease(MultiTableId, &tag, lockt));
     else
-	return(LockAcquire(MultiTableId, &tag, lockt));
+        return (LockAcquire(MultiTableId, &tag, lockt));
 }
 
 /*
@@ -60,27 +59,26 @@ SingleLockReln(LockInfo linfo, LOCKT lockt, int action)
  */
 bool
 SingleLockPage(LockInfo linfo,
-	       ItemPointer tidPtr,
-	       LOCKT lockt,
-	       int action)
-{
-    LOCKTAG	tag;
-    
+               ItemPointer tidPtr,
+               LOCKT lockt,
+               int action) {
+    LOCKTAG tag;
+
     /* 
      * LOCKTAG has two bytes of padding, unfortunately.  The
      * hash function will return miss if the padding bytes aren't
      * zero'd.
      */
-    memset(&tag,0,sizeof(tag));
+    memset(&tag, 0, sizeof(tag));
     tag.relId = linfo->lRelId.relId;
     tag.dbId = linfo->lRelId.dbId;
     BlockIdCopy(&(tag.tupleId.ip_blkid), &(tidPtr->ip_blkid));
     tag.tupleId.ip_posid = InvalidOffsetNumber;
-    
-    
+
+
     if (action == UNLOCK)
-	return(LockRelease(MultiTableId, &tag, lockt));
+        return (LockRelease(MultiTableId, &tag, lockt));
     else
-	return(LockAcquire(MultiTableId, &tag, lockt));
+        return (LockAcquire(MultiTableId, &tag, lockt));
 }
 

@@ -11,7 +11,7 @@
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>	/* for sprintf() */
+#include <stdio.h>    /* for sprintf() */
 #include "postgres.h"
 #include "access/heapam.h"
 #include "access/xact.h"
@@ -42,15 +42,14 @@
  *---------------------------------------------------------------------
  */
 static void
-DefineVirtualRelation(char *relname, List *tlist)
-{
+DefineVirtualRelation(char *relname, List *tlist) {
     CreateStmt createStmt;
     List *attrList, *t;
     TargetEntry *entry;
-    Resdom  *res;
+    Resdom *res;
     char *resname;
     char *restypename;
-    
+
     /*
      * create a list with one entry per attribute of this relation.
      * Each entry is a two element list. The first element is the
@@ -58,32 +57,32 @@ DefineVirtualRelation(char *relname, List *tlist)
      * (NOTE: a string, not a type id!).
      */
     attrList = NIL;
-    if (tlist!=NIL) {
-	foreach (t, tlist ) {
-	    ColumnDef *def = makeNode(ColumnDef);
-	    TypeName *typename;
+    if (tlist != NIL) {
+        foreach (t, tlist) {
+            ColumnDef *def = makeNode(ColumnDef);
+            TypeName *typename;
 
-	    /*
-	     * find the names of the attribute & its type
-	     */
-	    entry = lfirst(t);
-	    res   = entry->resdom;
-	    resname = res->resname;
-	    restypename = tname(get_id_type((long)res->restype));
+            /*
+             * find the names of the attribute & its type
+             */
+            entry = lfirst(t);
+            res = entry->resdom;
+            resname = res->resname;
+            restypename = tname(get_id_type((long) res->restype));
 
-	    typename = makeNode(TypeName);
+            typename = makeNode(TypeName);
 
-	    typename->name = pstrdup(restypename);
-	    def->colname = pstrdup(resname);
+            typename->name = pstrdup(restypename);
+            def->colname = pstrdup(resname);
 
-	    def->typename = typename;
+            def->typename = typename;
 
-	    attrList = lappend(attrList, def);
-	}
+            attrList = lappend(attrList, def);
+        }
     } else {
-	elog ( WARN, "attempted to define virtual relation with no attrs");
+        elog(WARN, "attempted to define virtual relation with no attrs");
     }
-    
+
     /*
      * now create the parametesr for keys/inheritance etc.
      * All of them are nil...
@@ -100,7 +99,7 @@ DefineVirtualRelation(char *relname, List *tlist)
      * finally create the relation...
      */
     DefineRelation(&createStmt);
-}    
+}
 
 /*------------------------------------------------------------------
  * makeViewRetrieveRuleName
@@ -115,8 +114,7 @@ DefineVirtualRelation(char *relname, List *tlist)
  *------------------------------------------------------------------
  */
 char *
-MakeRetrieveViewRuleName(char *viewName)
-{
+MakeRetrieveViewRuleName(char *viewName) {
 /*
     char buf[100];
 
@@ -128,17 +126,16 @@ MakeRetrieveViewRuleName(char *viewName)
 
     char *buf;
     buf = palloc(strlen(viewName) + 5);
-    sprintf(buf, "_RET%s",viewName);
+    sprintf(buf, "_RET%s", viewName);
     return buf;
 }
 
 static RuleStmt *
-FormViewRetrieveRule(char *viewName, Query *viewParse)
-{
+FormViewRetrieveRule(char *viewName, Query *viewParse) {
     RuleStmt *rule;
     char *rname;
     Attr *attr;
-    
+
     /*
      * Create a RuleStmt that corresponds to the suitable
      * rewrite rule args for DefineQueryRewrite();
@@ -155,34 +152,33 @@ FormViewRetrieveRule(char *viewName, Query *viewParse)
     rule->object = attr;
     rule->instead = true;
     rule->actions = lcons(viewParse, NIL);
-	
+
     return rule;
 }
 
 static void
-DefineViewRules(char *viewName, Query *viewParse)
-{
-    RuleStmt *retrieve_rule	= NULL;
+DefineViewRules(char *viewName, Query *viewParse) {
+    RuleStmt *retrieve_rule = NULL;
 #ifdef NOTYET
     RuleStmt *replace_rule	= NULL;
     RuleStmt *append_rule	= NULL;
     RuleStmt *delete_rule	= NULL;
 #endif
-    
-    retrieve_rule = 
-	FormViewRetrieveRule(viewName, viewParse);
-    
+
+    retrieve_rule =
+            FormViewRetrieveRule(viewName, viewParse);
+
 #ifdef NOTYET
-    
+
     replace_rule =
-	FormViewReplaceRule(viewName, viewParse);
+    FormViewReplaceRule(viewName, viewParse);
     append_rule = 
-	FormViewAppendRule(viewName, viewParse);
+    FormViewAppendRule(viewName, viewParse);
     delete_rule = 
-	FormViewDeleteRule(viewName, viewParse);
-    
+    FormViewDeleteRule(viewName, viewParse);
+
 #endif
-    
+
     DefineQueryRewrite(retrieve_rule);
 
 #ifdef NOTYET
@@ -190,8 +186,8 @@ DefineViewRules(char *viewName, Query *viewParse)
     DefineQueryRewrite(append_rule);
     DefineQueryRewrite(delete_rule);
 #endif
-    
-}     
+
+}
 
 /*---------------------------------------------------------------
  * UpdateRangeTableOfViewParse
@@ -212,18 +208,17 @@ DefineViewRules(char *viewName, Query *viewParse)
  *---------------------------------------------------------------
  */
 static void
-UpdateRangeTableOfViewParse(char *viewName, Query *viewParse)
-{
+UpdateRangeTableOfViewParse(char *viewName, Query *viewParse) {
     List *old_rt;
     List *new_rt;
     RangeTblEntry *rt_entry1, *rt_entry2;
-    
+
     /*
      * first offset all var nodes by 2
      */
-    OffsetVarNodes((Node*)viewParse->targetList, 2);
+    OffsetVarNodes((Node *) viewParse->targetList, 2);
     OffsetVarNodes(viewParse->qual, 2);
-    
+
     /*
      * find the old range table...
      */
@@ -235,12 +230,12 @@ UpdateRangeTableOfViewParse(char *viewName, Query *viewParse)
      * CURRENT first, then NEW....
      */
     rt_entry1 =
-	makeRangeTableEntry((char*)viewName, FALSE, NULL, "*CURRENT*");
+            makeRangeTableEntry((char *) viewName, FALSE, NULL, "*CURRENT*");
     rt_entry2 =
-	makeRangeTableEntry((char*)viewName, FALSE, NULL, "*NEW*");
+            makeRangeTableEntry((char *) viewName, FALSE, NULL, "*NEW*");
     new_rt = lcons(rt_entry2, old_rt);
     new_rt = lcons(rt_entry1, new_rt);
-    
+
     /*
      * Now the tricky part....
      * Update the range table in place... Be careful here, or
@@ -262,18 +257,17 @@ UpdateRangeTableOfViewParse(char *viewName, Query *viewParse)
  *-------------------------------------------------------------------
  */
 void
-DefineView(char *viewName, Query *viewParse)
-{
+DefineView(char *viewName, Query *viewParse) {
     List *viewTlist;
 
     viewTlist = viewParse->targetList;
-    
+
     /*
      * Create the "view" relation
      * NOTE: if it already exists, the xaxt will be aborted.
      */
     DefineVirtualRelation(viewName, viewTlist);
-    
+
     /*
      * The relation we have just created is not visible
      * to any other commands running with the same transaction &
@@ -282,7 +276,7 @@ DefineView(char *viewName, Query *viewParse)
      * memory!!!!)
      */
     CommandCounterIncrement();
-    
+
     /*
      * The range table of 'viewParse' does not contain entries
      * for the "CURRENT" and "NEW" relations.
@@ -301,10 +295,9 @@ DefineView(char *viewName, Query *viewParse)
  *------------------------------------------------------------------
  */
 void
-RemoveView(char *viewName)
-{
-    char* rname;
-    
+RemoveView(char *viewName) {
+    char *rname;
+
     /*
      * first remove all the "view" rules...
      * Currently we only have one!
@@ -316,7 +309,7 @@ RemoveView(char *viewName)
      * we don't really need that, but just in case...
      */
     CommandCounterIncrement();
-    
+
     /*
      * now remove the relation.
      */

@@ -29,12 +29,12 @@
 #include "postgres.h"
 
 CATALOG(pg_log) BOOTSTRAP {
-    Oid  	logfoo;
+    Oid logfoo;
 } FormData_pg_log;
 
-typedef FormData_pg_log	*Form_pg_log;
+typedef FormData_pg_log *Form_pg_log;
 
-#define Natts_pg_log		1
-#define Anum_pg_log_logfoo	1
+#define Natts_pg_log        1
+#define Anum_pg_log_logfoo    1
 
 #endif /* PG_LOG_H */

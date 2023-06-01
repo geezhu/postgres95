@@ -11,15 +11,14 @@
  *
  *-------------------------------------------------------------------------
  */
-#include "utils/exc.h"		/* where function declarations go */
+#include "utils/exc.h"        /* where function declarations go */
 
 void
-ExcAbort(const Exception *excP, 
-	 ExcDetail detail, 
-	 ExcData data,
-	 ExcMessage message)
-{
-#ifdef	__SABER__
+ExcAbort(const Exception *excP,
+         ExcDetail detail,
+         ExcData data,
+         ExcMessage message) {
+#ifdef    __SABER__
     saber_stop();
 #else
     /* dump core */

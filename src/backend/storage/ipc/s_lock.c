@@ -40,6 +40,7 @@
 #ifdef WIN32
 #include <windows.h>
 #endif /* WIN32 */
+
 #include "storage/ipc.h"
 
 
@@ -53,26 +54,26 @@
 void
 S_LOCK(slock_t *lock)
 {
-	mutex_lock(lock);
+    mutex_lock(lock);
 }
 void
 S_UNLOCK(slock_t *lock)
 {
-	mutex_unlock(lock);
+    mutex_unlock(lock);
 }
 void
 S_INIT_LOCK(slock_t *lock)
 {
- 	mutex_init(lock);	
+     mutex_init(lock);	
 }
 
  /* S_LOCK_FREE should return 1 if lock is free; 0 if lock is locked */
 int
  S_LOCK_FREE(slock_t *lock)
 {
- 	/* For Mach, we have to delve inside the entrails of `struct  
+     /* For Mach, we have to delve inside the entrails of `struct  
 mutex'.  Ick! */
- 	return (lock->lock == 0);
+     return (lock->lock == 0);
 }
 
 #endif /* PORTNAME_next */
@@ -92,28 +93,28 @@ mutex'.  Ick! */
 void
 S_LOCK(slock_t *lock)
 {
-	/* spin_lock(lock); */
-	while (!acquire_lock(lock))
-	    ;
+    /* spin_lock(lock); */
+    while (!acquire_lock(lock))
+        ;
 }
 
 void
 S_UNLOCK(slock_t *lock)
 {
-	(void)release_lock(lock);
+    (void)release_lock(lock);
 }
 
 void
 S_INIT_LOCK(slock_t *lock)
 {
-	(void)init_lock(lock);	
+    (void)init_lock(lock);	
 }
 
 /* S_LOCK_FREE should return 1 if lock is free; 0 if lock is locked */
 int
 S_LOCK_FREE(slock_t *lock)
 {
-	return(stat_lock(lock)==UNLOCKED); 
+    return(stat_lock(lock)==UNLOCKED); 
 }
 
 #endif /* PORTNAME_irix5 */
@@ -132,7 +133,7 @@ void
 S_LOCK(slock_t *lock)
 {
     while (msem_lock(lock, MSEM_IF_NOWAIT) < 0)
-	;
+    ;
 }
 
 void
@@ -168,7 +169,7 @@ void
 S_LOCK(slock_t *lock)
 {
     while (tas(lock))
-	;
+    ;
 }
 
 void
@@ -198,7 +199,7 @@ void
 S_LOCK(slock_t *lock)
 {
     while (cs((int *) lock, 0, 1))
-	;
+    ;
 }
 
 void
@@ -237,7 +238,7 @@ void
 S_LOCK(slock_t *lock)
 {
     while (tas(lock))
-	;
+    ;
 }
 
 void
@@ -395,7 +396,7 @@ void
 S_LOCK(slock_t *lock)
 {
     while (tas(lock))
-	;
+    ;
 }
 
 void

@@ -17,8 +17,8 @@
  */
 #include <stdio.h>
 #include "c.h"
-#include "utils/excid.h"	/* for ExhaustedMemory */
-#include "utils/memutils.h"	/* where funnction declarations go */
+#include "utils/excid.h"    /* for ExhaustedMemory */
+#include "utils/memutils.h"    /* where funnction declarations go */
 #include "utils/elog.h"
 #include "utils/palloc.h"
 
@@ -35,8 +35,8 @@
  *	Allocation element.
  */
 typedef struct AllocElemData {
-    OrderedElemData	elemData;	/* elem in AllocSet */
-    Size		size;
+    OrderedElemData elemData;    /* elem in AllocSet */
+    Size size;
 } AllocElemData;
 
 typedef AllocElemData *AllocElem;
@@ -50,22 +50,23 @@ typedef AllocElemData *AllocElem;
  * AllocPointerGetAllocElem --
  *	Returns allocation (internal) elem given (external) pointer.
  */
-#define AllocPointerGetAllocElem(pointer)	(&((AllocElem)(pointer))[-1])
+#define AllocPointerGetAllocElem(pointer)    (&((AllocElem)(pointer))[-1])
 
 /*
  * AllocElemGetAllocPointer --
  *	Returns allocation (external) pointer given (internal) elem.
  */
-#define AllocElemGetAllocPointer(alloc)	((AllocPointer)&(alloc)[1])
+#define AllocElemGetAllocPointer(alloc)    ((AllocPointer)&(alloc)[1])
 
 /*
  * AllocElemIsValid --
  *	True iff alloc is valid.
  */
-#define AllocElemIsValid(alloc)	PointerIsValid(alloc)
+#define AllocElemIsValid(alloc)    PointerIsValid(alloc)
 
 /* non-export function prototypes */
 static AllocPointer AllocSetGetFirst(AllocSet set);
+
 static AllocPointer AllocPointerGetNext(AllocPointer pointer);
 
 /*
@@ -92,17 +93,16 @@ static AllocPointer AllocPointerGetNext(AllocPointer pointer);
  *	BadArg if mode is invalid.
  */
 void
-AllocSetInit(AllocSet set, AllocMode mode, Size limit)
-{
+AllocSetInit(AllocSet set, AllocMode mode, Size limit) {
     AssertArg(PointerIsValid(set));
-    AssertArg((int)DynamicAllocMode <= (int)mode);
-    AssertArg((int)mode <= (int)BoundedAllocMode);
-    
+    AssertArg((int) DynamicAllocMode <= (int) mode);
+    AssertArg((int) mode <= (int) BoundedAllocMode);
+
     /*
      * XXX mode is currently ignored and treated as DynamicAllocMode.
      * XXX limit is also ignored.  This affects this whole file.
      */
-    
+
     OrderedSetInit(&set->setData, offsetof(AllocElemData, elemData));
 }
 
@@ -114,26 +114,24 @@ AllocSetInit(AllocSet set, AllocMode mode, Size limit)
  *	BadArg if set is invalid.
  */
 void
-AllocSetReset(AllocSet set)
-{
-    AllocPointer	pointer;
-    
+AllocSetReset(AllocSet set) {
+    AllocPointer pointer;
+
     AssertArg(AllocSetIsValid(set));
-    
+
     while (AllocPointerIsValid(pointer = AllocSetGetFirst(set))) {
-	AllocSetFree(set, pointer);
+        AllocSetFree(set, pointer);
     }
 }
 
 void
-AllocSetReset_debug(char *file, int line, AllocSet set)
-{
-    AllocPointer	pointer;
-    
+AllocSetReset_debug(char *file, int line, AllocSet set) {
+    AllocPointer pointer;
+
     AssertArg(AllocSetIsValid(set));
-    
+
     while (AllocPointerIsValid(pointer = AllocSetGetFirst(set))) {
-	AllocSetFree(set, pointer);
+        AllocSetFree(set, pointer);
     }
 }
 
@@ -146,13 +144,12 @@ AllocSetReset_debug(char *file, int line, AllocSet set)
  *	BadArg if pointer is invalid.
  */
 bool
-AllocSetContains(AllocSet set, AllocPointer pointer)
-{
+AllocSetContains(AllocSet set, AllocPointer pointer) {
     AssertArg(AllocSetIsValid(set));
     AssertArg(AllocPointerIsValid(pointer));
-    
+
     return (OrderedSetContains(&set->setData,
-			       &AllocPointerGetAllocElem(pointer)->elemData));
+                               &AllocPointerGetAllocElem(pointer)->elemData));
 }
 
 /*
@@ -165,25 +162,24 @@ AllocSetContains(AllocSet set, AllocPointer pointer)
  *	MemoryExhausted if allocation fails.
  */
 AllocPointer
-AllocSetAlloc(AllocSet set, Size size)
-{
-    AllocElem	alloc;
-    
+AllocSetAlloc(AllocSet set, Size size) {
+    AllocElem alloc;
+
     AssertArg(AllocSetIsValid(set));
-    
+
     /* allocate */
-    alloc = (AllocElem)malloc(sizeof (*alloc) + size);
-    
+    alloc = (AllocElem) malloc(sizeof(*alloc) + size);
+
     if (!PointerIsValid(alloc)) {
-	elog (FATAL, "palloc failure: memory exhausted");
+        elog(FATAL, "palloc failure: memory exhausted");
     }
-    
+
     /* add to allocation list */
     OrderedElemPushInto(&alloc->elemData, &set->setData);
-    
+
     /* set size */
     alloc->size = size;
-    
+
     return (AllocElemGetAllocPointer(alloc));
 }
 
@@ -197,19 +193,18 @@ AllocSetAlloc(AllocSet set, Size size)
  *	BadArg if pointer is not member of set.
  */
 void
-AllocSetFree(AllocSet set, AllocPointer pointer)
-{
-    AllocElem	alloc;
-    
+AllocSetFree(AllocSet set, AllocPointer pointer) {
+    AllocElem alloc;
+
     /* AssertArg(AllocSetIsValid(set)); */
     /* AssertArg(AllocPointerIsValid(pointer)); */
     AssertArg(AllocSetContains(set, pointer));
-    
+
     alloc = AllocPointerGetAllocElem(pointer);
-    
+
     /* remove from allocation set */
     OrderedElemPop(&alloc->elemData);
-    
+
     /* free storage */
     free(alloc);
 }
@@ -227,32 +222,31 @@ AllocSetFree(AllocSet set, AllocPointer pointer)
  *	MemoryExhausted if allocation fails.
  */
 AllocPointer
-AllocSetRealloc(AllocSet set, AllocPointer pointer, Size size)
-{
-    AllocPointer	newPointer;
-    AllocElem	alloc;
-    
+AllocSetRealloc(AllocSet set, AllocPointer pointer, Size size) {
+    AllocPointer newPointer;
+    AllocElem alloc;
+
     /* AssertArg(AllocSetIsValid(set)); */
     /* AssertArg(AllocPointerIsValid(pointer)); */
     AssertArg(AllocSetContains(set, pointer));
-    
+
     /*
      * Calling realloc(3) directly is not be possible (unless we use
      * our own hacked version of malloc) since we must keep the
      * allocations in the allocation set.
      */
-    
+
     alloc = AllocPointerGetAllocElem(pointer);
-    
+
     /* allocate new pointer */
     newPointer = AllocSetAlloc(set, size);
-    
+
     /* fill new memory */
     memmove(newPointer, pointer, (alloc->size < size) ? alloc->size : size);
-    
+
     /* free old pointer */
     AllocSetFree(set, pointer);
-    
+
     return (newPointer);
 }
 
@@ -270,38 +264,36 @@ AllocSetRealloc(AllocSet set, AllocPointer pointer, Size size)
  */
 int
 AllocSetIterate(AllocSet set,
-		void (*function)(AllocPointer pointer))
-{
-    int		count = 0;
-    AllocPointer	pointer;
-    
+                void (*function)(AllocPointer pointer)) {
+    int count = 0;
+    AllocPointer pointer;
+
     AssertArg(AllocSetIsValid(set));
-    
+
     for (pointer = AllocSetGetFirst(set);
-	 AllocPointerIsValid(pointer);
-	 pointer = AllocPointerGetNext(pointer)) {
-	
-	if (PointerIsValid(function)) {
-	    (*function)(pointer);
-	}
-	count += 1;
+         AllocPointerIsValid(pointer);
+         pointer = AllocPointerGetNext(pointer)) {
+
+        if (PointerIsValid(function)) {
+            (*function)(pointer);
+        }
+        count += 1;
     }
-    
+
     return (count);
 }
 
 int
-AllocSetCount(AllocSet set)
-{
-    int		count = 0;
-    AllocPointer	pointer;
-    
+AllocSetCount(AllocSet set) {
+    int count = 0;
+    AllocPointer pointer;
+
     AssertArg(AllocSetIsValid(set));
-    
+
     for (pointer = AllocSetGetFirst(set);
-	 AllocPointerIsValid(pointer);
-	 pointer = AllocPointerGetNext(pointer)) {
-	count++;
+         AllocPointerIsValid(pointer);
+         pointer = AllocPointerGetNext(pointer)) {
+        count++;
     }
     return count;
 }
@@ -318,16 +310,15 @@ AllocSetCount(AllocSet set)
  *	Assumes set is valid.
  */
 static AllocPointer
-AllocSetGetFirst(AllocSet set)
-{
-    AllocElem	alloc;
-    
-    alloc = (AllocElem)OrderedSetGetHead(&set->setData);
-    
+AllocSetGetFirst(AllocSet set) {
+    AllocElem alloc;
+
+    alloc = (AllocElem) OrderedSetGetHead(&set->setData);
+
     if (!AllocElemIsValid(alloc)) {
-	return (NULL);
+        return (NULL);
     }
-    
+
     return (AllocElemGetAllocPointer(alloc));
 }
 
@@ -339,17 +330,16 @@ AllocSetGetFirst(AllocSet set)
  *	Assumes pointer is valid.
  */
 static AllocPointer
-AllocPointerGetNext(AllocPointer pointer)
-{
-    AllocElem	alloc;
-    
+AllocPointerGetNext(AllocPointer pointer) {
+    AllocElem alloc;
+
     alloc = (AllocElem)
-	OrderedElemGetSuccessor(&AllocPointerGetAllocElem(pointer)->elemData);
-    
+            OrderedElemGetSuccessor(&AllocPointerGetAllocElem(pointer)->elemData);
+
     if (!AllocElemIsValid(alloc)) {
-	return (NULL);
+        return (NULL);
     }
-    
+
     return (AllocElemGetAllocPointer(alloc));
 }
 
@@ -363,9 +353,8 @@ AllocPointerGetNext(AllocPointer pointer)
  *	Displays allocated pointer.
  */
 void
-AllocPointerDump(AllocPointer pointer)
-{
-    printf("\t%-10d@ %0#x\n", ((long*)pointer)[-1], pointer); /* XXX */
+AllocPointerDump(AllocPointer pointer) {
+    printf("\t%-10d@ %0#x\n", ((long *) pointer)[-1], pointer); /* XXX */
 }
 
 /*
@@ -373,8 +362,7 @@ AllocPointerDump(AllocPointer pointer)
  *	Displays allocated set.
  */
 void
-AllocSetDump(AllocSet set)
-{
+AllocSetDump(AllocSet set) {
     int count;
     count = AllocSetIterate(set, AllocPointerDump);
     printf("\ttotal %d allocations\n", count);

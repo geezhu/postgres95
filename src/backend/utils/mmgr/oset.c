@@ -17,11 +17,14 @@
  */
 #include "c.h"
 
-#include "utils/memutils.h"	/* where declarations of this file goes */
+#include "utils/memutils.h"    /* where declarations of this file goes */
 
 static Pointer OrderedElemGetBase(OrderedElem elem);
+
 static void OrderedElemInit(OrderedElem elem, OrderedSet set);
+
 static void OrderedElemPush(OrderedElem elem);
+
 static void OrderedElemPushHead(OrderedElem elem);
 
 /*
@@ -29,23 +32,21 @@ static void OrderedElemPushHead(OrderedElem elem);
  *	Returns base of enclosing structure.
  */
 static Pointer
-OrderedElemGetBase(OrderedElem elem)
-{
+OrderedElemGetBase(OrderedElem elem) {
     if (elem == (OrderedElem) NULL)
-	return (Pointer) NULL;
-    
-    return ((Pointer)((char*)(elem) - (elem)->set->offset));
+        return (Pointer) NULL;
+
+    return ((Pointer) ((char *) (elem) - (elem)->set->offset));
 }
 
 /*
  * OrderedSetInit --
  */
 void
-OrderedSetInit(OrderedSet set, Offset offset)
-{
-    set->head = (OrderedElem)&set->dummy;
+OrderedSetInit(OrderedSet set, Offset offset) {
+    set->head = (OrderedElem) &set->dummy;
     set->dummy = NULL;
-    set->tail = (OrderedElem)&set->head;
+    set->tail = (OrderedElem) &set->head;
     set->offset = offset;
 }
 
@@ -53,8 +54,7 @@ OrderedSetInit(OrderedSet set, Offset offset)
  * OrderedElemInit --
  */
 static void
-OrderedElemInit(OrderedElem elem, OrderedSet set)
-{
+OrderedElemInit(OrderedElem elem, OrderedSet set) {
     elem->set = set;
     /* mark as unattached */
     elem->next = NULL;
@@ -66,22 +66,20 @@ OrderedElemInit(OrderedElem elem, OrderedSet set)
  *	True iff ordered set contains given element.
  */
 bool
-OrderedSetContains(OrderedSet set, OrderedElem elem)
-{
-    return ((bool)(elem->set == set && (elem->next || elem->prev)));
+OrderedSetContains(OrderedSet set, OrderedElem elem) {
+    return ((bool) (elem->set == set && (elem->next || elem->prev)));
 }
 
 /*
  * OrderedSetGetHead --
  */
 Pointer
-OrderedSetGetHead(OrderedSet set)
-{
-    register OrderedElem	elem;
-    
+OrderedSetGetHead(OrderedSet set) {
+    register OrderedElem elem;
+
     elem = set->head;
     if (elem->next) {
-	return (OrderedElemGetBase(elem));
+        return (OrderedElemGetBase(elem));
     }
     return (NULL);
 }
@@ -90,13 +88,12 @@ OrderedSetGetHead(OrderedSet set)
  * OrderedSetGetTail --
  */
 Pointer
-OrderedSetGetTail(OrderedSet set)
-{
-    register OrderedElem	elem;
-    
+OrderedSetGetTail(OrderedSet set) {
+    register OrderedElem elem;
+
     elem = set->tail;
     if (elem->prev) {
-	return (OrderedElemGetBase(elem));
+        return (OrderedElemGetBase(elem));
     }
     return (NULL);
 }
@@ -105,11 +102,10 @@ OrderedSetGetTail(OrderedSet set)
  * OrderedElemGetPredecessor --
  */
 Pointer
-OrderedElemGetPredecessor(OrderedElem elem)
-{
+OrderedElemGetPredecessor(OrderedElem elem) {
     elem = elem->prev;
     if (elem->prev) {
-	return (OrderedElemGetBase(elem));
+        return (OrderedElemGetBase(elem));
     }
     return (NULL);
 }
@@ -118,11 +114,10 @@ OrderedElemGetPredecessor(OrderedElem elem)
  * OrderedElemGetSuccessor --
  */
 Pointer
-OrderedElemGetSuccessor(OrderedElem elem)
-{
+OrderedElemGetSuccessor(OrderedElem elem) {
     elem = elem->next;
     if (elem->next) {
-	return (OrderedElemGetBase(elem));
+        return (OrderedElemGetBase(elem));
     }
     return (NULL);
 }
@@ -130,9 +125,8 @@ OrderedElemGetSuccessor(OrderedElem elem)
 /*
  * OrderedElemPop --
  */
-void 
-OrderedElemPop(OrderedElem elem)
-{
+void
+OrderedElemPop(OrderedElem elem) {
     elem->next->prev = elem->prev;
     elem->prev->next = elem->next;
     /* assignments used only for error detection */
@@ -144,8 +138,7 @@ OrderedElemPop(OrderedElem elem)
  * OrderedElemPushInto --
  */
 void
-OrderedElemPushInto(OrderedElem elem, OrderedSet set)
-{
+OrderedElemPushInto(OrderedElem elem, OrderedSet set) {
     OrderedElemInit(elem, set);
     OrderedElemPush(elem);
 }
@@ -154,8 +147,7 @@ OrderedElemPushInto(OrderedElem elem, OrderedSet set)
  * OrderedElemPush --
  */
 static void
-OrderedElemPush(OrderedElem elem)
-{
+OrderedElemPush(OrderedElem elem) {
     OrderedElemPushHead(elem);
 }
 
@@ -163,10 +155,9 @@ OrderedElemPush(OrderedElem elem)
  * OrderedElemPushHead --
  */
 static void
-OrderedElemPushHead(OrderedElem elem)
-{
+OrderedElemPushHead(OrderedElem elem) {
     elem->next = elem->set->head;
-    elem->prev = (OrderedElem)&elem->set->head;
+    elem->prev = (OrderedElem) &elem->set->head;
     elem->next->prev = elem;
     elem->prev->next = elem;
 }

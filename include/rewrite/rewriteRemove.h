@@ -10,11 +10,13 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	REWRITEREMOVE_H
-#define	REWRITEREMOVE_H
+#ifndef    REWRITEREMOVE_H
+#define    REWRITEREMOVE_H
 
 extern char *RewriteGetRuleEventRel(char *rulename);
+
 extern void RemoveRewriteRule(char *ruleName);
+
 extern void RelationRemoveRules(Oid relid);
 
-#endif	/* REWRITEREMOVE_H */
+#endif    /* REWRITEREMOVE_H */

@@ -52,12 +52,12 @@
  *      appended, replaced, deleted.
  * ----------------------------------------------------------------
  */
-int     NTupleProcessed;
-int     NTupleRetrieved;
-int     NTupleReplaced;
-int     NTupleAppended;
-int     NTupleDeleted;
-int	NIndexTupleInserted;
+int NTupleProcessed;
+int NTupleRetrieved;
+int NTupleReplaced;
+int NTupleAppended;
+int NTupleDeleted;
+int NIndexTupleInserted;
 extern int NIndexTupleProcessed;  /* have to be defined in the access
 			             method level so that the cinterface.a
 			             will link ok. */
@@ -72,8 +72,7 @@ extern int NIndexTupleProcessed;  /* have to be defined in the access
  * ----------------------------------------------------------------
  */
 void
-ResetTupleCount()
-{
+ResetTupleCount() {
     NTupleProcessed = 0;
     NTupleRetrieved = 0;
     NTupleAppended = 0;
@@ -87,33 +86,32 @@ ResetTupleCount()
  * ----------------------------------------------------------------
  */
 void
-DisplayTupleCount(FILE *statfp)
-{
+DisplayTupleCount(FILE *statfp) {
     if (NTupleProcessed > 0)
-	fprintf(statfp, "!\t%d tuple%s processed, ", NTupleProcessed,
-		(NTupleProcessed == 1) ? "" : "s");
+        fprintf(statfp, "!\t%d tuple%s processed, ", NTupleProcessed,
+                (NTupleProcessed == 1) ? "" : "s");
     else {
-	fprintf(statfp, "!\tno tuples processed.\n");
-	return;
+        fprintf(statfp, "!\tno tuples processed.\n");
+        return;
     }
     if (NIndexTupleProcessed > 0)
-	fprintf(statfp, "%d indextuple%s processed, ", NIndexTupleProcessed,
-		(NIndexTupleProcessed == 1) ? "" : "s");
+        fprintf(statfp, "%d indextuple%s processed, ", NIndexTupleProcessed,
+                (NIndexTupleProcessed == 1) ? "" : "s");
     if (NIndexTupleInserted > 0)
-	fprintf(statfp, "%d indextuple%s inserted, ", NIndexTupleInserted,
-		(NIndexTupleInserted == 1) ? "" : "s");
+        fprintf(statfp, "%d indextuple%s inserted, ", NIndexTupleInserted,
+                (NIndexTupleInserted == 1) ? "" : "s");
     if (NTupleRetrieved > 0)
-	fprintf(statfp, "%d tuple%s retrieved. ", NTupleRetrieved,
-		(NTupleRetrieved == 1) ? "" : "s");
+        fprintf(statfp, "%d tuple%s retrieved. ", NTupleRetrieved,
+                (NTupleRetrieved == 1) ? "" : "s");
     if (NTupleAppended > 0)
-	fprintf(statfp, "%d tuple%s appended. ", NTupleAppended,
-		(NTupleAppended == 1) ? "" : "s");
+        fprintf(statfp, "%d tuple%s appended. ", NTupleAppended,
+                (NTupleAppended == 1) ? "" : "s");
     if (NTupleDeleted > 0)
-	fprintf(statfp, "%d tuple%s deleted. ", NTupleDeleted,
-		(NTupleDeleted == 1) ? "" : "s");
+        fprintf(statfp, "%d tuple%s deleted. ", NTupleDeleted,
+                (NTupleDeleted == 1) ? "" : "s");
     if (NTupleReplaced > 0)
-	fprintf(statfp, "%d tuple%s replaced. ", NTupleReplaced,
-		(NTupleReplaced == 1) ? "" : "s");
+        fprintf(statfp, "%d tuple%s replaced. ", NTupleReplaced,
+                (NTupleReplaced == 1) ? "" : "s");
     fprintf(statfp, "\n");
 }
 
@@ -135,10 +133,9 @@ DisplayTupleCount(FILE *statfp)
  * ----------------
  */
 void
-ExecAssignNodeBaseInfo(EState *estate, CommonState *cstate, Plan *parent)
-{
+ExecAssignNodeBaseInfo(EState *estate, CommonState *cstate, Plan *parent) {
     int baseId;
-    
+
     baseId = estate->es_BaseId;
     cstate->cs_base_id = baseId;
     estate->es_BaseId = baseId + 1;
@@ -154,24 +151,23 @@ ExecAssignNodeBaseInfo(EState *estate, CommonState *cstate, Plan *parent)
  * ----------------
  */
 void
-ExecAssignExprContext(EState *estate, CommonState *commonstate)
-{
-    ExprContext    *econtext;
-    ParamListInfo  paraminfo;
-    List           *rangeTable;
-    
+ExecAssignExprContext(EState *estate, CommonState *commonstate) {
+    ExprContext *econtext;
+    ParamListInfo paraminfo;
+    List *rangeTable;
+
     paraminfo = estate->es_param_list_info;
     rangeTable = estate->es_range_table;
 
     econtext = makeNode(ExprContext);
-    econtext->ecxt_scantuple = NULL;		/* scan tuple slot */
-    econtext->ecxt_innertuple = NULL;		/* inner tuple slot */
-    econtext->ecxt_outertuple = NULL;		/* outer tuple slot */
-    econtext->ecxt_relation = NULL;		/* relation */
-    econtext->ecxt_relid = 0;			/* relid */
-    econtext->ecxt_param_list_info = paraminfo;	/* param list info */
-    econtext->ecxt_range_table = rangeTable;	/* range table */
-    
+    econtext->ecxt_scantuple = NULL;        /* scan tuple slot */
+    econtext->ecxt_innertuple = NULL;        /* inner tuple slot */
+    econtext->ecxt_outertuple = NULL;        /* outer tuple slot */
+    econtext->ecxt_relation = NULL;        /* relation */
+    econtext->ecxt_relid = 0;            /* relid */
+    econtext->ecxt_param_list_info = paraminfo;    /* param list info */
+    econtext->ecxt_range_table = rangeTable;    /* range table */
+
     commonstate->cs_ExprContext = econtext;
 }
 
@@ -186,10 +182,9 @@ ExecAssignExprContext(EState *estate, CommonState *commonstate)
  */
 void
 ExecAssignResultType(CommonState *commonstate,
-		     TupleDesc tupDesc)
-{
-    TupleTableSlot	*slot;
-    
+                     TupleDesc tupDesc) {
+    TupleTableSlot *slot;
+
     slot = commonstate->cs_ResultTupleSlot;
     slot->ttc_tupleDescriptor = tupDesc;
 }
@@ -199,14 +194,13 @@ ExecAssignResultType(CommonState *commonstate,
  * ----------------
  */
 void
-ExecAssignResultTypeFromOuterPlan(Plan *node, CommonState *commonstate)
-{
-    Plan	*outerPlan;
-    TupleDesc	tupDesc;
-    
-    outerPlan =   outerPlan(node);
+ExecAssignResultTypeFromOuterPlan(Plan *node, CommonState *commonstate) {
+    Plan *outerPlan;
+    TupleDesc tupDesc;
+
+    outerPlan = outerPlan(node);
     tupDesc = ExecGetTupType(outerPlan);
-    
+
     ExecAssignResultType(commonstate, tupDesc);
 }
 
@@ -215,49 +209,46 @@ ExecAssignResultTypeFromOuterPlan(Plan *node, CommonState *commonstate)
  * ----------------
  */
 void
-ExecAssignResultTypeFromTL(Plan *node, CommonState *commonstate)
-{
-    List	*targetList;
-    int		i;
-    int		len;
-    List	*tl;
-    TargetEntry	*tle;
-    List	*fjtl;
-    TupleDesc	origTupDesc;
-    
-    targetList =  node->targetlist;
+ExecAssignResultTypeFromTL(Plan *node, CommonState *commonstate) {
+    List *targetList;
+    int i;
+    int len;
+    List *tl;
+    TargetEntry *tle;
+    List *fjtl;
+    TupleDesc origTupDesc;
+
+    targetList = node->targetlist;
     origTupDesc = ExecTypeFromTL(targetList);
     len = ExecTargetListLength(targetList);
-    
+
     fjtl = NIL;
     tl = targetList;
     i = 0;
     while (tl != NIL || fjtl != NIL) {
-	if (fjtl != NIL) {
-	    tle = lfirst(fjtl);
-	    fjtl = lnext(fjtl);
-	}
-	else {
-	    tle = lfirst(tl);
-	    tl = lnext(tl);
-	}
+        if (fjtl != NIL) {
+            tle = lfirst(fjtl);
+            fjtl = lnext(fjtl);
+        } else {
+            tle = lfirst(tl);
+            tl = lnext(tl);
+        }
 #ifdef SETS_FIXED
-	if (!tl_is_resdom(tle)) {
-	    Fjoin *fj = (Fjoin *)lfirst(tle);
-	    /* it is a FJoin */
-	    fjtl = lnext(tle);
-	    tle = fj->fj_innerNode;
-	}
+        if (!tl_is_resdom(tle)) {
+            Fjoin *fj = (Fjoin *)lfirst(tle);
+            /* it is a FJoin */
+            fjtl = lnext(tle);
+            tle = fj->fj_innerNode;
+        }
 #endif
-	i++;
+        i++;
     }
     if (len > 0) {
-	ExecAssignResultType(commonstate, 
-			     origTupDesc);
-    }
-    else
-	ExecAssignResultType(commonstate,
-			     (TupleDesc)NULL);
+        ExecAssignResultType(commonstate,
+                             origTupDesc);
+    } else
+        ExecAssignResultType(commonstate,
+                             (TupleDesc) NULL);
 }
 
 /* ----------------
@@ -265,10 +256,9 @@ ExecAssignResultTypeFromTL(Plan *node, CommonState *commonstate)
  * ----------------
  */
 TupleDesc
-ExecGetResultType(CommonState *commonstate)
-{
+ExecGetResultType(CommonState *commonstate) {
     TupleTableSlot *slot = commonstate->cs_ResultTupleSlot;
-    
+
     return slot->ttc_tupleDescriptor;
 }
 
@@ -277,14 +267,13 @@ ExecGetResultType(CommonState *commonstate)
  * ----------------
  */
 void
-ExecFreeResultType(CommonState *commonstate)
-{
+ExecFreeResultType(CommonState *commonstate) {
     TupleTableSlot *slot;
     TupleDesc tupType;
-    
-    slot = 	  commonstate->cs_ResultTupleSlot;
-    tupType = 	  slot->ttc_tupleDescriptor;
-    
+
+    slot = commonstate->cs_ResultTupleSlot;
+    tupType = slot->ttc_tupleDescriptor;
+
 /*    ExecFreeTypeInfo(tupType); */
     pfree(tupType);
 }
@@ -296,20 +285,19 @@ ExecFreeResultType(CommonState *commonstate)
  * ----------------
  */
 void
-ExecAssignProjectionInfo(Plan *node, CommonState *commonstate)
-{
-    ProjectionInfo	*projInfo;
-    List	        *targetList;
-    int      		len;
-    
-    targetList =  node->targetlist;
-    len = 	  ExecTargetListLength(targetList);
+ExecAssignProjectionInfo(Plan *node, CommonState *commonstate) {
+    ProjectionInfo *projInfo;
+    List *targetList;
+    int len;
+
+    targetList = node->targetlist;
+    len = ExecTargetListLength(targetList);
 
     projInfo = makeNode(ProjectionInfo);
     projInfo->pi_targetlist = targetList;
     projInfo->pi_len = len;
     projInfo->pi_tupValue =
-	(len <= 0) ? NULL : (Datum *) palloc(sizeof(Datum) * len);
+            (len <= 0) ? NULL : (Datum *) palloc(sizeof(Datum) * len);
     projInfo->pi_exprContext = commonstate->cs_ExprContext;
     projInfo->pi_slot = commonstate->cs_ResultTupleSlot;
 
@@ -322,10 +310,9 @@ ExecAssignProjectionInfo(Plan *node, CommonState *commonstate)
  * ----------------
  */
 void
-ExecFreeProjectionInfo(CommonState *commonstate)
-{
-    ProjectionInfo	*projInfo;
-    
+ExecFreeProjectionInfo(CommonState *commonstate) {
+    ProjectionInfo *projInfo;
+
     /* ----------------
      *	get projection info.  if NULL then this node has
      *  none so we just return.
@@ -333,15 +320,15 @@ ExecFreeProjectionInfo(CommonState *commonstate)
      */
     projInfo = commonstate->cs_ProjInfo;
     if (projInfo == NULL)
-	return;
-    
+        return;
+
     /* ----------------
      *	clean up memory used.
      * ----------------
      */
     if (projInfo->pi_tupValue != NULL)
-	pfree(projInfo->pi_tupValue);
-    
+        pfree(projInfo->pi_tupValue);
+
     pfree(projInfo);
     commonstate->cs_ProjInfo = NULL;
 }
@@ -361,8 +348,7 @@ ExecFreeProjectionInfo(CommonState *commonstate)
  * ----------------
  */
 TupleDesc
-ExecGetScanType(CommonScanState *csstate)
-{
+ExecGetScanType(CommonScanState *csstate) {
     TupleTableSlot *slot = csstate->css_ScanTupleSlot;
     return slot->ttc_tupleDescriptor;
 }
@@ -372,14 +358,13 @@ ExecGetScanType(CommonScanState *csstate)
  * ----------------
  */
 void
-ExecFreeScanType(CommonScanState *csstate)
-{
+ExecFreeScanType(CommonScanState *csstate) {
     TupleTableSlot *slot;
     TupleDesc tupType;
-    
-    slot = 	  csstate->css_ScanTupleSlot;
-    tupType = 	  slot->ttc_tupleDescriptor;
-    
+
+    slot = csstate->css_ScanTupleSlot;
+    tupType = slot->ttc_tupleDescriptor;
+
 /*    ExecFreeTypeInfo(tupType); */
     pfree(tupType);
 }
@@ -390,10 +375,9 @@ ExecFreeScanType(CommonScanState *csstate)
  */
 void
 ExecAssignScanType(CommonScanState *csstate,
-		   TupleDesc tupDesc)
-{
-    TupleTableSlot	*slot;
-    
+                   TupleDesc tupDesc) {
+    TupleTableSlot *slot;
+
     slot = (TupleTableSlot *) csstate->css_ScanTupleSlot;
     slot->ttc_tupleDescriptor = tupDesc;
 }
@@ -403,13 +387,12 @@ ExecAssignScanType(CommonScanState *csstate,
  * ----------------
  */
 void
-ExecAssignScanTypeFromOuterPlan(Plan *node, CommonScanState *csstate)
-{
-    Plan	*outerPlan;
-    TupleDesc	tupDesc;
-    
-    outerPlan =   outerPlan(node);
-    tupDesc = 	  ExecGetTupType(outerPlan);
+ExecAssignScanTypeFromOuterPlan(Plan *node, CommonScanState *csstate) {
+    Plan *outerPlan;
+    TupleDesc tupDesc;
+
+    outerPlan = outerPlan(node);
+    tupDesc = ExecGetTupType(outerPlan);
 
     ExecAssignScanType(csstate, tupDesc);
 }
@@ -446,16 +429,16 @@ ExecAssignScanTypeFromOuterPlan(Plan *node, CommonScanState *csstate)
  *	    to share common code.
  * ----------------
  */
-#if 0 
+#if 0
 void
 ExecSetTypeInfo(int index,
-		TupleDesc typeInfo,
-		Oid typeID,
-		int attNum,
-		int attLen,
-		char *attName,
-		bool attbyVal,
-		char attalign)
+        TupleDesc typeInfo,
+        Oid typeID,
+        int attNum,
+        int attLen,
+        char *attName,
+        bool attbyVal,
+        char attalign)
 {
     AttributeTupleForm att;
     
@@ -465,7 +448,7 @@ ExecSetTypeInfo(int index,
      */
     att = typeInfo[index];
     if (att == NULL)
-	elog(WARN, "ExecSetTypeInfo: trying to assign through NULL");
+    elog(WARN, "ExecSetTypeInfo: trying to assign through NULL");
     
     /* ----------------
      *	assign values to the tuple descriptor, being careful not
@@ -480,9 +463,9 @@ ExecSetTypeInfo(int index,
     att->attrelid  = 0;				/* dummy value */
     
     if (attName != (char *) NULL)
-	strncpy(att->attname.data, attName, NAMEDATALEN);
+    strncpy(att->attname.data, attName, NAMEDATALEN);
     else
-	memset(att->attname.data,0,NAMEDATALEN);
+    memset(att->attname.data,0,NAMEDATALEN);
     
     att->atttypid = 	typeID;
     att->attdefrel = 	0;			/* dummy value */
@@ -513,7 +496,7 @@ ExecFreeTypeInfo(TupleDesc typeInfo)
      * ----------------
      */
     if (typeInfo == NULL)
-	return;
+    return;
     
     /* ----------------
      *	the entire array of typeinfo pointers created by
@@ -572,21 +555,20 @@ QueryDescGetTypeInfo(QueryDesc *queryDesc)
  */
 void
 ExecGetIndexKeyInfo(IndexTupleForm indexTuple,
-		    int *numAttsOutP,
-		    AttrNumber **attsOutP,
-		    FuncIndexInfoPtr fInfoP)
-{
-    int		i;
-    int 	numKeys;
-    AttrNumber 	*attKeys;
+                    int *numAttsOutP,
+                    AttrNumber **attsOutP,
+                    FuncIndexInfoPtr fInfoP) {
+    int i;
+    int numKeys;
+    AttrNumber *attKeys;
 
     /* ----------------
      *	check parameters
      * ----------------
      */
     if (numAttsOutP == NULL && attsOutP == NULL) {
-	elog(DEBUG, "ExecGetIndexKeyInfo: %s",
-	     "invalid parameters: numAttsOutP and attsOutP must be non-NULL");
+        elog(DEBUG, "ExecGetIndexKeyInfo: %s",
+             "invalid parameters: numAttsOutP and attsOutP must be non-NULL");
     }
 
     /* ----------------
@@ -600,8 +582,8 @@ ExecGetIndexKeyInfo(IndexTupleForm indexTuple,
      * ----------------
      */
     numKeys = 0;
-    for (i=0; i<8 && indexTuple->indkey[i] != 0; i++)
-	numKeys++;
+    for (i = 0; i < 8 && indexTuple->indkey[i] != 0; i++)
+        numKeys++;
 
     /* ----------------
      *	place number keys in callers return area
@@ -613,17 +595,16 @@ ExecGetIndexKeyInfo(IndexTupleForm indexTuple,
      * ----------------
      */
     if (FIgetProcOid(fInfoP) != InvalidOid) {
-	FIsetnArgs(fInfoP, numKeys);
-	(*numAttsOutP) = 1;
-    }
-    else
-	(*numAttsOutP) = numKeys;
+        FIsetnArgs(fInfoP, numKeys);
+        (*numAttsOutP) = 1;
+    } else
+        (*numAttsOutP) = numKeys;
 
     if (numKeys < 1) {
-	elog(DEBUG, "ExecGetIndexKeyInfo: %s",
-	     "all index key attribute numbers are zero!");
-	(*attsOutP) = NULL;
-	return;
+        elog(DEBUG, "ExecGetIndexKeyInfo: %s",
+             "all index key attribute numbers are zero!");
+        (*attsOutP) = NULL;
+        return;
     }
 
     /* ----------------
@@ -632,11 +613,11 @@ ExecGetIndexKeyInfo(IndexTupleForm indexTuple,
      */
     CXT1_printf("ExecGetIndexKeyInfo: context is %d\n", CurrentMemoryContext);
 
-    attKeys = (AttrNumber*)
-	palloc(numKeys * sizeof(AttrNumber));
+    attKeys = (AttrNumber *)
+            palloc(numKeys * sizeof(AttrNumber));
 
-    for (i=0; i<numKeys; i++)
-	attKeys[i] = indexTuple->indkey[i];
+    for (i = 0; i < numKeys; i++)
+        attKeys[i] = indexTuple->indkey[i];
 
     /* ----------------
      *	return array to caller.
@@ -668,34 +649,33 @@ ExecGetIndexKeyInfo(IndexTupleForm indexTuple,
  */
 void
 ExecOpenIndices(Oid resultRelationOid,
-		RelationInfo *resultRelationInfo)
-{
-    Relation		indexRd;
-    HeapScanDesc	indexSd;
-    ScanKeyData		key;
-    HeapTuple		tuple;
-    IndexTupleForm	indexStruct;
-    Oid  	   	indexOid;
-    List		*oidList;
-    List		*nkeyList;
-    List		*keyList;
-    List		*fiList;
-    char		*predString;
-    List		*predList;
-    List		*indexoid;
-    List		*numkeys;
-    List		*indexkeys;
-    List		*indexfuncs;
-    List		*indexpreds;
-    int			len;
+                RelationInfo *resultRelationInfo) {
+    Relation indexRd;
+    HeapScanDesc indexSd;
+    ScanKeyData key;
+    HeapTuple tuple;
+    IndexTupleForm indexStruct;
+    Oid indexOid;
+    List *oidList;
+    List *nkeyList;
+    List *keyList;
+    List *fiList;
+    char *predString;
+    List *predList;
+    List *indexoid;
+    List *numkeys;
+    List *indexkeys;
+    List *indexfuncs;
+    List *indexpreds;
+    int len;
 
-    RelationPtr		relationDescs;
-    IndexInfo		**indexInfoArray;
-    FuncIndexInfoPtr	fInfoP;
-    int		   	numKeyAtts;
-    AttrNumber 		*indexKeyAtts;
-    PredInfo 		*predicate;
-    int			i;
+    RelationPtr relationDescs;
+    IndexInfo **indexInfoArray;
+    FuncIndexInfoPtr fInfoP;
+    int numKeyAtts;
+    AttrNumber *indexKeyAtts;
+    PredInfo *predicate;
+    int i;
 
     /* ----------------
      *	open pg_index
@@ -708,77 +688,77 @@ ExecOpenIndices(Oid resultRelationOid,
      * ----------------
      */
     ScanKeyEntryInitialize(&key, 0, Anum_pg_index_indrelid,
-			   ObjectIdEqualRegProcedure,
-			   ObjectIdGetDatum(resultRelationOid));
+                           ObjectIdEqualRegProcedure,
+                           ObjectIdGetDatum(resultRelationOid));
 
     /* ----------------
      *	scan the index relation, looking for indices for our
      *  result relation..
      * ----------------
      */
-    indexSd = heap_beginscan(indexRd, 		/* scan desc */
-			     false, 		/* scan backward flag */
-			     NowTimeQual,	/* time qual */
-			     1,			/* number scan keys */
-			     &key); 		/* scan keys */
+    indexSd = heap_beginscan(indexRd,        /* scan desc */
+                             false,        /* scan backward flag */
+                             NowTimeQual,    /* time qual */
+                             1,            /* number scan keys */
+                             &key);        /* scan keys */
 
-    oidList =  NIL;
+    oidList = NIL;
     nkeyList = NIL;
-    keyList =  NIL;
-    fiList =   NIL;
+    keyList = NIL;
+    fiList = NIL;
     predList = NIL;
 
-    while(tuple = heap_getnext(indexSd, 		/* scan desc */
-			       false,		/* scan backward flag */
-			       NULL),    		/* return: buffer */
-	  HeapTupleIsValid(tuple)) {
-	
-	/* ----------------
-	 *  For each index relation we find, extract the information
-	 *  we need and store it in a list..
-	 * 
-	 *  first get the oid of the index relation from the tuple
-	 * ----------------
-	 */
-	indexStruct = (IndexTupleForm) GETSTRUCT(tuple);
-	indexOid = indexStruct->indexrelid;
-	
-	/* ----------------
-	 * allocate space for functional index information.
-	 * ----------------
-	 */
-	fInfoP = (FuncIndexInfoPtr)palloc( sizeof(*fInfoP) );
-	
-	/* ----------------
-	 *  next get the index key information from the tuple
-	 * ----------------
-	 */
-	ExecGetIndexKeyInfo(indexStruct,
-			    &numKeyAtts,
-			    &indexKeyAtts,
-			    fInfoP);
-	
-	/* ----------------
-	 *  next get the index predicate from the tuple
-	 * ----------------
-	 */
-	if (VARSIZE(&indexStruct->indpred) != 0) {
-	    predString = fmgr(F_TEXTOUT, &indexStruct->indpred);
-	    predicate = (PredInfo*)stringToNode(predString);
-	    pfree(predString);
-	} else {
-	    predicate = NULL;
-	}
-	
-	/* ----------------
-	 *  save the index information into lists
-	 * ----------------
-	 */
-	oidList =  lconsi(indexOid, oidList);
-	nkeyList = lconsi(numKeyAtts, nkeyList);
-	keyList =  lcons(indexKeyAtts, keyList);
-	fiList =   lcons(fInfoP, fiList);
-	predList = lcons(predicate, predList);
+    while (tuple = heap_getnext(indexSd,        /* scan desc */
+                                false,        /* scan backward flag */
+                                NULL),            /* return: buffer */
+            HeapTupleIsValid(tuple)) {
+
+        /* ----------------
+         *  For each index relation we find, extract the information
+         *  we need and store it in a list..
+         * 
+         *  first get the oid of the index relation from the tuple
+         * ----------------
+         */
+        indexStruct = (IndexTupleForm) GETSTRUCT(tuple);
+        indexOid = indexStruct->indexrelid;
+
+        /* ----------------
+         * allocate space for functional index information.
+         * ----------------
+         */
+        fInfoP = (FuncIndexInfoPtr) palloc(sizeof(*fInfoP));
+
+        /* ----------------
+         *  next get the index key information from the tuple
+         * ----------------
+         */
+        ExecGetIndexKeyInfo(indexStruct,
+                            &numKeyAtts,
+                            &indexKeyAtts,
+                            fInfoP);
+
+        /* ----------------
+         *  next get the index predicate from the tuple
+         * ----------------
+         */
+        if (VARSIZE(&indexStruct->indpred) != 0) {
+            predString = fmgr(F_TEXTOUT, &indexStruct->indpred);
+            predicate = (PredInfo *) stringToNode(predString);
+            pfree(predString);
+        } else {
+            predicate = NULL;
+        }
+
+        /* ----------------
+         *  save the index information into lists
+         * ----------------
+         */
+        oidList = lconsi(indexOid, oidList);
+        nkeyList = lconsi(numKeyAtts, nkeyList);
+        keyList = lcons(indexKeyAtts, keyList);
+        fiList = lcons(fInfoP, fiList);
+        predList = lcons(predicate, predList);
     }
 
     /* ----------------
@@ -796,87 +776,87 @@ ExecOpenIndices(Oid resultRelationOid,
      */
     len = length(oidList);
     if (len > 0) {
-	/* ----------------
-	 *   allocate space for relation descs
-	 * ----------------
-	 */
-	CXT1_printf("ExecOpenIndices: context is %d\n", CurrentMemoryContext);
-	relationDescs = (RelationPtr)
-	    palloc(len * sizeof(Relation));
-	
-	/* ----------------
-	 *   initialize index info array
-	 * ----------------
-	 */
-	CXT1_printf("ExecOpenIndices: context is %d\n", CurrentMemoryContext);
-	indexInfoArray = (IndexInfo**)
-	    palloc(len * sizeof(IndexInfo*));
-	
-	for (i=0; i<len; i++) {
-	    IndexInfo *ii = makeNode(IndexInfo);
-	    ii->ii_NumKeyAttributes = 0;
-	    ii->ii_KeyAttributeNumbers = (AttrNumber*) NULL;
-	    ii->ii_FuncIndexInfo = (FuncIndexInfoPtr) NULL;
-	    ii->ii_Predicate = NULL;
-	    indexInfoArray[i] = ii;
-	}
-	
-	/* ----------------
-	 *   attempt to open each of the indices.  If we succeed,
-	 *   then store the index relation descriptor into the
-	 *   relation descriptor array.
-	 * ----------------
-	 */
-	i = 0;
-	foreach (indexoid, oidList) {
-	    Relation  indexDesc;
-	    
-	    indexOid =  lfirsti(indexoid);
-	    indexDesc = index_open(indexOid);
-	    if (indexDesc != NULL)
-		relationDescs[i++] = indexDesc;
-	}
-	
-	/* ----------------
-	 *   store the relation descriptor array and number of
-	 *   descs into the result relation info.
-	 * ----------------
-	 */
-	resultRelationInfo->ri_NumIndices = i;
-	resultRelationInfo->ri_IndexRelationDescs = relationDescs;
-	
-	/* ----------------
-	 *   store the index key information collected in our
-	 *   lists into the index info array
-	 * ----------------
-	 */
-	i = 0;
-	foreach (numkeys, nkeyList) {
-	    numKeyAtts = lfirsti(numkeys);
-	    indexInfoArray[i++]->ii_NumKeyAttributes = numKeyAtts;
-	}
-	
-	i = 0;
-	foreach (indexkeys, keyList) {
-	    indexKeyAtts = (AttrNumber*) lfirst(indexkeys);
-	    indexInfoArray[i++]->ii_KeyAttributeNumbers = indexKeyAtts;
-	}
-	
-	i = 0;
-	foreach (indexfuncs, fiList) {
-	    FuncIndexInfoPtr fiP = (FuncIndexInfoPtr)lfirst(indexfuncs);
-	    indexInfoArray[i++]->ii_FuncIndexInfo = fiP;
-	}
-	
-	i = 0;
-	foreach (indexpreds, predList) {
-	    indexInfoArray[i++]->ii_Predicate = lfirst(indexpreds);
-	}
-	/* ----------------
-	 *   store the index info array into relation info
-	 * ----------------
-	 */
-	resultRelationInfo->ri_IndexRelationInfo = indexInfoArray;
+        /* ----------------
+         *   allocate space for relation descs
+         * ----------------
+         */
+        CXT1_printf("ExecOpenIndices: context is %d\n", CurrentMemoryContext);
+        relationDescs = (RelationPtr)
+                palloc(len * sizeof(Relation));
+
+        /* ----------------
+         *   initialize index info array
+         * ----------------
+         */
+        CXT1_printf("ExecOpenIndices: context is %d\n", CurrentMemoryContext);
+        indexInfoArray = (IndexInfo **)
+                palloc(len * sizeof(IndexInfo *));
+
+        for (i = 0; i < len; i++) {
+            IndexInfo *ii = makeNode(IndexInfo);
+            ii->ii_NumKeyAttributes = 0;
+            ii->ii_KeyAttributeNumbers = (AttrNumber *) NULL;
+            ii->ii_FuncIndexInfo = (FuncIndexInfoPtr) NULL;
+            ii->ii_Predicate = NULL;
+            indexInfoArray[i] = ii;
+        }
+
+        /* ----------------
+         *   attempt to open each of the indices.  If we succeed,
+         *   then store the index relation descriptor into the
+         *   relation descriptor array.
+         * ----------------
+         */
+        i = 0;
+        foreach (indexoid, oidList) {
+            Relation indexDesc;
+
+            indexOid = lfirsti(indexoid);
+            indexDesc = index_open(indexOid);
+            if (indexDesc != NULL)
+                relationDescs[i++] = indexDesc;
+        }
+
+        /* ----------------
+         *   store the relation descriptor array and number of
+         *   descs into the result relation info.
+         * ----------------
+         */
+        resultRelationInfo->ri_NumIndices = i;
+        resultRelationInfo->ri_IndexRelationDescs = relationDescs;
+
+        /* ----------------
+         *   store the index key information collected in our
+         *   lists into the index info array
+         * ----------------
+         */
+        i = 0;
+        foreach (numkeys, nkeyList) {
+            numKeyAtts = lfirsti(numkeys);
+            indexInfoArray[i++]->ii_NumKeyAttributes = numKeyAtts;
+        }
+
+        i = 0;
+        foreach (indexkeys, keyList) {
+            indexKeyAtts = (AttrNumber *) lfirst(indexkeys);
+            indexInfoArray[i++]->ii_KeyAttributeNumbers = indexKeyAtts;
+        }
+
+        i = 0;
+        foreach (indexfuncs, fiList) {
+            FuncIndexInfoPtr fiP = (FuncIndexInfoPtr) lfirst(indexfuncs);
+            indexInfoArray[i++]->ii_FuncIndexInfo = fiP;
+        }
+
+        i = 0;
+        foreach (indexpreds, predList) {
+            indexInfoArray[i++]->ii_Predicate = lfirst(indexpreds);
+        }
+        /* ----------------
+         *   store the index info array into relation info
+         * ----------------
+         */
+        resultRelationInfo->ri_IndexRelationInfo = indexInfoArray;
     }
 
     /* ----------------
@@ -901,18 +881,17 @@ ExecOpenIndices(Oid resultRelationOid,
  * ----------------------------------------------------------------
  */
 void
-ExecCloseIndices(RelationInfo *resultRelationInfo)
-{
-    int 	i;
-    int 	numIndices;
-    RelationPtr	relationDescs;
+ExecCloseIndices(RelationInfo *resultRelationInfo) {
+    int i;
+    int numIndices;
+    RelationPtr relationDescs;
 
     numIndices = resultRelationInfo->ri_NumIndices;
     relationDescs = resultRelationInfo->ri_IndexRelationDescs;
 
-    for (i=0; i<numIndices; i++)
-	if (relationDescs[i] != NULL)
-	    index_close(relationDescs[i]);
+    for (i = 0; i < numIndices; i++)
+        if (relationDescs[i] != NULL)
+            index_close(relationDescs[i]);
     /*
      * XXX should free indexInfo array here too.
      */
@@ -929,27 +908,26 @@ ExecCloseIndices(RelationInfo *resultRelationInfo)
  */
 IndexTuple
 ExecFormIndexTuple(HeapTuple heapTuple,
-		   Relation heapRelation,
-		   Relation indexRelation,
-		   IndexInfo *indexInfo)
-{
-    IndexTuple	indexTuple;
-    TupleDesc	heapDescriptor;
-    TupleDesc	indexDescriptor;
-    Datum	*datum;
-    char	*nulls;
+                   Relation heapRelation,
+                   Relation indexRelation,
+                   IndexInfo *indexInfo) {
+    IndexTuple indexTuple;
+    TupleDesc heapDescriptor;
+    TupleDesc indexDescriptor;
+    Datum *datum;
+    char *nulls;
 
-    int			numberOfAttributes;
-    AttrNumber     	*keyAttributeNumbers;
-    FuncIndexInfoPtr	fInfoP;
+    int numberOfAttributes;
+    AttrNumber *keyAttributeNumbers;
+    FuncIndexInfoPtr fInfoP;
 
     /* ----------------
      *	get information from index info structure
      * ----------------
      */
-    numberOfAttributes =  indexInfo->ii_NumKeyAttributes;
+    numberOfAttributes = indexInfo->ii_NumKeyAttributes;
     keyAttributeNumbers = indexInfo->ii_KeyAttributeNumbers;
-    fInfoP =              indexInfo->ii_FuncIndexInfo;
+    fInfoP = indexInfo->ii_FuncIndexInfo;
 
     /* ----------------
      *	datum and null are arrays in which we collect the index attributes
@@ -957,15 +935,15 @@ ExecFormIndexTuple(HeapTuple heapTuple,
      * ----------------
      */
     CXT1_printf("ExecFormIndexTuple: context is %d\n", CurrentMemoryContext);
-    datum = (Datum *)	palloc(numberOfAttributes * sizeof *datum);
-    nulls =  (char *)	palloc(numberOfAttributes * sizeof *nulls);
+    datum = (Datum *) palloc(numberOfAttributes * sizeof *datum);
+    nulls = (char *) palloc(numberOfAttributes * sizeof *nulls);
 
     /* ----------------
      *	get the tuple descriptors from the relations so we know
      *  how to form the index tuples..
      * ----------------
      */
-    heapDescriptor =  RelationGetTupleDescriptor(heapRelation);
+    heapDescriptor = RelationGetTupleDescriptor(heapRelation);
     indexDescriptor = RelationGetTupleDescriptor(indexRelation);
 
     /* ----------------
@@ -974,17 +952,17 @@ ExecFormIndexTuple(HeapTuple heapTuple,
      * ----------------
      */
     FormIndexDatum(numberOfAttributes,  /* num attributes */
-		   keyAttributeNumbers,	/* array of att nums to extract */
-		   heapTuple,	        /* tuple from base relation */
-		   heapDescriptor,	/* heap tuple's descriptor */
-		   InvalidBuffer,	/* buffer associated with heap tuple */
-		   datum,		/* return: array of attributes */
-		   nulls,		/* return: array of char's */
-		   fInfoP);		/* functional index information */
+                   keyAttributeNumbers,    /* array of att nums to extract */
+                   heapTuple,            /* tuple from base relation */
+                   heapDescriptor,    /* heap tuple's descriptor */
+                   InvalidBuffer,    /* buffer associated with heap tuple */
+                   datum,        /* return: array of attributes */
+                   nulls,        /* return: array of char's */
+                   fInfoP);        /* functional index information */
 
     indexTuple = index_formtuple(indexDescriptor,
-				 datum,
-				 nulls);
+                                 datum,
+                                 nulls);
 
     /* ----------------
      *	free temporary arrays
@@ -1015,21 +993,20 @@ ExecFormIndexTuple(HeapTuple heapTuple,
  */
 void
 ExecInsertIndexTuples(TupleTableSlot *slot,
-		      ItemPointer tupleid,
-		      EState *estate)
-{
-    HeapTuple			heapTuple;
-    RelationInfo	        *resultRelationInfo;
-    int 			i;
-    int 			numIndices;
-    RelationPtr		    	relationDescs;
-    Relation			heapRelation;
-    IndexInfo			**indexInfoArray;
-    Node			*predicate;
-    bool			satisfied;
-    ExprContext			*econtext;
-    IndexTuple		     	indexTuple;
-    InsertIndexResult 		result;
+                      ItemPointer tupleid,
+                      EState *estate) {
+    HeapTuple heapTuple;
+    RelationInfo *resultRelationInfo;
+    int i;
+    int numIndices;
+    RelationPtr relationDescs;
+    Relation heapRelation;
+    IndexInfo **indexInfoArray;
+    Node *predicate;
+    bool satisfied;
+    ExprContext *econtext;
+    IndexTuple indexTuple;
+    InsertIndexResult result;
 
     heapTuple = slot->val;
 
@@ -1038,54 +1015,54 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
      * ----------------
      */
     resultRelationInfo = estate->es_result_relation_info;
-    numIndices =         resultRelationInfo->ri_NumIndices;
-    relationDescs =      resultRelationInfo->ri_IndexRelationDescs;
-    indexInfoArray =     resultRelationInfo->ri_IndexRelationInfo;
-    heapRelation =       resultRelationInfo->ri_RelationDesc;
+    numIndices = resultRelationInfo->ri_NumIndices;
+    relationDescs = resultRelationInfo->ri_IndexRelationDescs;
+    indexInfoArray = resultRelationInfo->ri_IndexRelationInfo;
+    heapRelation = resultRelationInfo->ri_RelationDesc;
 
     /* ----------------
      *	for each index, form and insert the index tuple
      * ----------------
      */
     econtext = NULL;
-    for (i=0; i<numIndices; i++) {
-	if (relationDescs[i] == NULL) continue;
-	
-	predicate = indexInfoArray[i]->ii_Predicate;
-	if (predicate != NULL) {
-	    if (econtext == NULL) {
-		econtext = makeNode(ExprContext);
-	    }
-	    econtext->ecxt_scantuple = slot;
-	    
-	    /* Skip this index-update if the predicate isn't satisfied */
-	    satisfied = ExecQual((List*)predicate, econtext);
-	    if (satisfied == false)
-		continue;
-	}
-	
-	indexTuple = ExecFormIndexTuple(heapTuple,
-					heapRelation,
-					relationDescs[i],
-					indexInfoArray[i]);
-	
-	indexTuple->t_tid = (*tupleid);     /* structure assignment */
-	
-	result = index_insert(relationDescs[i], /* index relation */
-			      indexTuple); 	/* index tuple */
-	
-	/* ----------------
-	 *	keep track of index inserts for debugging
-	 * ----------------
-	 */
-	IncrIndexInserted();
-	
-	/* ----------------
-	 *	free index tuple after insertion
-	 * ----------------
-	 */
-	if (result) pfree(result);
-	pfree(indexTuple);
+    for (i = 0; i < numIndices; i++) {
+        if (relationDescs[i] == NULL) continue;
+
+        predicate = indexInfoArray[i]->ii_Predicate;
+        if (predicate != NULL) {
+            if (econtext == NULL) {
+                econtext = makeNode(ExprContext);
+            }
+            econtext->ecxt_scantuple = slot;
+
+            /* Skip this index-update if the predicate isn't satisfied */
+            satisfied = ExecQual((List *) predicate, econtext);
+            if (satisfied == false)
+                continue;
+        }
+
+        indexTuple = ExecFormIndexTuple(heapTuple,
+                                        heapRelation,
+                                        relationDescs[i],
+                                        indexInfoArray[i]);
+
+        indexTuple->t_tid = (*tupleid);     /* structure assignment */
+
+        result = index_insert(relationDescs[i], /* index relation */
+                              indexTuple);    /* index tuple */
+
+        /* ----------------
+         *	keep track of index inserts for debugging
+         * ----------------
+         */
+        IncrIndexInserted();
+
+        /* ----------------
+         *	free index tuple after insertion
+         * ----------------
+         */
+        if (result) pfree(result);
+        pfree(indexTuple);
     }
     if (econtext != NULL) pfree(econtext);
 }

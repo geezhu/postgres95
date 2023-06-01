@@ -103,8 +103,8 @@ mminit()
     mmcacheblk = (char *) ShmemInitStruct("Main memory smgr", mmsize, &found);
 
     if (mmcacheblk == (char *) NULL) {
-	SpinRelease(MMCacheLock);
-	return (SM_FAIL);
+    SpinRelease(MMCacheLock);
+    return (SM_FAIL);
     }
 
     info.keysize = sizeof(MMCacheTag);
@@ -112,12 +112,12 @@ mminit()
     info.hash = tag_hash;
 
     MMCacheHT = (HTAB *) ShmemInitHash("Main memory store HT",
-					MMNBUFFERS, MMNBUFFERS,
-					&info, (HASH_ELEM|HASH_FUNCTION));
+                    MMNBUFFERS, MMNBUFFERS,
+                    &info, (HASH_ELEM|HASH_FUNCTION));
 
     if (MMCacheHT == (HTAB *) NULL) {
-	SpinRelease(MMCacheLock);
-	return (SM_FAIL);
+    SpinRelease(MMCacheLock);
+    return (SM_FAIL);
     }
 
     info.keysize = sizeof(MMRelTag);
@@ -125,18 +125,18 @@ mminit()
     info.hash = tag_hash;
 
     MMRelCacheHT = (HTAB *) ShmemInitHash("Main memory rel HT",
-					  MMNRELATIONS, MMNRELATIONS,
-					  &info, (HASH_ELEM|HASH_FUNCTION));
+                      MMNRELATIONS, MMNRELATIONS,
+                      &info, (HASH_ELEM|HASH_FUNCTION));
 
     if (MMRelCacheHT == (HTAB *) NULL) {
-	SpinRelease(MMCacheLock);
-	return (SM_FAIL);
+    SpinRelease(MMCacheLock);
+    return (SM_FAIL);
     }
 
     if (IsPostmaster) {
-	memset(mmcacheblk, 0, mmsize);
-	SpinRelease(MMCacheLock);
-	return (SM_SUCCESS);
+    memset(mmcacheblk, 0, mmsize);
+    SpinRelease(MMCacheLock);
+    return (SM_SUCCESS);
     }
 
     SpinRelease(MMCacheLock);
@@ -168,30 +168,30 @@ mmcreate(Relation reln)
     SpinAcquire(MMCacheLock);
 
     if (*MMCurRelno == MMNRELATIONS) {
-	SpinRelease(MMCacheLock);
-	return (SM_FAIL);
+    SpinRelease(MMCacheLock);
+    return (SM_FAIL);
     }
 
     (*MMCurRelno)++;
 
     tag.mmrt_relid = reln->rd_id;
     if (reln->rd_rel->relisshared)
-	tag.mmrt_dbid = (Oid) 0;
+    tag.mmrt_dbid = (Oid) 0;
     else
-	tag.mmrt_dbid = MyDatabaseId;
+    tag.mmrt_dbid = MyDatabaseId;
 
     entry = (MMRelHashEntry *) hash_search(MMRelCacheHT,
-					   (char *) &tag, HASH_ENTER, &found);
+                       (char *) &tag, HASH_ENTER, &found);
 
     if (entry == (MMRelHashEntry *) NULL) {
-	SpinRelease(MMCacheLock);
-	elog(FATAL, "main memory storage mgr rel cache hash table corrupt");
+    SpinRelease(MMCacheLock);
+    elog(FATAL, "main memory storage mgr rel cache hash table corrupt");
     }
 
     if (found) {
-	/* already exists */
-	SpinRelease(MMCacheLock);
-	return (SM_FAIL);
+    /* already exists */
+    SpinRelease(MMCacheLock);
+    return (SM_FAIL);
     }
 
     entry->mmrhe_nblocks = 0;
@@ -215,36 +215,36 @@ mmunlink(Relation reln)
     MMRelTag rtag;
 
     if (reln->rd_rel->relisshared)
-	reldbid = (Oid) 0;
+    reldbid = (Oid) 0;
     else
-	reldbid = MyDatabaseId;
+    reldbid = MyDatabaseId;
 
     SpinAcquire(MMCacheLock);
 
     for (i = 0; i < MMNBUFFERS; i++) {
-	if (MMBlockTags[i].mmct_dbid == reldbid
-	    && MMBlockTags[i].mmct_relid == reln->rd_id) {
-	    entry = (MMHashEntry *) hash_search(MMCacheHT,
-						(char *) &MMBlockTags[i],
-						 HASH_REMOVE, &found);
-	    if (entry == (MMHashEntry *) NULL || !found) {
-		SpinRelease(MMCacheLock);
-		elog(FATAL, "mmunlink: cache hash table corrupted");
-	    }
-	    MMBlockTags[i].mmct_dbid = (Oid) 0;
-	    MMBlockTags[i].mmct_relid = (Oid) 0;
-	    MMBlockTags[i].mmct_blkno = (BlockNumber) 0;
-	}
+    if (MMBlockTags[i].mmct_dbid == reldbid
+        && MMBlockTags[i].mmct_relid == reln->rd_id) {
+        entry = (MMHashEntry *) hash_search(MMCacheHT,
+                        (char *) &MMBlockTags[i],
+                         HASH_REMOVE, &found);
+        if (entry == (MMHashEntry *) NULL || !found) {
+        SpinRelease(MMCacheLock);
+        elog(FATAL, "mmunlink: cache hash table corrupted");
+        }
+        MMBlockTags[i].mmct_dbid = (Oid) 0;
+        MMBlockTags[i].mmct_relid = (Oid) 0;
+        MMBlockTags[i].mmct_blkno = (BlockNumber) 0;
+    }
     }
     rtag.mmrt_dbid = reldbid;
     rtag.mmrt_relid = reln->rd_id;
 
     rentry = (MMRelHashEntry *) hash_search(MMRelCacheHT, (char *) &rtag,
-					    HASH_REMOVE, &found);
+                        HASH_REMOVE, &found);
 
     if (rentry == (MMRelHashEntry *) NULL || !found) {
-	SpinRelease(MMCacheLock);
-	elog(FATAL, "mmunlink: rel cache hash table corrupted");
+    SpinRelease(MMCacheLock);
+    elog(FATAL, "mmunlink: rel cache hash table corrupted");
     }
 
     (*MMCurRelno)--;
@@ -272,9 +272,9 @@ mmextend(Relation reln, char *buffer)
     MMCacheTag tag;
 
     if (reln->rd_rel->relisshared)
-	reldbid = (Oid) 0;
+    reldbid = (Oid) 0;
     else
-	reldbid = MyDatabaseId;
+    reldbid = MyDatabaseId;
 
     tag.mmct_dbid = rtag.mmrt_dbid = reldbid;
     tag.mmct_relid = rtag.mmrt_relid = reln->rd_id;
@@ -282,34 +282,34 @@ mmextend(Relation reln, char *buffer)
     SpinAcquire(MMCacheLock);
 
     if (*MMCurTop == MMNBUFFERS) {
-	for (i = 0; i < MMNBUFFERS; i++) {
-	    if (MMBlockTags[i].mmct_dbid == 0 &&
-		MMBlockTags[i].mmct_relid == 0)
-		break;
-	}
-	if (i == MMNBUFFERS) {
-	    SpinRelease(MMCacheLock);
-	    return (SM_FAIL);
-	}
+    for (i = 0; i < MMNBUFFERS; i++) {
+        if (MMBlockTags[i].mmct_dbid == 0 &&
+        MMBlockTags[i].mmct_relid == 0)
+        break;
+    }
+    if (i == MMNBUFFERS) {
+        SpinRelease(MMCacheLock);
+        return (SM_FAIL);
+    }
     } else {
-	i = *MMCurTop;
-	(*MMCurTop)++;
+    i = *MMCurTop;
+    (*MMCurTop)++;
     }
 
     rentry = (MMRelHashEntry *) hash_search(MMRelCacheHT, (char *) &rtag,
-					    HASH_FIND, &found);
+                        HASH_FIND, &found);
     if (rentry == (MMRelHashEntry *) NULL || !found) {
-	SpinRelease(MMCacheLock);
-	elog(FATAL, "mmextend: rel cache hash table corrupt");
+    SpinRelease(MMCacheLock);
+    elog(FATAL, "mmextend: rel cache hash table corrupt");
     }
 
     tag.mmct_blkno = rentry->mmrhe_nblocks;
 
     entry = (MMHashEntry *) hash_search(MMCacheHT, (char *) &tag,
-					HASH_ENTER, &found);
+                    HASH_ENTER, &found);
     if (entry == (MMHashEntry *) NULL || found) {
-	SpinRelease(MMCacheLock);
-	elog(FATAL, "mmextend: cache hash table corrupt");
+    SpinRelease(MMCacheLock);
+    elog(FATAL, "mmextend: cache hash table corrupt");
     }
 
     entry->mmhe_bufno = i;
@@ -365,27 +365,27 @@ mmread(Relation reln, BlockNumber blocknum, char *buffer)
     MMCacheTag tag;
 
     if (reln->rd_rel->relisshared)
-	tag.mmct_dbid = (Oid) 0;
+    tag.mmct_dbid = (Oid) 0;
     else
-	tag.mmct_dbid = MyDatabaseId;
+    tag.mmct_dbid = MyDatabaseId;
 
     tag.mmct_relid = reln->rd_id;
     tag.mmct_blkno = blocknum;
 
     SpinAcquire(MMCacheLock);
     entry = (MMHashEntry *) hash_search(MMCacheHT, (char *) &tag,
-					HASH_FIND, &found);
+                    HASH_FIND, &found);
 
     if (entry == (MMHashEntry *) NULL) {
-	SpinRelease(MMCacheLock);
-	elog(FATAL, "mmread: hash table corrupt");
+    SpinRelease(MMCacheLock);
+    elog(FATAL, "mmread: hash table corrupt");
     }
 
     if (!found) {
-	/* reading nonexistent pages is defined to fill them with zeroes */
-	SpinRelease(MMCacheLock);
-	memset(buffer, 0, BLCKSZ);
-	return (SM_SUCCESS);
+    /* reading nonexistent pages is defined to fill them with zeroes */
+    SpinRelease(MMCacheLock);
+    memset(buffer, 0, BLCKSZ);
+    return (SM_SUCCESS);
     }
 
     offset = (entry->mmhe_bufno * BLCKSZ);
@@ -410,25 +410,25 @@ mmwrite(Relation reln, BlockNumber blocknum, char *buffer)
     MMCacheTag tag;
 
     if (reln->rd_rel->relisshared)
-	tag.mmct_dbid = (Oid) 0;
+    tag.mmct_dbid = (Oid) 0;
     else
-	tag.mmct_dbid = MyDatabaseId;
+    tag.mmct_dbid = MyDatabaseId;
 
     tag.mmct_relid = reln->rd_id;
     tag.mmct_blkno = blocknum;
 
     SpinAcquire(MMCacheLock);
     entry = (MMHashEntry *) hash_search(MMCacheHT, (char *) &tag,
-					HASH_FIND, &found);
+                    HASH_FIND, &found);
 
     if (entry == (MMHashEntry *) NULL) {
-	SpinRelease(MMCacheLock);
-	elog(FATAL, "mmread: hash table corrupt");
+    SpinRelease(MMCacheLock);
+    elog(FATAL, "mmread: hash table corrupt");
     }
 
     if (!found) {
-	SpinRelease(MMCacheLock);
-	elog(FATAL, "mmwrite: hash table missing requested page");
+    SpinRelease(MMCacheLock);
+    elog(FATAL, "mmwrite: hash table missing requested page");
     }
 
     offset = (entry->mmhe_bufno * BLCKSZ);
@@ -458,11 +458,11 @@ mmflush(Relation reln, BlockNumber blocknum, char *buffer)
  */
 int
 mmblindwrt(char *dbstr,
-	   char *relstr,
-	   Oid dbid,
-	   Oid relid,
-	   BlockNumber blkno,
-	   char *buffer)
+       char *relstr,
+       Oid dbid,
+       Oid relid,
+       BlockNumber blkno,
+       char *buffer)
 {
     return (SM_FAIL);
 }
@@ -481,26 +481,26 @@ mmnblocks(Relation reln)
     int nblocks;
 
     if (reln->rd_rel->relisshared)
-	rtag.mmrt_dbid = (Oid) 0;
+    rtag.mmrt_dbid = (Oid) 0;
     else
-	rtag.mmrt_dbid = MyDatabaseId;
+    rtag.mmrt_dbid = MyDatabaseId;
 
     rtag.mmrt_relid = reln->rd_id;
 
     SpinAcquire(MMCacheLock);
 
     rentry = (MMRelHashEntry *) hash_search(MMRelCacheHT, (char *) &rtag,
-					    HASH_FIND, &found);
+                        HASH_FIND, &found);
 
     if (rentry == (MMRelHashEntry *) NULL) {
-	SpinRelease(MMCacheLock);
-	elog(FATAL, "mmnblocks: rel cache hash table corrupt");
+    SpinRelease(MMCacheLock);
+    elog(FATAL, "mmnblocks: rel cache hash table corrupt");
     }
 
     if (found)
-	nblocks = rentry->mmrhe_nblocks;
+    nblocks = rentry->mmrhe_nblocks;
     else
-	nblocks = -1;
+    nblocks = -1;
 
     SpinRelease(MMCacheLock);
 
@@ -556,8 +556,8 @@ MMShmemSize()
     size += nsegs * MAXALIGN(DEF_SEGSIZE * sizeof(SEGMENT));
     tmp = (int)ceil((double)MMNBUFFERS/BUCKET_ALLOC_INCR);
     size += tmp * BUCKET_ALLOC_INCR *
-	(MAXALIGN(sizeof(BUCKET_INDEX)) +
-	 MAXALIGN(sizeof(MMHashEntry)));	/* contains hash key */
+    (MAXALIGN(sizeof(BUCKET_INDEX)) +
+     MAXALIGN(sizeof(MMHashEntry)));	/* contains hash key */
 
     /*
      *  now do the same for the rel hash table
@@ -568,8 +568,8 @@ MMShmemSize()
     size += nsegs * MAXALIGN(DEF_SEGSIZE * sizeof(SEGMENT));
     tmp = (int)ceil((double)MMNRELATIONS/BUCKET_ALLOC_INCR);
     size += tmp * BUCKET_ALLOC_INCR *
-	(MAXALIGN(sizeof(BUCKET_INDEX)) +
-	 MAXALIGN(sizeof(MMRelHashEntry)));	/* contains hash key */
+    (MAXALIGN(sizeof(BUCKET_INDEX)) +
+     MAXALIGN(sizeof(MMRelHashEntry)));	/* contains hash key */
 
     /*
      *  finally, add in the memory block we use directly

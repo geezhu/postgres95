@@ -15,7 +15,7 @@
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>	/* XXX use own I/O routines */
+#include <stdio.h>    /* XXX use own I/O routines */
 #include <errno.h>
 #include "utils/exc.h"
 #include "storage/ipc.h"
@@ -25,14 +25,14 @@
  */
 static bool ExceptionHandlingEnabled = false;
 
-char*			ExcFileName = NULL;
-Index			ExcLineNumber = 0;
+char *ExcFileName = NULL;
+Index ExcLineNumber = 0;
 
-ExcFrame		*ExcCurFrameP = NULL;
+ExcFrame *ExcCurFrameP = NULL;
 
-static	ExcProc		*ExcUnCaughtP = NULL;
+static ExcProc *ExcUnCaughtP = NULL;
 
-extern	char*	ProgramName;
+extern char *ProgramName;
 
 /*
  * Exported Functions
@@ -62,122 +62,116 @@ extern	char*	ProgramName;
  * called by all the other module Enable functions.
  */
 void
-EnableExceptionHandling(bool on)
-{
+EnableExceptionHandling(bool on) {
     if (on == ExceptionHandlingEnabled) {
-	/* XXX add logging of failed state */
-	exitpg(255);
-	/* ExitPostgres(FatalExitStatus); */
+        /* XXX add logging of failed state */
+        exitpg(255);
+        /* ExitPostgres(FatalExitStatus); */
     }
-    
-    if (on) {	/* initialize */
-	;
-    } else {	/* cleanup */
-	ExcFileName = NULL;
-	ExcLineNumber = 0;
-	ExcCurFrameP = NULL;
-	ExcUnCaughtP = NULL;
+
+    if (on) {    /* initialize */
+        ;
+    } else {    /* cleanup */
+        ExcFileName = NULL;
+        ExcLineNumber = 0;
+        ExcCurFrameP = NULL;
+        ExcUnCaughtP = NULL;
     }
-    
+
     ExceptionHandlingEnabled = on;
 }
 
 void
 ExcPrint(Exception *excP,
-	 ExcDetail detail,
-	 ExcData data,
-	 ExcMessage message)
-{
-    extern	int	errno;
-    extern	int	sys_nerr;
+         ExcDetail detail,
+         ExcData data,
+         ExcMessage message) {
+    extern int    errno;
+    extern int sys_nerr;
 #if !defined(PORTNAME_BSD44_derived) && !defined(PORTNAME_bsdi)
-    extern	const char	* const sys_errlist[];
+    extern const char *const sys_errlist[];
 #endif /* !PORTNAME_BSD44_derived */
-    
-#ifdef	lint
+
+#ifdef    lint
     data = data;
 #endif
-    
-    (void) fflush(stdout);	/* In case stderr is buffered */
-    
-#if	0
+
+    (void) fflush(stdout);    /* In case stderr is buffered */
+
+#if    0
     if (ProgramName != NULL && *ProgramName != '\0')
-	(void) fprintf(stderr, "%s: ", ProgramName);
+    (void) fprintf(stderr, "%s: ", ProgramName);
 #endif
-    
+
     if (message != NULL)
-	(void) fprintf(stderr, "%s", message);
+        (void) fprintf(stderr, "%s", message);
     else if (excP->message != NULL)
-	(void) fprintf(stderr, "%s", excP->message);
+        (void) fprintf(stderr, "%s", excP->message);
     else
-#ifdef	lint
-	(void) fprintf(stderr, "UNNAMED EXCEPTION 0x%lx", excP);
+#ifdef    lint
+        (void) fprintf(stderr, "UNNAMED EXCEPTION 0x%lx", excP);
 #else
-    (void) fprintf(stderr, "UNNAMED EXCEPTION 0x%lx", (long)excP);
+        (void) fprintf(stderr, "UNNAMED EXCEPTION 0x%lx", (long) excP);
 #endif
-    
+
     (void) fprintf(stderr, " (%ld)", detail);
-    
+
     if (errno > 0 && errno < sys_nerr &&
-	sys_errlist[errno] != NULL && sys_errlist[errno][0] != '\0')
-	(void) fprintf(stderr, " [%s]", sys_errlist[errno]);
+        sys_errlist[errno] != NULL && sys_errlist[errno][0] != '\0')
+        (void) fprintf(stderr, " [%s]", sys_errlist[errno]);
     else if (errno != 0)
-	(void) fprintf(stderr, " [Error %d]", errno);
-    
+        (void) fprintf(stderr, " [Error %d]", errno);
+
     (void) fprintf(stderr, "\n");
-    
+
     (void) fflush(stderr);
 }
 
 ExcProc *
-ExcGetUnCaught()
-{
+ExcGetUnCaught() {
     return (ExcUnCaughtP);
 }
 
 ExcProc *
-ExcSetUnCaught(ExcProc *newP)
-{
-    ExcProc	*oldP = ExcUnCaughtP;
-    
+ExcSetUnCaught(ExcProc *newP) {
+    ExcProc *oldP = ExcUnCaughtP;
+
     ExcUnCaughtP = newP;
-    
+
     return (oldP);
 }
 
 void
 ExcUnCaught(Exception *excP,
-	    ExcDetail detail,
-	    ExcData data,
-	    ExcMessage message)
-{
+            ExcDetail detail,
+            ExcData data,
+            ExcMessage message) {
     ExcPrint(excP, detail, data, message);
-    
+
     ExcAbort(excP, detail, data, message);
 }
 
 void
 ExcRaise(Exception *excP,
-	 ExcDetail detail,
-	 ExcData	data,
-	 ExcMessage message)
-{
-    register ExcFrame	*efp;
-    
+         ExcDetail detail,
+         ExcData data,
+         ExcMessage message) {
+    register ExcFrame *efp;
+
     efp = ExcCurFrameP;
     if (efp == NULL) {
-	if (ExcUnCaughtP != NULL)
-	    (*ExcUnCaughtP)(excP, detail, data, message);
-	
-	ExcUnCaught(excP, detail, data, message);
+        if (ExcUnCaughtP != NULL)
+            (*ExcUnCaughtP)(excP, detail, data, message);
+
+        ExcUnCaught(excP, detail, data, message);
     } else {
-	efp->id		= excP;
-	efp->detail	= detail;
-	efp->data	= data;
-	efp->message	= message;
-	
-	ExcCurFrameP = efp->link;
-	
-	longjmp(efp->context, 1);
+        efp->id = excP;
+        efp->detail = detail;
+        efp->data = data;
+        efp->message = message;
+
+        ExcCurFrameP = efp->link;
+
+        longjmp(efp->context, 1);
     }
 }

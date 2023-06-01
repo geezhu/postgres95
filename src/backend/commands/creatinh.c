@@ -11,7 +11,7 @@
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>	/* for sprintf() */
+#include <stdio.h>    /* for sprintf() */
 #include <string.h>
 #include "postgres.h"
 
@@ -46,9 +46,11 @@
  * ----------------
  */
 
-static int checkAttrExists(char *attributeName, 
- 			   char *attributeType, List *schema);
+static int checkAttrExists(char *attributeName,
+                           char *attributeType, List *schema);
+
 static List *MergeAttributes(List *schema, List *supers);
+
 static void StoreCatalogInheritance(Oid relationId, List *supers);
 
 /* ----------------------------------------------------------------
@@ -57,85 +59,84 @@ static void StoreCatalogInheritance(Oid relationId, List *supers);
  * ----------------------------------------------------------------
  */
 void
-DefineRelation(CreateStmt *stmt)
-{
+DefineRelation(CreateStmt *stmt) {
     char *relname = stmt->relname;
     List *schema = stmt->tableElts;
-    int			numberOfAttributes;
-    Oid			relationId;
-    char		archChar;
-    List		*inheritList 	= NULL;
-    char *archiveName 	= NULL;
-    TupleDesc	descriptor;
-    int			heaploc, archloc;
-    
-    char*   typename = NULL;  /* the typename of this relation. not useod for now */
+    int numberOfAttributes;
+    Oid relationId;
+    char archChar;
+    List *inheritList = NULL;
+    char *archiveName = NULL;
+    TupleDesc descriptor;
+    int heaploc, archloc;
 
-    if ( strlen(relname) > NAMEDATALEN)
-	elog(WARN, "the relation name %s is > %d characters long", relname,
-	     NAMEDATALEN);
-    
+    char *typename = NULL;  /* the typename of this relation. not useod for now */
+
+    if (strlen(relname) > NAMEDATALEN)
+        elog(WARN, "the relation name %s is > %d characters long", relname,
+             NAMEDATALEN);
+
     /* ----------------
      * 	Handle parameters
      * 	XXX parameter handling missing below.
      * ----------------
      */
     inheritList = stmt->inhRelnames;
-    
+
     /* ----------------
      *	determine archive mode
      * 	XXX use symbolic constants...
      * ----------------
      */
     archChar = 'n';
-    
+
     switch (stmt->archiveType) {
-    case ARCH_NONE:
-	archChar = 'n';
-	break;
-    case ARCH_LIGHT:
-	archChar = 'l';
-	break;
-    case ARCH_HEAVY:
-	archChar = 'h';
-	break;
-    default:
-	elog(WARN, "Botched archive mode %d, ignoring",
-	     stmt->archiveType);
-	break;
+        case ARCH_NONE:
+            archChar = 'n';
+            break;
+        case ARCH_LIGHT:
+            archChar = 'l';
+            break;
+        case ARCH_HEAVY:
+            archChar = 'h';
+            break;
+        default:
+            elog(WARN, "Botched archive mode %d, ignoring",
+                 stmt->archiveType);
+            break;
     }
-    
+
     if (stmt->location == -1)
-	heaploc = 0;
+        heaploc = 0;
     else
-	heaploc = stmt->location;
-    
+        heaploc = stmt->location;
+
     /*
      *  For now, any user-defined relation defaults to the magnetic
      *  disk storgage manager.  --mao 2 july 91
      */
     if (stmt->archiveLoc == -1) {
-	archloc = 0;
+        archloc = 0;
     } else {
-	if (archChar == 'n') {
-	    elog(WARN, "Set archive location, but not mode, for %s",
-		 relname);
-	}
-	archloc = stmt->archiveLoc;
+        if (archChar == 'n') {
+            elog(WARN, "Set archive location, but not mode, for %s",
+                 relname);
+        }
+        archloc = stmt->archiveLoc;
     }
-    
+
     /* ----------------
      *	generate relation schema, including inherited attributes.
      * ----------------
      */
     schema = MergeAttributes(schema, inheritList);
-    
+
     numberOfAttributes = length(schema);
     if (numberOfAttributes <= 0) {
-	elog(WARN, "DefineRelation: %s",
-	     "please inherit from a relation or define an attribute");
+        elog(WARN, "DefineRelation: %s",
+             "please inherit from a relation or define an attribute");
     }
-    
+
     /* ----------------
      *	create a relation descriptor from the relation schema
      *  and create the relation.  
@@ -143,34 +144,34 @@ DefineRelation(CreateStmt *stmt)
      */
     descriptor = BuildDescForRelation(schema, relname);
     relationId = heap_create(relname,
-			     typename,
-			     archChar,
-			     heaploc,
-			     descriptor);
-    
+                             typename,
+                             archChar,
+                             heaploc,
+                             descriptor);
+
     StoreCatalogInheritance(relationId, inheritList);
-    
+
     /* ----------------
      *	create an archive relation if necessary
      * ----------------
      */
     if (archChar != 'n') {
-	/*
-	 *  Need to create an archive relation for this heap relation.
-	 *  We cobble up the command by hand, and increment the command
-	 *  counter ourselves.
-	 */
-	
-	CommandCounterIncrement();
-	archiveName = MakeArchiveName(relationId);
-	
-	relationId = heap_create(archiveName,
-				 typename,
-				 'n',		/* archive isn't archived */
-				 archloc,
-				 descriptor);
-	
-	pfree(archiveName);
+        /*
+         *  Need to create an archive relation for this heap relation.
+         *  We cobble up the command by hand, and increment the command
+         *  counter ourselves.
+         */
+
+        CommandCounterIncrement();
+        archiveName = MakeArchiveName(relationId);
+
+        relationId = heap_create(archiveName,
+                                 typename,
+                                 'n',        /* archive isn't archived */
+                                 archloc,
+                                 descriptor);
+
+        pfree(archiveName);
     }
 }
 
@@ -186,8 +187,7 @@ DefineRelation(CreateStmt *stmt)
  * themselves will be destroyed, too.
  */
 void
-RemoveRelation(char *name)
-{
+RemoveRelation(char *name) {
     AssertArg(name);
     heap_destroy(name);
 }
@@ -225,119 +225,118 @@ RemoveRelation(char *name)
  *                         stud_emp {7:percent}
  */
 static List *
-MergeAttributes(List *schema, List *supers)
-{
+MergeAttributes(List *schema, List *supers) {
     List *entry;
     List *inhSchema = NIL;
-    
+
     /*
      * Validates that there are no duplications.
      * Validity checking of types occurs later.
      */
     foreach (entry, schema) {
-	List	*rest;
-	ColumnDef *coldef = lfirst(entry);
-	
-	foreach (rest, lnext(entry)) {
-	    /*
-	     * check for duplicated relation names
-	     */
-	    ColumnDef *restdef = lfirst(rest);
-	    
-	    if (!strcmp(coldef->colname, restdef->colname)) {
-		elog(WARN, "attribute \"%s\" duplicated",
-		     coldef->colname);
-	    }
-	}
+        List *rest;
+        ColumnDef *coldef = lfirst(entry);
+
+        foreach (rest, lnext(entry)) {
+            /*
+             * check for duplicated relation names
+             */
+            ColumnDef *restdef = lfirst(rest);
+
+            if (!strcmp(coldef->colname, restdef->colname)) {
+                elog(WARN, "attribute \"%s\" duplicated",
+                     coldef->colname);
+            }
+        }
     }
     foreach (entry, supers) {
-	List	*rest;
-	
-	foreach (rest, lnext(entry)) {
-	    if (!strcmp(strVal(lfirst(entry)), strVal(lfirst(rest)))) {
-		elog(WARN, "relation \"%s\" duplicated",
-		     strVal(lfirst(entry)));
-	    }
-	}
+        List *rest;
+
+        foreach (rest, lnext(entry)) {
+            if (!strcmp(strVal(lfirst(entry)), strVal(lfirst(rest)))) {
+                elog(WARN, "relation \"%s\" duplicated",
+                     strVal(lfirst(entry)));
+            }
+        }
     }
-    
+
     /*
      * merge the inherited attributes into the schema
      */
     foreach (entry, supers) {
-	char		*name = strVal(lfirst(entry));
-	Relation	relation;
-	List		*partialResult = NIL;
-	AttrNumber	attrno;
-	TupleDesc	tupleDesc;
-	
-	relation =  heap_openr(name);
-	if (relation==NULL) {
-	    elog(WARN,
-		 "MergeAttr: Can't inherit from non-existent superclass '%s'",
-		 name);
-	}
-	tupleDesc = RelationGetTupleDescriptor(relation);
-	
-	for (attrno = relation->rd_rel->relnatts - 1; attrno >= 0; attrno--) {
-	    AttributeTupleForm	attribute = tupleDesc->attrs[attrno];
-	    char *attributeName;
-	    char *attributeType;
-	    HeapTuple	tuple;
-	    ColumnDef	*def;
-	    TypeName	*typename;
-	    
-	    /*
-	     * form name and type
-	     */
-	    attributeName = (attribute->attname).data;
-	    tuple =
-		SearchSysCacheTuple(TYPOID,
-				    ObjectIdGetDatum(attribute->atttypid),
-				    0,0,0);
-	    AssertState(HeapTupleIsValid(tuple));
-	    attributeType =
-		(((TypeTupleForm)GETSTRUCT(tuple))->typname).data;
-	    /*
-	     * check validity
-	     *
-	     */
-	    if (checkAttrExists(attributeName, attributeType, inhSchema) ||
-		checkAttrExists(attributeName, attributeType, schema)) {
-		/*
-		 * this entry already exists
-		 */
-		continue;
-	    }
+        char *name = strVal(lfirst(entry));
+        Relation relation;
+        List *partialResult = NIL;
+        AttrNumber attrno;
+        TupleDesc tupleDesc;
 
-	    /*
-	     * add an entry to the schema
-	     */
-	    def = makeNode(ColumnDef);
-	    typename = makeNode(TypeName);
-	    def->colname = pstrdup(attributeName);
-	    typename->name = pstrdup(attributeType); 
-	    def->typename = typename;
-	    partialResult = lcons(def, partialResult);
-	}
-	
-	/*
-	 * iteration cleanup and result collection
-	 */
-	heap_close(relation);
+        relation = heap_openr(name);
+        if (relation == NULL) {
+            elog(WARN,
+                 "MergeAttr: Can't inherit from non-existent superclass '%s'",
+                 name);
+        }
+        tupleDesc = RelationGetTupleDescriptor(relation);
 
-	/*
-	 * wants the inherited schema to appear in the order they are
-	 * specified in CREATE TABLE
-	 */
-	inhSchema = nconc(inhSchema, partialResult);
+        for (attrno = relation->rd_rel->relnatts - 1; attrno >= 0; attrno--) {
+            AttributeTupleForm attribute = tupleDesc->attrs[attrno];
+            char *attributeName;
+            char *attributeType;
+            HeapTuple tuple;
+            ColumnDef *def;
+            TypeName *typename;
+
+            /*
+             * form name and type
+             */
+            attributeName = (attribute->attname).data;
+            tuple =
+                    SearchSysCacheTuple(TYPOID,
+                                        ObjectIdGetDatum(attribute->atttypid),
+                                        0, 0, 0);
+            AssertState(HeapTupleIsValid(tuple));
+            attributeType =
+                    (((TypeTupleForm) GETSTRUCT(tuple))->typname).data;
+            /*
+             * check validity
+             *
+             */
+            if (checkAttrExists(attributeName, attributeType, inhSchema) ||
+                checkAttrExists(attributeName, attributeType, schema)) {
+                /*
+                 * this entry already exists
+                 */
+                continue;
+            }
+
+            /*
+             * add an entry to the schema
+             */
+            def = makeNode(ColumnDef);
+            typename = makeNode(TypeName);
+            def->colname = pstrdup(attributeName);
+            typename->name = pstrdup(attributeType);
+            def->typename = typename;
+            partialResult = lcons(def, partialResult);
+        }
+
+        /*
+         * iteration cleanup and result collection
+         */
+        heap_close(relation);
+
+        /*
+         * wants the inherited schema to appear in the order they are
+         * specified in CREATE TABLE
+         */
+        inhSchema = nconc(inhSchema, partialResult);
     }
 
     /*
      * put the inherited schema before our the schema for this table
      */
     schema = nconc(inhSchema, schema);
-    
+
     return (schema);
 }
 
@@ -346,65 +345,64 @@ MergeAttributes(List *schema, List *supers)
  *	Updates the system catalogs with proper inheritance information.
  */
 static void
-StoreCatalogInheritance(Oid relationId, List *supers)
-{
-    Relation	relation;
-    TupleDesc	desc;
-    int16	seqNumber;
-    List	*entry;
-    List	*idList;
-    HeapTuple	tuple;
-    
+StoreCatalogInheritance(Oid relationId, List *supers) {
+    Relation relation;
+    TupleDesc desc;
+    int16 seqNumber;
+    List *entry;
+    List *idList;
+    HeapTuple tuple;
+
     /* ----------------
      *	sanity checks
      * ----------------
      */
     AssertArg(OidIsValid(relationId));
-    
-    if (supers==NIL)
-	return;
-    
+
+    if (supers == NIL)
+        return;
+
     /* ----------------
      * Catalog INHERITS information.
      * ----------------
      */
-    relation = heap_openr( InheritsRelationName );
+    relation = heap_openr(InheritsRelationName);
     desc = RelationGetTupleDescriptor(relation);
 
     seqNumber = 1;
     idList = NIL;
     foreach (entry, supers) {
-	Datum		datum[ Natts_pg_inherits ];
-	char		nullarr[ Natts_pg_inherits ];
-	
-	tuple = SearchSysCacheTuple(RELNAME, 
-				    PointerGetDatum(strVal(lfirst(entry))),
-				    0,0,0);
-	AssertArg(HeapTupleIsValid(tuple));
-	
-	/*
-	 * build idList for use below
-	 */
-	idList = lappendi(idList, tuple->t_oid);
-	
-	datum[0] = ObjectIdGetDatum(relationId);	/* inhrel */
-	datum[1] = ObjectIdGetDatum(tuple->t_oid);	/* inhparent */
-	datum[2] = Int16GetDatum(seqNumber);		/* inhseqno */
-	
-	nullarr[0] = ' ';
-	nullarr[1] = ' ';
-	nullarr[2] = ' ';
-	
-	tuple = heap_formtuple(desc,datum, nullarr);
-	
-	(void) heap_insert(relation, tuple);
-	pfree(tuple);
-	
-	seqNumber += 1;
+        Datum datum[Natts_pg_inherits];
+        char nullarr[Natts_pg_inherits];
+
+        tuple = SearchSysCacheTuple(RELNAME,
+                                    PointerGetDatum(strVal(lfirst(entry))),
+                                    0, 0, 0);
+        AssertArg(HeapTupleIsValid(tuple));
+
+        /*
+         * build idList for use below
+         */
+        idList = lappendi(idList, tuple->t_oid);
+
+        datum[0] = ObjectIdGetDatum(relationId);    /* inhrel */
+        datum[1] = ObjectIdGetDatum(tuple->t_oid);    /* inhparent */
+        datum[2] = Int16GetDatum(seqNumber);        /* inhseqno */
+
+        nullarr[0] = ' ';
+        nullarr[1] = ' ';
+        nullarr[2] = ' ';
+
+        tuple = heap_formtuple(desc, datum, nullarr);
+
+        (void) heap_insert(relation, tuple);
+        pfree(tuple);
+
+        seqNumber += 1;
     }
-    
+
     heap_close(relation);
-    
+
     /* ----------------
      * Catalog IPL information.
      *
@@ -415,100 +413,100 @@ StoreCatalogInheritance(Oid relationId, List *supers)
      *	4. store result.
      * ----------------
      */
-    
+
     /* ----------------
      *	1.
      * ----------------
      */
     foreach (entry, idList) {
-	HeapTuple		tuple;
-	Oid			id;
-	int16			number;
-	List			*next;
-	List			*current;
-	
-	id = (Oid)lfirsti(entry);
-	current = entry;
-	next = lnext(entry);
-	
-	for (number = 1; ; number += 1) {
-	    tuple = SearchSysCacheTuple(INHRELID,
-					ObjectIdGetDatum(id),
-					Int16GetDatum(number),
-					0,0);
-	    
-	    if (! HeapTupleIsValid(tuple))
-		break;
-	    
-	    lnext(current) =
-		lconsi(((InheritsTupleForm)
-			 GETSTRUCT(tuple))->inhparent,
-			NIL);
-	    
-	    current = lnext(current);
-	}
-	lnext(current) = next;
+        HeapTuple tuple;
+        Oid id;
+        int16 number;
+        List *next;
+        List *current;
+
+        id = (Oid) lfirsti(entry);
+        current = entry;
+        next = lnext(entry);
+
+        for (number = 1;; number += 1) {
+            tuple = SearchSysCacheTuple(INHRELID,
+                                        ObjectIdGetDatum(id),
+                                        Int16GetDatum(number),
+                                        0, 0);
+
+            if (!HeapTupleIsValid(tuple))
+                break;
+
+            lnext(current) =
+                    lconsi(((InheritsTupleForm)
+                            GETSTRUCT(tuple))->inhparent,
+                           NIL);
+
+            current = lnext(current);
+        }
+        lnext(current) = next;
     }
-    
+
     /* ----------------
      *	2.
      * ----------------
      */
     foreach (entry, idList) {
-	Oid		name;
-	List		*rest;
-	bool		found = false;
-	
-    again:
-	name = lfirsti(entry);
-	foreach (rest, lnext(entry)) {
-	    if (name == lfirsti(rest)) {
-		found = true;
-		break;
-	    }
-	}
-	if (found) {
-	    /*
-	     * entry list must be of length >= 2 or else no match
-	     *
-	     * so, remove this entry.
-	     */
-	    lfirst(entry) = lfirst(lnext(entry));
-	    lnext(entry) = lnext(lnext(entry));
-	    
-	    found = false;
-	    goto again;
-	}
+        Oid name;
+        List *rest;
+        bool found = false;
+
+        again:
+        name = lfirsti(entry);
+        foreach (rest, lnext(entry)) {
+            if (name == lfirsti(rest)) {
+                found = true;
+                break;
+            }
+        }
+        if (found) {
+            /*
+             * entry list must be of length >= 2 or else no match
+             *
+             * so, remove this entry.
+             */
+            lfirst(entry) = lfirst(lnext(entry));
+            lnext(entry) = lnext(lnext(entry));
+
+            found = false;
+            goto again;
+        }
     }
-    
+
     /* ----------------
      *	3.
      * ----------------
      */
-    relation = heap_openr( InheritancePrecidenceListRelationName );
+    relation = heap_openr(InheritancePrecidenceListRelationName);
     desc = RelationGetTupleDescriptor(relation);
-    
+
     seqNumber = 1;
-    
+
     foreach (entry, idList) {
-	Datum	datum[ Natts_pg_ipl ];
-	char	nullarr[ Natts_pg_ipl ];
-	
-	datum[0] = ObjectIdGetDatum(relationId);	/* iplrel */
-	datum[1] = ObjectIdGetDatum(lfirsti(entry));
-	/*iplinherits*/
-	datum[2] = Int16GetDatum(seqNumber);		/* iplseqno */
-	
-	nullarr[0] = ' ';
-	nullarr[1] = ' ';
-	nullarr[2] = ' ';
-	
-	tuple = heap_formtuple( desc, datum, nullarr);
-	
-	(void) heap_insert(relation, tuple);
-	pfree(tuple);
-	
-	seqNumber += 1;
+        Datum datum[Natts_pg_ipl];
+        char nullarr[Natts_pg_ipl];
+
+        datum[0] = ObjectIdGetDatum(relationId);    /* iplrel */
+        datum[1] = ObjectIdGetDatum(lfirsti(entry));
+        /*iplinherits*/
+        datum[2] = Int16GetDatum(seqNumber);        /* iplseqno */
+
+        nullarr[0] = ' ';
+        nullarr[1] = ' ';
+        nullarr[2] = ' ';
+
+        tuple = heap_formtuple(desc, datum, nullarr);
+
+        (void) heap_insert(relation, tuple);
+        pfree(tuple);
+
+        seqNumber += 1;
     }
 
     heap_close(relation);
@@ -518,23 +516,22 @@ StoreCatalogInheritance(Oid relationId, List *supers)
  * returns 1 if attribute already exists in schema, 0 otherwise.
  */
 static int
-checkAttrExists(char *attributeName, char *attributeType, List *schema)
-{
+checkAttrExists(char *attributeName, char *attributeType, List *schema) {
     List *s;
 
     foreach (s, schema) {
-	ColumnDef *def = lfirst(s);
+        ColumnDef *def = lfirst(s);
 
-	if (!strcmp(attributeName, def->colname)) {
-	    /*
-	     * attribute exists. Make sure the types are the same.
-	     */
-	    if (strcmp(attributeType, def->typename->name) != 0) {
-		elog(WARN, "%s and %s conflict for %s",
-		     attributeType, def->typename->name, attributeName);
-	    }
-	    return 1;
-	}
+        if (!strcmp(attributeName, def->colname)) {
+            /*
+             * attribute exists. Make sure the types are the same.
+             */
+            if (strcmp(attributeType, def->typename->name) != 0) {
+                elog(WARN, "%s and %s conflict for %s",
+                     attributeType, def->typename->name, attributeName);
+            }
+            return 1;
+        }
     }
     return 0;
 }
@@ -546,9 +543,8 @@ checkAttrExists(char *attributeName, char *attributeType, List *schema)
 * the CALLER is responsible for freeing the memory allocated
  */
 
-char*
-MakeArchiveName(Oid relationId)
-{
+char *
+MakeArchiveName(Oid relationId) {
     char *arch;
 
     /*
@@ -556,8 +552,8 @@ MakeArchiveName(Oid relationId)
      *  of the relation they archive.  Create a string containing
      *  this name and find the reldesc for the archive relation.
      */
-    arch = palloc(NAMEDATALEN); 
-    sprintf(arch, "a,%d",relationId);
+    arch = palloc(NAMEDATALEN);
+    sprintf(arch, "a,%d", relationId);
 
     return arch;
 }

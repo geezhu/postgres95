@@ -17,20 +17,20 @@ execute_process(
 )
 
 execute_process(
-    COMMAND flex bootscanner.l
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND flex bootscanner.l
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 execute_process(
-    COMMAND bash -c "sed -f boot.sed < lex.yy.c > bootscanner.c"
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND bash -c "sed -f boot.sed < lex.yy.c > bootscanner.c"
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 execute_process(
-    COMMAND rm -f lex.yy.c
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMAND rm -f lex.yy.c
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 execute_process(
-        COMMAND mv ${CMAKE_CURRENT_SOURCE_DIR}/bootstrap_tokens.h  ${CMAKE_SOURCE_DIR}/include/bootstrap/bootstrap_tokens.h
+        COMMAND mv ${CMAKE_CURRENT_SOURCE_DIR}/bootstrap_tokens.h ${CMAKE_SOURCE_DIR}/include/bootstrap/bootstrap_tokens.h
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 

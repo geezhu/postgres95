@@ -37,24 +37,23 @@
 
 
 Expr *
-make_clause(int type, Node *oper, List *args)
-{
+make_clause(int type, Node *oper, List *args) {
     if (type == AND_EXPR || type == OR_EXPR || type == NOT_EXPR ||
-	type == OP_EXPR || type == FUNC_EXPR) {
-	Expr *expr = makeNode(Expr);
+        type == OP_EXPR || type == FUNC_EXPR) {
+        Expr *expr = makeNode(Expr);
 
-	/*
-	 * assume type checking already done and we don't need the type of
-	 * the expr any more.
-	 */
-	expr->typeOid = InvalidOid;
-	expr->opType = type;
-	expr->oper = oper;	/* ignored for AND, OR, NOT */
-	expr->args = args;
-	return expr;
-    }else {
-	/* will this ever happen? translated from lispy C code - ay 10/94 */
-	return((Expr*)args);
+        /*
+         * assume type checking already done and we don't need the type of
+         * the expr any more.
+         */
+        expr->typeOid = InvalidOid;
+        expr->opType = type;
+        expr->oper = oper;    /* ignored for AND, OR, NOT */
+        expr->args = args;
+        return expr;
+    } else {
+        /* will this ever happen? translated from lispy C code - ay 10/94 */
+        return ((Expr *) args);
     }
 }
 
@@ -75,11 +74,10 @@ make_clause(int type, Node *oper, List *args)
  *						- ay 10/94.]
  */
 bool
-is_opclause(Node *clause)
-{
-    return 
-	(clause!=NULL &&
-	 nodeTag(clause)==T_Expr && ((Expr*)clause)->opType==OP_EXPR);
+is_opclause(Node *clause) {
+    return
+            (clause != NULL &&
+             nodeTag(clause) == T_Expr && ((Expr *) clause)->opType == OP_EXPR);
 }
 
 /*    
@@ -89,13 +87,12 @@ is_opclause(Node *clause)
  *    
  */
 Expr *
-make_opclause(Oper *op, Var *leftop, Var *rightop)
-{
+make_opclause(Oper *op, Var *leftop, Var *rightop) {
     Expr *expr = makeNode(Expr);
 
-    expr->typeOid = InvalidOid;	/* assume type checking done */
+    expr->typeOid = InvalidOid;    /* assume type checking done */
     expr->opType = OP_EXPR;
-    expr->oper = (Node*)op;
+    expr->oper = (Node *) op;
     expr->args = makeList(leftop, rightop, -1);
     return expr;
 }
@@ -108,12 +105,11 @@ make_opclause(Oper *op, Var *leftop, Var *rightop)
  * NB: it is assumed (for now) that all expr must be Var nodes    
  */
 Var *
-get_leftop(Expr *clause)
-{
-    if (clause->args!=NULL)
-	return(lfirst(clause->args));
+get_leftop(Expr *clause) {
+    if (clause->args != NULL)
+        return (lfirst(clause->args));
     else
-	return NULL;
+        return NULL;
 }
 
 /*    
@@ -123,12 +119,11 @@ get_leftop(Expr *clause)
  *    
  */
 Var *
-get_rightop(Expr *clause)
-{
-    if (clause->args!=NULL && lnext(clause->args)!=NULL)
-	return (lfirst(lnext(clause->args)));
+get_rightop(Expr *clause) {
+    if (clause->args != NULL && lnext(clause->args) != NULL)
+        return (lfirst(lnext(clause->args)));
     else
-	return NULL;
+        return NULL;
 }
 
 /*****************************************************************************
@@ -136,10 +131,9 @@ get_rightop(Expr *clause)
  *****************************************************************************/
 
 bool
-agg_clause(Node *clause)
-{
+agg_clause(Node *clause) {
     return
-	(clause!=NULL && nodeTag(clause)==T_Aggreg);
+            (clause != NULL && nodeTag(clause) == T_Aggreg);
 }
 
 /*****************************************************************************
@@ -153,11 +147,10 @@ agg_clause(Node *clause)
  *    
  */
 bool
-is_funcclause(Node *clause)
-{
+is_funcclause(Node *clause) {
     return
-	(clause!=NULL &&
-	 nodeTag(clause)==T_Expr && ((Expr*)clause)->opType==FUNC_EXPR);
+            (clause != NULL &&
+             nodeTag(clause) == T_Expr && ((Expr *) clause)->opType == FUNC_EXPR);
 }
 
 /*    
@@ -168,13 +161,12 @@ is_funcclause(Node *clause)
  *    
  */
 Expr *
-make_funcclause(Func *func, List *funcargs)
-{
+make_funcclause(Func *func, List *funcargs) {
     Expr *expr = makeNode(Expr);
 
-    expr->typeOid = InvalidOid;	/* assume type checking done */
+    expr->typeOid = InvalidOid;    /* assume type checking done */
     expr->opType = FUNC_EXPR;
-    expr->oper = (Node*)func;
+    expr->oper = (Node *) func;
     expr->args = funcargs;
     return expr;
 }
@@ -190,11 +182,10 @@ make_funcclause(Func *func, List *funcargs)
  *    
  */
 bool
-or_clause(Node *clause)
-{
+or_clause(Node *clause) {
     return
-	(clause!=NULL &&
-	 nodeTag(clause)==T_Expr && ((Expr*)clause)->opType==OR_EXPR);
+            (clause != NULL &&
+             nodeTag(clause) == T_Expr && ((Expr *) clause)->opType == OR_EXPR);
 }
 
 /*    
@@ -204,11 +195,10 @@ or_clause(Node *clause)
  *    
  */
 Expr *
-make_orclause(List *orclauses)
-{
+make_orclause(List *orclauses) {
     Expr *expr = makeNode(Expr);
 
-    expr->typeOid = InvalidOid;	/* assume type checking done */
+    expr->typeOid = InvalidOid;    /* assume type checking done */
     expr->opType = OR_EXPR;
     expr->oper = NULL;
     expr->args = orclauses;
@@ -226,11 +216,10 @@ make_orclause(List *orclauses)
  *    
  */
 bool
-not_clause(Node *clause)
-{
+not_clause(Node *clause) {
     return
-	(clause!=NULL &&
-	 nodeTag(clause)==T_Expr && ((Expr*)clause)->opType == NOT_EXPR);
+            (clause != NULL &&
+             nodeTag(clause) == T_Expr && ((Expr *) clause)->opType == NOT_EXPR);
 }
 
 /*    
@@ -240,11 +229,10 @@ not_clause(Node *clause)
  *    
  */
 Expr *
-make_notclause(Expr *notclause)
-{
+make_notclause(Expr *notclause) {
     Expr *expr = makeNode(Expr);
 
-    expr->typeOid = InvalidOid;	/* assume type checking done */
+    expr->typeOid = InvalidOid;    /* assume type checking done */
     expr->opType = NOT_EXPR;
     expr->oper = NULL;
     expr->args = lcons(notclause, NIL);
@@ -258,9 +246,8 @@ make_notclause(Expr *notclause)
  *    
  */
 Expr *
-get_notclausearg(Expr *notclause)
-{
-     return(lfirst(notclause->args));
+get_notclausearg(Expr *notclause) {
+    return (lfirst(notclause->args));
 }
 
 /*****************************************************************************
@@ -275,12 +262,12 @@ get_notclausearg(Expr *notclause)
  *    
  */
 bool
-and_clause(Node *clause)
-{
+and_clause(Node *clause) {
     return
-	(clause!=NULL &&
-	 nodeTag(clause)==T_Expr && ((Expr*)clause)->opType == AND_EXPR);
+            (clause != NULL &&
+             nodeTag(clause) == T_Expr && ((Expr *) clause)->opType == AND_EXPR);
 }
+
 /*    		 
  * make_andclause--
  *    
@@ -288,11 +275,10 @@ and_clause(Node *clause)
  *    
  */
 Expr *
-make_andclause(List *andclauses)
-{
+make_andclause(List *andclauses) {
     Expr *expr = makeNode(Expr);
 
-    expr->typeOid = InvalidOid;	/* assume type checking done */
+    expr->typeOid = InvalidOid;    /* assume type checking done */
     expr->opType = AND_EXPR;
     expr->oper = NULL;
     expr->args = andclauses;
@@ -316,18 +302,17 @@ make_andclause(List *andclauses)
  *    
  */
 List *
-pull_constant_clauses(List *quals, List **constantQual)
-{
+pull_constant_clauses(List *quals, List **constantQual) {
     List *q;
-    List *constqual=NIL;
-    List *restqual=NIL;
+    List *constqual = NIL;
+    List *restqual = NIL;
 
     foreach(q, quals) {
-	if (!contain_var_clause(lfirst(q))) {
-	    constqual = lcons(lfirst(q), constqual);
-	}else {
-	    restqual = lcons(lfirst(q), restqual);
-	}
+        if (!contain_var_clause(lfirst(q))) {
+            constqual = lcons(lfirst(q), constqual);
+        } else {
+            restqual = lcons(lfirst(q), restqual);
+        }
     }
     freeList(quals);
     *constantQual = constqual;
@@ -347,20 +332,19 @@ pull_constant_clauses(List *quals, List **constantQual)
  *    
  */
 void
-clause_relids_vars(Node *clause, List **relids, List **vars)
-{
+clause_relids_vars(Node *clause, List **relids, List **vars) {
     List *clvars = pull_var_clause(clause);
     List *var_list = NIL;
     List *varno_list = NIL;
     List *i = NIL;
 
     foreach (i, clvars) {
-	Var *var = (Var *)lfirst(i);
+        Var *var = (Var *) lfirst(i);
 
-	if (!intMember(var->varno, varno_list)) {
-	    varno_list = lappendi(varno_list, var->varno);
-	    var_list = lappend(var_list, var);
-	}
+        if (!intMember(var->varno, varno_list)) {
+            varno_list = lappendi(varno_list, var->varno);
+            var_list = lappend(var_list, var);
+        }
     }
 
     *relids = varno_list;
@@ -375,21 +359,20 @@ clause_relids_vars(Node *clause, List **relids, List **vars)
  * Returns the number of different relations referenced in 'clause'.
  */
 int
-NumRelids(Node *clause)
-{
+NumRelids(Node *clause) {
     List *vars = pull_var_clause(clause);
     List *i = NIL;
     List *var_list = NIL;
 
     foreach (i, vars) {
-	Var *var = (Var *)lfirst(i);
+        Var *var = (Var *) lfirst(i);
 
-	if (!intMember(var->varno, var_list)) {
-	    var_list = lconsi(var->varno, var_list);
-	}
+        if (!intMember(var->varno, var_list)) {
+            var_list = lconsi(var->varno, var_list);
+        }
     }
 
-    return(length(var_list));
+    return (length(var_list));
 }
 
 /*    
@@ -400,23 +383,22 @@ NumRelids(Node *clause)
  *    
  */
 bool
-contains_not(Node *clause)
-{
+contains_not(Node *clause) {
     if (single_node(clause))
-	return (false);
+        return (false);
 
     if (not_clause(clause))
-	return (true);
+        return (true);
 
     if (or_clause(clause)) {
-	List *a;
-	foreach(a, ((Expr*)clause)->args) {
-	    if (contains_not(lfirst(a)))
-		return (true);
-	}
+        List *a;
+        foreach(a, ((Expr *) clause)->args) {
+            if (contains_not(lfirst(a)))
+                return (true);
+        }
     }
-	
-    return(false);
+
+    return (false);
 }
 
 /*    
@@ -426,30 +408,29 @@ contains_not(Node *clause)
  *    
  */
 bool
-join_clause_p(Node *clause)
-{
+join_clause_p(Node *clause) {
     Node *leftop, *rightop;
 
     if (!is_opclause(clause))
-	return false;
+        return false;
 
-    leftop = (Node*)get_leftop((Expr*)clause);
-    rightop = (Node*)get_rightop((Expr*)clause);
+    leftop = (Node *) get_leftop((Expr *) clause);
+    rightop = (Node *) get_rightop((Expr *) clause);
 
     /*
      * One side of the clause (i.e. left or right operands)
      * must either be a var node ...
      */
-    if (IsA(leftop,Var) || IsA(rightop,Var))
-	return true;
+    if (IsA(leftop, Var) || IsA(rightop, Var))
+        return true;
 
     /*
      * ... or a func node.
      */
     if (is_funcclause(leftop) || is_funcclause(rightop))
-	return(true);
+        return (true);
 
-    return(false);
+    return (false);
 }
 
 /*    
@@ -459,22 +440,18 @@ join_clause_p(Node *clause)
  *    
  */
 bool
-qual_clause_p(Node *clause)
-{
+qual_clause_p(Node *clause) {
     if (!is_opclause(clause))
-	return false;
+        return false;
 
-    if (IsA (get_leftop((Expr*)clause),Var) &&
-	IsA (get_rightop((Expr*)clause),Const))
-	{
-	    return(true);
-	}
-    else if (IsA (get_rightop((Expr*)clause),Var) &&
-	     IsA (get_leftop((Expr*)clause),Const))
-	{
-	    return(true);
-	}
-    return(false);
+    if (IsA (get_leftop((Expr *) clause), Var) &&
+        IsA (get_rightop((Expr *) clause), Const)) {
+        return (true);
+    } else if (IsA (get_rightop((Expr *) clause), Var) &&
+               IsA (get_leftop((Expr *) clause), Const)) {
+        return (true);
+    }
+    return (false);
 }
 
 /*    
@@ -485,32 +462,25 @@ qual_clause_p(Node *clause)
  *    
  */
 void
-fix_opid(Node *clause)
-{
-    if (clause==NULL || single_node(clause)) {
-	;
-    } 
-    else if (or_clause (clause)) {
-	fix_opids(((Expr*)clause)->args);
-    } 
-    else if (is_funcclause (clause)) {
-	fix_opids(((Expr*)clause)->args);
-    } 
-    else if (IsA(clause,ArrayRef)) {
-	ArrayRef *aref = (ArrayRef *)clause;
-	
-	fix_opids(aref->refupperindexpr);
-	fix_opids(aref->reflowerindexpr);
-	fix_opid(aref->refexpr);
-	fix_opid(aref->refassgnexpr);
-    }
-    else if (not_clause(clause)) {
-	fix_opid((Node*)get_notclausearg((Expr*)clause));
-    } 
-    else if (is_opclause (clause)) {
-	replace_opid((Oper*)((Expr*)clause)->oper);
-	fix_opid((Node*)get_leftop((Expr*)clause));
-	fix_opid((Node*)get_rightop((Expr*)clause));
+fix_opid(Node *clause) {
+    if (clause == NULL || single_node(clause)) { ;
+    } else if (or_clause(clause)) {
+        fix_opids(((Expr *) clause)->args);
+    } else if (is_funcclause(clause)) {
+        fix_opids(((Expr *) clause)->args);
+    } else if (IsA(clause, ArrayRef)) {
+        ArrayRef *aref = (ArrayRef *) clause;
+
+        fix_opids(aref->refupperindexpr);
+        fix_opids(aref->reflowerindexpr);
+        fix_opid(aref->refexpr);
+        fix_opid(aref->refassgnexpr);
+    } else if (not_clause(clause)) {
+        fix_opid((Node *) get_notclausearg((Expr *) clause));
+    } else if (is_opclause(clause)) {
+        replace_opid((Oper *) ((Expr *) clause)->oper);
+        fix_opid((Node *) get_leftop((Expr *) clause));
+        fix_opid((Node *) get_rightop((Expr *) clause));
     }
 
 }
@@ -523,14 +493,12 @@ fix_opid(Node *clause)
  *    
  */
 List *
-fix_opids(List *clauses)
-{
+fix_opids(List *clauses) {
     List *clause;
 
-    foreach(clause, clauses)
-	fix_opid(lfirst(clause));
+    foreach(clause, clauses) fix_opid(lfirst(clause));
 
-    return(clauses);
+    return (clauses);
 }
 
 /*    
@@ -559,85 +527,84 @@ fix_opids(List *clauses)
  */
 void
 get_relattval(Node *clause,
-	      int *relid,
-	      AttrNumber *attno,
-	      Datum *constval,
-	      int *flag)
-{
-    Var *left = get_leftop((Expr*)clause);
-    Var *right = get_rightop((Expr*)clause);
-    
-    if(is_opclause(clause) && IsA(left,Var) && 
-       IsA(right,Const)) {
+              int *relid,
+              AttrNumber *attno,
+              Datum *constval,
+              int *flag) {
+    Var *left = get_leftop((Expr *) clause);
+    Var *right = get_rightop((Expr *) clause);
 
-	if(right!=NULL) {
+    if (is_opclause(clause) && IsA(left, Var) &&
+        IsA(right, Const)) {
 
-	    *relid = left->varno;
-	    *attno = left->varattno;
-	    *constval = ((Const *)right)->constvalue;
-	    *flag = (_SELEC_CONSTANT_RIGHT_ | _SELEC_IS_CONSTANT_);
+        if (right != NULL) {
 
-	} else {
+            *relid = left->varno;
+            *attno = left->varattno;
+            *constval = ((Const *) right)->constvalue;
+            *flag = (_SELEC_CONSTANT_RIGHT_ | _SELEC_IS_CONSTANT_);
 
-	    *relid = left->varno;
-	    *attno = left->varattno;
-	    *constval = 0;
-	    *flag = (_SELEC_CONSTANT_RIGHT_ | _SELEC_NOT_CONSTANT_);
-	
-	} 
-    }else if (is_opclause(clause) &&
-	      is_funcclause((Node*)left) &&
-	      IsA(right,Const)) {
-	List *args = ((Expr*)left)->args;
+        } else {
 
+            *relid = left->varno;
+            *attno = left->varattno;
+            *constval = 0;
+            *flag = (_SELEC_CONSTANT_RIGHT_ | _SELEC_NOT_CONSTANT_);
 
-	*relid = ((Var*)lfirst(args))->varno;
-	*attno = InvalidAttrNumber;
-	*constval = ((Const*)right)->constvalue;
-	*flag = (_SELEC_CONSTANT_RIGHT_ | _SELEC_IS_CONSTANT_);
-    
-	/*
-	 * XXX both of these func clause handling if's seem wrong to me.
-	 *     they assume that the first argument is the Var.  It could
-	 *     not handle (for example) f(1, emp.name).  I think I may have
-	 *     been assuming no constants in functional index scans when I
-	 *     implemented this originally (still currently true).
-	 *     -mer 10 Aug 1992
-	 */
+        }
     } else if (is_opclause(clause) &&
-	     is_funcclause((Node*)right) &&
-	       IsA(left,Const)) {
-	List *args = ((Expr*)right)->args;
+               is_funcclause((Node *) left) &&
+               IsA(right, Const)) {
+        List *args = ((Expr *) left)->args;
 
-	*relid = ((Var*)lfirst(args))->varno;
-	*attno = InvalidAttrNumber;
-	*constval = ((Const*)left)->constvalue;
-	*flag = ( _SELEC_IS_CONSTANT_);
-    
-    } else if (is_opclause (clause) && IsA (right,Var) &&
-	      IsA (left,Const)) {
-	if (left!=NULL) {
 
-	    *relid = right->varno;
-	    *attno = right->varattno;
-	    *constval = ((Const*)left)->constvalue;
-	    *flag = (_SELEC_IS_CONSTANT_);
-	} else {
+        *relid = ((Var *) lfirst(args))->varno;
+        *attno = InvalidAttrNumber;
+        *constval = ((Const *) right)->constvalue;
+        *flag = (_SELEC_CONSTANT_RIGHT_ | _SELEC_IS_CONSTANT_);
 
-	    *relid = right->varno;
-	    *attno = right->varattno;
-	    *constval = 0;
-	    *flag = (_SELEC_NOT_CONSTANT_);
-	} 
+        /*
+         * XXX both of these func clause handling if's seem wrong to me.
+         *     they assume that the first argument is the Var.  It could
+         *     not handle (for example) f(1, emp.name).  I think I may have
+         *     been assuming no constants in functional index scans when I
+         *     implemented this originally (still currently true).
+         *     -mer 10 Aug 1992
+         */
+    } else if (is_opclause(clause) &&
+               is_funcclause((Node *) right) &&
+               IsA(left, Const)) {
+        List *args = ((Expr *) right)->args;
+
+        *relid = ((Var *) lfirst(args))->varno;
+        *attno = InvalidAttrNumber;
+        *constval = ((Const *) left)->constvalue;
+        *flag = (_SELEC_IS_CONSTANT_);
+
+    } else if (is_opclause(clause) && IsA (right, Var) &&
+               IsA (left, Const)) {
+        if (left != NULL) {
+
+            *relid = right->varno;
+            *attno = right->varattno;
+            *constval = ((Const *) left)->constvalue;
+            *flag = (_SELEC_IS_CONSTANT_);
+        } else {
+
+            *relid = right->varno;
+            *attno = right->varattno;
+            *constval = 0;
+            *flag = (_SELEC_NOT_CONSTANT_);
+        }
     } else {
-	/* One or more of the operands are expressions 
-	 * (e.g., oper clauses)
-	 */
-	*relid = _SELEC_VALUE_UNKNOWN_;
-	*attno = _SELEC_VALUE_UNKNOWN_;
-	*constval = 0;
-	*flag = (_SELEC_NOT_CONSTANT_);
-    }		       
+        /* One or more of the operands are expressions 
+         * (e.g., oper clauses)
+         */
+        *relid = _SELEC_VALUE_UNKNOWN_;
+        *attno = _SELEC_VALUE_UNKNOWN_;
+        *constval = 0;
+        *flag = (_SELEC_NOT_CONSTANT_);
+    }
 }
 
 /*    
@@ -653,43 +620,42 @@ get_relattval(Node *clause,
  */
 void
 get_rels_atts(Node *clause,
-	      int *relid1,
-	      AttrNumber *attno1,
-	      int *relid2,
-	      AttrNumber *attno2)
-{
-    Var *left = get_leftop((Expr*)clause);
-    Var *right = get_rightop((Expr*)clause);
-    bool var_left = (IsA(left,Var));
-    bool var_right = (IsA(right,Var));
-    bool varexpr_left = (bool)((IsA(left,Func) || IsA (left,Oper)) &&
-			       contain_var_clause((Node*)left));
-    bool varexpr_right = (bool)(( IsA(right,Func) || IsA (right,Oper)) &&
-				contain_var_clause((Node*)right));
-    
+              int *relid1,
+              AttrNumber *attno1,
+              int *relid2,
+              AttrNumber *attno2) {
+    Var *left = get_leftop((Expr *) clause);
+    Var *right = get_rightop((Expr *) clause);
+    bool var_left = (IsA(left, Var));
+    bool var_right = (IsA(right, Var));
+    bool varexpr_left = (bool) ((IsA(left, Func) || IsA (left, Oper)) &&
+                                contain_var_clause((Node *) left));
+    bool varexpr_right = (bool) ((IsA(right, Func) || IsA (right, Oper)) &&
+                                 contain_var_clause((Node *) right));
+
     if (is_opclause(clause)) {
-	if(var_left && var_right) {
+        if (var_left && var_right) {
 
-	    *relid1 = left->varno;
-	    *attno1 = left->varoattno;
-	    *relid2 = right->varno;
-	    *attno2 = right->varoattno;
-	    return;
-	} else if (var_left && varexpr_right ) {
+            *relid1 = left->varno;
+            *attno1 = left->varoattno;
+            *relid2 = right->varno;
+            *attno2 = right->varoattno;
+            return;
+        } else if (var_left && varexpr_right) {
 
-	    *relid1 = left->varno;
-	    *attno1 = left->varoattno;
-	    *relid2 = _SELEC_VALUE_UNKNOWN_;
-	    *attno2 = _SELEC_VALUE_UNKNOWN_;
-	    return;
-	} else if (varexpr_left && var_right) {
+            *relid1 = left->varno;
+            *attno1 = left->varoattno;
+            *relid2 = _SELEC_VALUE_UNKNOWN_;
+            *attno2 = _SELEC_VALUE_UNKNOWN_;
+            return;
+        } else if (varexpr_left && var_right) {
 
-	    *relid1 = _SELEC_VALUE_UNKNOWN_;
-	    *attno1 = _SELEC_VALUE_UNKNOWN_;
-	    *relid2 = right->varno;
-	    *attno2 = right->varoattno;
-	    return;
-	}
+            *relid1 = _SELEC_VALUE_UNKNOWN_;
+            *attno1 = _SELEC_VALUE_UNKNOWN_;
+            *relid2 = right->varno;
+            *attno2 = right->varoattno;
+            return;
+        }
     }
 
     *relid1 = _SELEC_VALUE_UNKNOWN_;
@@ -700,37 +666,36 @@ get_rels_atts(Node *clause,
 }
 
 void
-CommuteClause(Node *clause)
-{
+CommuteClause(Node *clause) {
     Node *temp;
     Oper *commu;
     OperatorTupleForm commuTup;
     HeapTuple heapTup;
 
     if (!is_opclause(clause))
-	return;
+        return;
 
     heapTup = (HeapTuple)
-	get_operator_tuple(get_commutator(((Oper*)((Expr*)clause)->oper)->opno));
+            get_operator_tuple(get_commutator(((Oper *) ((Expr *) clause)->oper)->opno));
 
-    if (heapTup == (HeapTuple)NULL)
-	return;
+    if (heapTup == (HeapTuple) NULL)
+        return;
 
-    commuTup = (OperatorTupleForm)GETSTRUCT(heapTup);
+    commuTup = (OperatorTupleForm) GETSTRUCT(heapTup);
 
     commu = makeOper(heapTup->t_oid,
-		     InvalidOid,
-		     commuTup->oprresult,
-		     ((Oper*)((Expr*)clause)->oper)->opsize,
-		     NULL);
+                     InvalidOid,
+                     commuTup->oprresult,
+                     ((Oper *) ((Expr *) clause)->oper)->opsize,
+                     NULL);
 
     /*
      * reform the clause -> (operator func/var constant)
      */
-    ((Expr*)clause)->oper = (Node*)commu;
-    temp = lfirst(((Expr*)clause)->args);
-    lfirst(((Expr*)clause)->args) = lsecond(((Expr*)clause)->args);
-    lsecond(((Expr*)clause)->args) = temp;
+    ((Expr *) clause)->oper = (Node *) commu;
+    temp = lfirst(((Expr *) clause)->args);
+    lfirst(((Expr *) clause)->args) = lsecond(((Expr *) clause)->args);
+    lsecond(((Expr *) clause)->args) = temp;
 }
 
 

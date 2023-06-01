@@ -10,9 +10,9 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	REWRITEDEFINE_H
-#define	REWRITEDEFINE_H
+#ifndef    REWRITEDEFINE_H
+#define    REWRITEDEFINE_H
 
-extern void DefineQueryRewrite(RuleStmt *args); 
+extern void DefineQueryRewrite(RuleStmt *args);
 
-#endif	/* REWRITEDEFINE_H */
+#endif    /* REWRITEDEFINE_H */

@@ -27,8 +27,8 @@
 #include "nodes/plannodes.h"
 #include "parser/parsetree.h"
 #include "nodes/relation.h"
-#include "catalog/pg_index.h"	/* for INDEX_MAX_KEYS */
-#include "utils/syscache.h"	/* for SearchSysCacheGetAttribute, etc. */
+#include "catalog/pg_index.h"    /* for INDEX_MAX_KEYS */
+#include "utils/syscache.h"    /* for SearchSysCacheGetAttribute, etc. */
 
 /*
  *    	System-dependent tuning constants
@@ -46,12 +46,12 @@
 
 /*     The cost of sequentially scanning a materialized temporary relation
  */
-#define _TEMP_SCAN_COST_ 	10
+#define _TEMP_SCAN_COST_    10
 
 /*     The number of pages and tuples in a materialized relation
  */
-#define _TEMP_RELATION_PAGES_ 		1
-#define _TEMP_RELATION_TUPLES_ 	10
+#define _TEMP_RELATION_PAGES_        1
+#define _TEMP_RELATION_TUPLES_    10
 
 /*     The length of a variable-length field in bytes
  */
@@ -82,11 +82,11 @@
 
 #define TOLERANCE 0.000001
 
-#define FLOAT_EQUAL(X,Y) ((X) - (Y) < TOLERANCE)
+#define FLOAT_EQUAL(X, Y) ((X) - (Y) < TOLERANCE)
 #define FLOAT_IS_ZERO(X) (FLOAT_EQUAL(X,0.0))
 
 extern int BushyPlanFlag;
 /* #define deactivate_joininfo(joininfo)	joininfo->inactive=true*/
 /*#define joininfo_inactive(joininfo)	joininfo->inactive */
 
-#endif	/* INTERNAL_H */
+#endif    /* INTERNAL_H */

@@ -164,8 +164,8 @@
  *	      only as necessary -cim 10/26/89
  * ----------------------------------------------------------------
  */
-#define T_OR_F(b)  		(b ? "true" : "false")
-#define NULL_OR_TUPLE(slot) 	(TupIsNull(slot) ? "null" : "a tuple")
+#define T_OR_F(b)        (b ? "true" : "false")
+#define NULL_OR_TUPLE(slot)    (TupIsNull(slot) ? "null" : "a tuple")
 
 
 /* #define EXEC_TUPLECOUNT - XXX take out for now for executor stubbing -- jolly*/
@@ -192,10 +192,10 @@ extern int     NIndexTupleInserted;
 #define IncrIndexInserted()	NIndexTupleInserted++
 #else
 #define IncrRetrieved()
-#define	IncrAppended()
-#define	IncrDeleted()
-#define	IncrReplaced()
-#define	IncrInserted()
+#define    IncrAppended()
+#define    IncrDeleted()
+#define    IncrReplaced()
+#define    IncrInserted()
 #define IncrProcessed()
 #define IncrIndexProcessed()
 #define IncrIndexInserted()
@@ -209,8 +209,8 @@ extern int     NIndexTupleInserted;
 #define CXT_printf(s)			printf(s)
 #define CXT1_printf(s, a)		printf(s, a)
 #else
-#define CXT_printf(s)		
-#define CXT1_printf(s, a)		
+#define CXT_printf(s)
+#define CXT1_printf(s, a)
 #endif /* EXEC_CONTEXTDEBUG */
 
 /* ----------------
@@ -223,10 +223,10 @@ extern int     NIndexTupleInserted;
 #define EU1_printf(s, a)		printf(s, a)
 #define EU4_printf(s, a, b, c, d)	printf(s, a, b, c, d)
 #else
-#define EU_nodeDisplay(l)		
-#define EU_printf(s)			
-#define EU1_printf(s, a)		
-#define EU4_printf(s, a, b, c, d)	
+#define EU_nodeDisplay(l)
+#define EU_printf(s)
+#define EU1_printf(s, a)
+#define EU4_printf(s, a, b, c, d)
 #endif /* EXEC_UTILSDEBUG */
 
 
@@ -241,10 +241,10 @@ extern int     NIndexTupleInserted;
 #define NL4_printf(s, a, b, c, d)	printf(s, a, b, c, d)
 #define ENL1_printf(message)		printf("ExecNestLoop: %s\n", message)
 #else
-#define NL_nodeDisplay(l)		
-#define NL_printf(s)			
-#define NL1_printf(s, a)		
-#define NL4_printf(s, a, b, c, d)	
+#define NL_nodeDisplay(l)
+#define NL_printf(s)
+#define NL1_printf(s, a)
+#define NL4_printf(s, a, b, c, d)
 #define ENL1_printf(message)
 #endif /* EXEC_NESTLOOPDEBUG */
 
@@ -256,8 +256,8 @@ extern int     NIndexTupleInserted;
 #define PN_printf(s)			printf(s)
 #define PN1_printf(s, p)		printf(s, p)
 #else
-#define PN_printf(s)		
-#define PN1_printf(s, p)	
+#define PN_printf(s)
+#define PN1_printf(s, p)
 #endif /* EXEC_PROCDEBUG */
 
 /* ----------------
@@ -270,10 +270,10 @@ extern int     NIndexTupleInserted;
 #define EV1_printf(s, a)		printf(s, a)
 #define EV5_printf(s, a, b, c, d, e)	printf(s, a, b, c, d, e)
 #else
-#define EV_nodeDisplay(l)		
-#define EV_printf(s)			
-#define EV1_printf(s, a)		
-#define EV5_printf(s, a, b, c, d, e)	
+#define EV_nodeDisplay(l)
+#define EV_printf(s)
+#define EV1_printf(s, a)
+#define EV5_printf(s, a, b, c, d, e)
 #endif /* EXEC_EVALDEBUG */
 
 /* ----------------
@@ -285,11 +285,11 @@ extern int     NIndexTupleInserted;
 #define S_printf(s)			printf(s)
 #define S1_printf(s, p)			printf(s, p)
 #else
-#define S_nodeDisplay(l)	
-#define S_printf(s)		
-#define S1_printf(s, p)		
+#define S_nodeDisplay(l)
+#define S_printf(s)
+#define S1_printf(s, p)
 #endif /*  EXEC_SCANDEBUG */
- 
+
 /* ----------------
  *	sort node debugging defines
  * ----------------
@@ -299,9 +299,9 @@ extern int     NIndexTupleInserted;
 #define SO_printf(s)			printf(s)
 #define SO1_printf(s, p)		printf(s, p)
 #else
-#define SO_nodeDisplay(l)	
-#define SO_printf(s)		
-#define SO1_printf(s, p)		
+#define SO_nodeDisplay(l)
+#define SO_printf(s)
+#define SO1_printf(s, p)
 #endif /* EXEC_SORTDEBUG */
 
 /* ----------------
@@ -317,19 +317,19 @@ extern int     NIndexTupleInserted;
 #define MJ_dump(context, state)		ExecMergeTupleDump(econtext, state)
 #define MJ_DEBUG_QUAL(clause, res) \
   MJ2_printf("  ExecQual(%s, econtext) returns %s\n", \
-	     CppAsString(clause), T_OR_F(res));
-	    
+         CppAsString(clause), T_OR_F(res));
+        
 #define MJ_DEBUG_MERGE_COMPARE(qual, res) \
   MJ2_printf("  MergeCompare(mergeclauses, %s, ..) returns %s\n", \
-	     CppAsString(qual), T_OR_F(res));
+         CppAsString(qual), T_OR_F(res));
 
 #define MJ_DEBUG_PROC_NODE(slot) \
   MJ2_printf("  %s = ExecProcNode(innerPlan) returns %s\n", \
-	     CppAsString(slot), NULL_OR_TUPLE(slot));
+         CppAsString(slot), NULL_OR_TUPLE(slot));
 #else
 #define MJ_nodeDisplay(l)
-#define MJ_printf(s)		
-#define MJ1_printf(s, p)		
+#define MJ_printf(s)
+#define MJ1_printf(s, p)
 #define MJ2_printf(s, p1, p2)
 #define MJ_debugtup(tuple, type)
 #define MJ_dump(context, state)

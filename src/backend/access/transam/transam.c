@@ -17,7 +17,7 @@
  */
 #include "postgres.h"
 
-#include "machine.h"		/* in port/ directory (needed for BLCKSZ) */
+#include "machine.h"        /* in port/ directory (needed for BLCKSZ) */
 
 #include "access/heapam.h"
 #include "storage/buf.h"
@@ -33,7 +33,7 @@
 
 #include "access/transam.h"
 #include "access/xact.h"
-#include "commands/vacuum.h"	/* for VacuumRunning */
+#include "commands/vacuum.h"    /* for VacuumRunning */
 
 /* ----------------
  *    global variables holding pointers to relations used
@@ -42,18 +42,18 @@
  * ----------------
  */
 
-Relation LogRelation	  = (Relation) NULL;
-Relation TimeRelation	  = (Relation) NULL;
+Relation LogRelation = (Relation) NULL;
+Relation TimeRelation = (Relation) NULL;
 Relation VariableRelation = (Relation) NULL;
 
 /* ----------------
  *    	global variables holding cached transaction id's and statuses.
  * ----------------
  */
-TransactionId	cachedGetCommitTimeXid;
-AbsoluteTime	cachedGetCommitTime;
-TransactionId	cachedTestXid;
-XidStatus	cachedTestXidStatus;
+TransactionId cachedGetCommitTimeXid;
+AbsoluteTime cachedGetCommitTime;
+TransactionId cachedTestXid;
+XidStatus cachedTestXidStatus;
 
 /* ----------------
  *	transaction system constants
@@ -97,7 +97,7 @@ extern int OidGenLockId;
  *	globals that must be reset at abort
  * ----------------
  */
-extern bool	BuildingBtree;
+extern bool BuildingBtree;
 
 
 /* ----------------
@@ -105,14 +105,12 @@ extern bool	BuildingBtree;
  * ----------------
  */
 int
-RecoveryCheckingEnabled()
-{    
+RecoveryCheckingEnabled() {
     return RecoveryCheckingEnableState;
 }
 
 void
-SetRecoveryCheckingEnabled(bool state)
-{    
+SetRecoveryCheckingEnabled(bool state) {
     RecoveryCheckingEnableState = (state == true);
 }
 
@@ -133,22 +131,22 @@ SetRecoveryCheckingEnabled(bool state)
  * --------------------------------
  */
 
-bool	/* true/false: does transaction id have specified status? */
-TransactionLogTest(TransactionId transactionId,	/* transaction id to test */
-		   XidStatus status)		/* transaction status */
+bool    /* true/false: does transaction id have specified status? */
+TransactionLogTest(TransactionId transactionId,    /* transaction id to test */
+                   XidStatus status)        /* transaction status */
 {
-    BlockNumber		blockNumber;
-    XidStatus		xidstatus;	/* recorded status of xid */
-    bool		fail = false;      	/* success/failure */
-    
+    BlockNumber blockNumber;
+    XidStatus xidstatus;    /* recorded status of xid */
+    bool fail = false;        /* success/failure */
+
     /* ----------------
      * 	during initialization consider all transactions
      *  as having been committed
      * ----------------
      */
-    if (! RelationIsValid(LogRelation))
-	return (bool) (status == XID_COMMIT);
-    
+    if (!RelationIsValid(LogRelation))
+        return (bool) (status == XID_COMMIT);
+
     /* ----------------
      *	 before going to the buffer manager, check our single
      *   item cache to see if we didn't just check the transaction
@@ -156,9 +154,9 @@ TransactionLogTest(TransactionId transactionId,	/* transaction id to test */
      * ----------------
      */
     if (TransactionIdEquals(transactionId, cachedTestXid))
-	return (bool)
-	    (status == cachedTestXidStatus);
-    
+        return (bool)
+                (status == cachedTestXidStatus);
+
     /* ----------------
      *	compute the item pointer corresponding to the
      *  page containing our transaction id.  We save the item in
@@ -168,27 +166,27 @@ TransactionLogTest(TransactionId transactionId,	/* transaction id to test */
      */
     TransComputeBlockNumber(LogRelation, transactionId, &blockNumber);
     xidstatus = TransBlockNumberGetXidStatus(LogRelation,
-					     blockNumber,
-					     transactionId,
-					     &fail);
-    
-    if (! fail) {
-	TransactionIdStore(transactionId, &cachedTestXid);
-	cachedTestXidStatus = xidstatus;
-	return (bool)
-	    (status == xidstatus);
+                                             blockNumber,
+                                             transactionId,
+                                             &fail);
+
+    if (!fail) {
+        TransactionIdStore(transactionId, &cachedTestXid);
+        cachedTestXidStatus = xidstatus;
+        return (bool)
+                (status == xidstatus);
     }
-    
+
     /* ----------------
      *	  here the block didn't contain the information we wanted
      * ----------------
      */
     elog(WARN, "TransactionLogTest: failed to get xidstatus");
-    
+
     /*
      * so lint is happy...
      */
-    return(false);
+    return (false);
 }
 
 /* --------------------------------
@@ -197,70 +195,70 @@ TransactionLogTest(TransactionId transactionId,	/* transaction id to test */
  */
 void
 TransactionLogUpdate(TransactionId transactionId, /* trans id to update */
-		     XidStatus status) /* new trans status */
+                     XidStatus status) /* new trans status */
 {
-    BlockNumber		blockNumber;
-    bool		fail = false;      	/* success/failure */
-    AbsoluteTime	currentTime;	/* time of this transaction */
-    
+    BlockNumber blockNumber;
+    bool fail = false;        /* success/failure */
+    AbsoluteTime currentTime;    /* time of this transaction */
+
     /* ----------------
      * 	during initialization we don't record any updates.
      * ----------------
      */
-    if (! RelationIsValid(LogRelation))
-	return;
-    
+    if (!RelationIsValid(LogRelation))
+        return;
+
     /* ----------------
      *  get the transaction commit time
      * ----------------
      */
     currentTime = getSystemTime();
-    
+
     /* ----------------
      *  update the log relation
      * ----------------
      */
     TransComputeBlockNumber(LogRelation, transactionId, &blockNumber);
     TransBlockNumberSetXidStatus(LogRelation,
-				 blockNumber,
-				 transactionId,
-				 status,
-				 &fail);
-    
+                                 blockNumber,
+                                 transactionId,
+                                 status,
+                                 &fail);
+
     /* ----------------
      *	 update (invalidate) our single item TransactionLogTest cache.
      * ----------------
      */
     TransactionIdStore(transactionId, &cachedTestXid);
     cachedTestXidStatus = status;
-    
+
     /* ----------------
      *	now we update the time relation, if necessary
      *  (we only record commit times)
      * ----------------
      */
     if (RelationIsValid(TimeRelation) && status == XID_COMMIT) {
-	TransComputeBlockNumber(TimeRelation, transactionId, &blockNumber);
-	TransBlockNumberSetCommitTime(TimeRelation,
-				      blockNumber,
-				      transactionId,
-				      currentTime,
-				      &fail);
-	/* ----------------
-	 *   update (invalidate) our single item GetCommitTime cache.
-	 * ----------------
-	 */
-	TransactionIdStore(transactionId, &cachedGetCommitTimeXid);
-	cachedGetCommitTime = currentTime;
+        TransComputeBlockNumber(TimeRelation, transactionId, &blockNumber);
+        TransBlockNumberSetCommitTime(TimeRelation,
+                                      blockNumber,
+                                      transactionId,
+                                      currentTime,
+                                      &fail);
+        /* ----------------
+         *   update (invalidate) our single item GetCommitTime cache.
+         * ----------------
+         */
+        TransactionIdStore(transactionId, &cachedGetCommitTimeXid);
+        cachedGetCommitTime = currentTime;
     }
-    
+
     /* ----------------
      *	now we update the "last committed transaction" field
      *  in the variable relation if we are recording a commit.
      * ----------------
      */
     if (RelationIsValid(VariableRelation) && status == XID_COMMIT)
-	UpdateLastCommittedXid(transactionId);
+        UpdateLastCommittedXid(transactionId);
 }
 
 /* --------------------------------
@@ -271,17 +269,17 @@ TransactionLogUpdate(TransactionId transactionId, /* trans id to update */
 AbsoluteTime  /* commit time of transaction id */
 TransactionIdGetCommitTime(TransactionId transactionId) /* transaction id to test */
 {
-    BlockNumber		blockNumber;
-    AbsoluteTime	commitTime;     /* commit time */
-    bool		fail = false;      	/* success/failure */
-    
+    BlockNumber blockNumber;
+    AbsoluteTime commitTime;     /* commit time */
+    bool fail = false;        /* success/failure */
+
     /* ----------------
      *   return invalid if we aren't running yet...
      * ----------------
      */
-    if (! RelationIsValid(TimeRelation))
-	return INVALID_ABSTIME;
-    
+    if (!RelationIsValid(TimeRelation))
+        return INVALID_ABSTIME;
+
     /* ----------------
      *	 before going to the buffer manager, check our single
      *   item cache to see if we didn't just get the commit time
@@ -289,8 +287,8 @@ TransactionIdGetCommitTime(TransactionId transactionId) /* transaction id to tes
      * ----------------
      */
     if (TransactionIdEquals(transactionId, cachedGetCommitTimeXid))
-	return cachedGetCommitTime;
-    
+        return cachedGetCommitTime;
+
     /* ----------------
      *	compute the item pointer corresponding to the
      *  page containing our transaction commit time
@@ -298,20 +296,20 @@ TransactionIdGetCommitTime(TransactionId transactionId) /* transaction id to tes
      */
     TransComputeBlockNumber(TimeRelation, transactionId, &blockNumber);
     commitTime = TransBlockNumberGetCommitTime(TimeRelation,
-					       blockNumber,
-					       transactionId,
-					       &fail);
-    
+                                               blockNumber,
+                                               transactionId,
+                                               &fail);
+
     /* ----------------
      *	update our cache and return the transaction commit time
      * ----------------
      */
-    if (! fail) {
-	TransactionIdStore(transactionId, &cachedGetCommitTimeXid);
-	cachedGetCommitTime = commitTime;
-	return commitTime;
+    if (!fail) {
+        TransactionIdStore(transactionId, &cachedGetCommitTimeXid);
+        cachedGetCommitTime = commitTime;
+        return commitTime;
     } else
-	return INVALID_ABSTIME;
+        return INVALID_ABSTIME;
 }
 
 /* ----------------------------------------------------------------
@@ -381,16 +379,15 @@ TransactionIdGetCommitTime(TransactionId transactionId) /* transaction id to tes
  * --------------------------------
  */
 void
-TransRecover(Relation logRelation)
-{
-#if 0    
+TransRecover(Relation logRelation) {
+#if 0
     /* ----------------
      *    first get the last recorded transaction in the log.
      * ----------------
      */
     TransGetLastRecordedTransaction(logRelation, logLastXid, &fail);
     if (fail == true)
-	elog(WARN, "TransRecover: failed TransGetLastRecordedTransaction");
+    elog(WARN, "TransRecover: failed TransGetLastRecordedTransaction");
     
     /* ----------------
      *    next get the "last" and "next" variables
@@ -404,7 +401,7 @@ TransRecover(Relation logRelation)
      * ----------------
      */
     if (TransactionIdIsLessThan(varNextXid, logLastXid))
-	elog(WARN, "TransRecover: varNextXid < logLastXid");
+    elog(WARN, "TransRecover: varNextXid < logLastXid");
     
     /* ----------------
      *    intregity test (2)
@@ -462,42 +459,41 @@ TransRecover(Relation logRelation)
  *	Initializes transaction logging.
  */
 void
-InitializeTransactionLog()
-{
-    Relation	  logRelation;
-    Relation	  timeRelation;
+InitializeTransactionLog() {
+    Relation logRelation;
+    Relation timeRelation;
     MemoryContext oldContext;
-    
+
     /* ----------------
      *    don't do anything during bootstrapping
      * ----------------
      */
     if (AMI_OVERRIDE)
-	return;
-    
+        return;
+
     /* ----------------
      *	 disable the transaction system so the access methods
      *   don't interfere during initialization.
      * ----------------
      */
     OverrideTransactionSystem(true);
-    
+
     /* ----------------
      *	make sure allocations occur within the top memory context
      *  so that our log management structures are protected from
      *  garbage collection at the end of every transaction.
      * ----------------
      */
-    oldContext = MemoryContextSwitchTo(TopMemoryContext); 
-    
+    oldContext = MemoryContextSwitchTo(TopMemoryContext);
+
     /* ----------------
      *   first open the log and time relations
      *   (these are created by amiint so they are guaranteed to exist)
      * ----------------
      */
-    logRelation = 	heap_openr(LogRelationName);
-    timeRelation = 	heap_openr(TimeRelationName);
-    VariableRelation = 	heap_openr(VariableRelationName);
+    logRelation = heap_openr(LogRelationName);
+    timeRelation = heap_openr(TimeRelationName);
+    VariableRelation = heap_openr(VariableRelationName);
     /* ----------------
      *   XXX TransactionLogUpdate requires that LogRelation
      *	 and TimeRelation are valid so we temporarily set
@@ -505,9 +501,9 @@ InitializeTransactionLog()
      *	 This could be done cleaner.
      * ----------------
      */
-    LogRelation =  logRelation;
+    LogRelation = logRelation;
     TimeRelation = timeRelation;
-    
+
     /* ----------------
      *   if we have a virgin database, we initialize the log and time
      *	 relation by committing the AmiTransactionId (id 512) and we
@@ -518,41 +514,41 @@ InitializeTransactionLog()
      */
     SpinAcquire(OidGenLockId);
     if (!TransactionIdDidCommit(AmiTransactionId)) {
-	
-	/* ----------------
-	 *  SOMEDAY initialize the information stored in
-	 *          the headers of the log/time/variable relations.
-	 * ----------------
-	 */
-	TransactionLogUpdate(AmiTransactionId, XID_COMMIT);
-	VariableRelationPutNextXid(FirstTransactionId);
-	
+
+        /* ----------------
+         *  SOMEDAY initialize the information stored in
+         *          the headers of the log/time/variable relations.
+         * ----------------
+         */
+        TransactionLogUpdate(AmiTransactionId, XID_COMMIT);
+        VariableRelationPutNextXid(FirstTransactionId);
+
     } else if (RecoveryCheckingEnabled()) {
-	/* ----------------
-	 *	if we have a pre-initialized database and if the
-	 *	perform recovery checking flag was passed then we
-	 *	do our database integrity checking.
-	 * ----------------
-	 */
-	TransRecover(logRelation);
+        /* ----------------
+         *	if we have a pre-initialized database and if the
+         *	perform recovery checking flag was passed then we
+         *	do our database integrity checking.
+         * ----------------
+         */
+        TransRecover(logRelation);
     }
-    LogRelation =  (Relation) NULL;
+    LogRelation = (Relation) NULL;
     TimeRelation = (Relation) NULL;
     SpinRelease(OidGenLockId);
-    
+
     /* ----------------
      *	now re-enable the transaction system
      * ----------------
      */
     OverrideTransactionSystem(false);
-    
+
     /* ----------------
      *	instantiate the global variables
      * ----------------
      */
-    LogRelation = 	logRelation;
-    TimeRelation = 	timeRelation;
-    
+    LogRelation = logRelation;
+    TimeRelation = timeRelation;
+
     /* ----------------
      *	restore the memory context to the previous context
      *  before we return from initialization.
@@ -575,14 +571,13 @@ InitializeTransactionLog()
  * Note:
  *	Assumes transaction identifier is valid.
  */
-bool	/* true if given transaction committed */
-TransactionIdDidCommit(TransactionId transactionId)
-{
+bool    /* true if given transaction committed */
+TransactionIdDidCommit(TransactionId transactionId) {
     if (AMI_OVERRIDE)
-	return true;
-    
+        return true;
+
     return
-	TransactionLogTest(transactionId, XID_COMMIT);
+            TransactionLogTest(transactionId, XID_COMMIT);
 }
 
 /*
@@ -593,24 +588,22 @@ TransactionIdDidCommit(TransactionId transactionId)
  *	Assumes transaction identifier is valid.
  *	XXX Is this unneeded?
  */
-bool	/* true if given transaction aborted */
-TransactionIdDidAbort(TransactionId transactionId)
-{
+bool    /* true if given transaction aborted */
+TransactionIdDidAbort(TransactionId transactionId) {
     if (AMI_OVERRIDE)
-	return false;
-    
+        return false;
+
     return
-	TransactionLogTest(transactionId, XID_ABORT);
+            TransactionLogTest(transactionId, XID_ABORT);
 }
 
-bool	/* true if given transaction neither committed nor aborted */
-TransactionIdIsInProgress(TransactionId transactionId)
-{
+bool    /* true if given transaction neither committed nor aborted */
+TransactionIdIsInProgress(TransactionId transactionId) {
     if (AMI_OVERRIDE)
-	return false;
-    
+        return false;
+
     return
-	TransactionLogTest(transactionId, XID_INPROGRESS);
+            TransactionLogTest(transactionId, XID_INPROGRESS);
 }
 
 /* --------------------------------
@@ -628,11 +621,10 @@ TransactionIdIsInProgress(TransactionId transactionId)
  *	Assumes transaction identifier is valid.
  */
 void
-TransactionIdCommit(TransactionId transactionId)
-{
+TransactionIdCommit(TransactionId transactionId) {
     if (AMI_OVERRIDE)
-	return;
-    
+        return;
+
     /*
      * Within TransactionLogUpdate we call UpdateLastCommited()
      * which assumes we have exclusive access to pg_variable.
@@ -652,24 +644,22 @@ TransactionIdCommit(TransactionId transactionId)
  *	Assumes transaction identifier is valid.
  */
 void
-TransactionIdAbort(TransactionId transactionId)
-{
+TransactionIdAbort(TransactionId transactionId) {
     BuildingBtree = false;
-    
+
     if (VacuumRunning)
-	vc_abort();
-    
+        vc_abort();
+
     if (AMI_OVERRIDE)
-	return;
-    
+        return;
+
     TransactionLogUpdate(transactionId, XID_ABORT);
 }
 
 void
-TransactionIdSetInProgress(TransactionId transactionId)
-{
+TransactionIdSetInProgress(TransactionId transactionId) {
     if (AMI_OVERRIDE)
-	return;
-    
+        return;
+
     TransactionLogUpdate(transactionId, XID_INPROGRESS);
 }

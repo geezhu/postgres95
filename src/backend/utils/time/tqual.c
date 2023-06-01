@@ -30,125 +30,126 @@
  * TimeQualMode --
  *	Mode indicator for treatment of time qualifications.
  */
-typedef uint16	TimeQualMode;
+typedef uint16 TimeQualMode;
 
-#define TimeQualAt	0x1
-#define TimeQualNewer	0x2
-#define TimeQualOlder	0x4
-#define TimeQualAll	0x8
+#define TimeQualAt    0x1
+#define TimeQualNewer    0x2
+#define TimeQualOlder    0x4
+#define TimeQualAll    0x8
 
-#define TimeQualMask	0xf
+#define TimeQualMask    0xf
 
-#define TimeQualEvery	0x0
-#define TimeQualRange	(TimeQualNewer | TimeQualOlder)
-#define TimeQualAllAt	(TimeQualAt | TimeQualAll)
+#define TimeQualEvery    0x0
+#define TimeQualRange    (TimeQualNewer | TimeQualOlder)
+#define TimeQualAllAt    (TimeQualAt | TimeQualAll)
 
 typedef struct TimeQualData {
-    AbsoluteTime	start;
-    AbsoluteTime	end;
-    TimeQualMode	mode;
+    AbsoluteTime start;
+    AbsoluteTime end;
+    TimeQualMode mode;
 } TimeQualData;
 
-typedef TimeQualData	*InternalTimeQual;
+typedef TimeQualData *InternalTimeQual;
 
-static TimeQualData	SelfTimeQualData;
-TimeQual		SelfTimeQual = (Pointer)&SelfTimeQualData;
+static TimeQualData SelfTimeQualData;
+TimeQual SelfTimeQual = (Pointer) &SelfTimeQualData;
 
-extern bool		PostgresIsInitialized;
+extern bool PostgresIsInitialized;
 
 /*
  * XXX Transaction system override hacks start here
  */
-#ifndef	GOODAMI
+#ifndef    GOODAMI
 
-static TransactionId	HeapSpecialTransactionId = InvalidTransactionId;
-static CommandId	HeapSpecialCommandId = FirstCommandId;
+static TransactionId HeapSpecialTransactionId = InvalidTransactionId;
+static CommandId HeapSpecialCommandId = FirstCommandId;
 
 void
-setheapoverride(bool on)
-{
+setheapoverride(bool on) {
     if (on) {
-	TransactionIdStore(GetCurrentTransactionId(),
-			   &HeapSpecialTransactionId);
-	HeapSpecialCommandId = GetCurrentCommandId();
+        TransactionIdStore(GetCurrentTransactionId(),
+                           &HeapSpecialTransactionId);
+        HeapSpecialCommandId = GetCurrentCommandId();
     } else {
-	HeapSpecialTransactionId = InvalidTransactionId;
+        HeapSpecialTransactionId = InvalidTransactionId;
     }
 }
 
 /* static */
 bool
-heapisoverride()
-{
+heapisoverride() {
     if (!TransactionIdIsValid(HeapSpecialTransactionId)) {
-	return (false);
+        return (false);
     }
-    
+
     if (!TransactionIdEquals(GetCurrentTransactionId(),
-			     HeapSpecialTransactionId) ||
-	GetCurrentCommandId() != HeapSpecialCommandId) {
-	HeapSpecialTransactionId = InvalidTransactionId;
-	
-	return (false);
+                             HeapSpecialTransactionId) ||
+        GetCurrentCommandId() != HeapSpecialCommandId) {
+        HeapSpecialTransactionId = InvalidTransactionId;
+
+        return (false);
     }
     return (true);
 }
 
-#endif	/* !defined(GOODAMI) */
+#endif    /* !defined(GOODAMI) */
+
 /*
  * XXX Transaction system override hacks end here
  */
 
 static bool HeapTupleSatisfiesItself(HeapTuple tuple);
+
 static bool HeapTupleSatisfiesNow(HeapTuple tuple);
+
 static bool HeapTupleSatisfiesSnapshotInternalTimeQual(HeapTuple tuple,
-					   InternalTimeQual qual);
+                                                       InternalTimeQual qual);
+
 static bool HeapTupleSatisfiesUpperBoundedInternalTimeQual(HeapTuple tuple,
-					       InternalTimeQual qual);
+                                                           InternalTimeQual qual);
+
 static bool HeapTupleSatisfiesUpperUnboundedInternalTimeQual(HeapTuple tuple,
-						 InternalTimeQual qual);
+                                                             InternalTimeQual qual);
 
 
-     
 /*
  * TimeQualIsValid --
  *	True iff time qualification is valid.
  */
 bool
-TimeQualIsValid(TimeQual qual)
-{
-    bool	hasStartTime;
-    
+TimeQualIsValid(TimeQual qual) {
+    bool hasStartTime;
+
     if (!PointerIsValid(qual) || qual == SelfTimeQual) {
-	return (true);
+        return (true);
     }
-    
-    if (((InternalTimeQual)qual)->mode & ~TimeQualMask) {
-	return (false);
+
+    if (((InternalTimeQual) qual)->mode & ~TimeQualMask) {
+        return (false);
     }
-    
-    if (((InternalTimeQual)qual)->mode & TimeQualAt) {
-	return (AbsoluteTimeIsBackwardCompatiblyValid(((InternalTimeQual)qual)->start));
+
+    if (((InternalTimeQual) qual)->mode & TimeQualAt) {
+        return (AbsoluteTimeIsBackwardCompatiblyValid(((InternalTimeQual) qual)->start));
     }
-    
+
     hasStartTime = false;
-    
-    if (((InternalTimeQual)qual)->mode & TimeQualNewer) {
-	if (!AbsoluteTimeIsBackwardCompatiblyValid(((InternalTimeQual)qual)->start)) {
-	    return (false);
-	}
-	hasStartTime = true;
+
+    if (((InternalTimeQual) qual)->mode & TimeQualNewer) {
+        if (!AbsoluteTimeIsBackwardCompatiblyValid(((InternalTimeQual) qual)->start)) {
+            return (false);
+        }
+        hasStartTime = true;
     }
-    
-    if (((InternalTimeQual)qual)->mode & TimeQualOlder) {
-	if (!AbsoluteTimeIsBackwardCompatiblyValid(((InternalTimeQual)qual)->end)) {
-	    return (false);
-	}
-	if (hasStartTime) {
-	    return ((bool)!AbsoluteTimeIsBefore(
-						((InternalTimeQual)qual)->end,
-						((InternalTimeQual)qual)->start));
-	}
+
+    if (((InternalTimeQual) qual)->mode & TimeQualOlder) {
+        if (!AbsoluteTimeIsBackwardCompatiblyValid(((InternalTimeQual) qual)->end)) {
+            return (false);
+        }
+        if (hasStartTime) {
+            return ((bool) !AbsoluteTimeIsBefore(
+                    ((InternalTimeQual) qual)->end,
+                    ((InternalTimeQual) qual)->start));
+        }
     }
     return (true);
 }
@@ -163,53 +164,52 @@ TimeQualIsValid(TimeQual qual)
  *	Assumes time qualification is valid.
  */
 bool
-TimeQualIsLegal(TimeQual qual)
-{
+TimeQualIsLegal(TimeQual qual) {
     Assert(TimeQualIsValid(qual));
-    
+
     if (qual == NowTimeQual || qual == SelfTimeQual) {
-	return (true);
+        return (true);
     }
-    
+
     /* TimeQualAt */
-    if (((InternalTimeQual)qual)->mode & TimeQualAt) {
-	AbsoluteTime a, b;
-	
-	a = ((InternalTimeQual)qual)->start;
-	b = GetCurrentTransactionStartTime();
-	
-	if (AbsoluteTimeIsAfter(a, b))
-	    return (false);
-	else
-	    return (true);
+    if (((InternalTimeQual) qual)->mode & TimeQualAt) {
+        AbsoluteTime a, b;
+
+        a = ((InternalTimeQual) qual)->start;
+        b = GetCurrentTransactionStartTime();
+
+        if (AbsoluteTimeIsAfter(a, b))
+            return (false);
+        else
+            return (true);
     }
-    
+
     /* TimeQualOlder or TimeQualRange */
-    if (((InternalTimeQual)qual)->mode & TimeQualOlder) {
-	AbsoluteTime a, b;
-	
-	a = ((InternalTimeQual)qual)->end;
-	b = GetCurrentTransactionStartTime();
-	
-	if (AbsoluteTimeIsAfter(a, b))
-	    return (false);
-	else
-	    return (true);
+    if (((InternalTimeQual) qual)->mode & TimeQualOlder) {
+        AbsoluteTime a, b;
+
+        a = ((InternalTimeQual) qual)->end;
+        b = GetCurrentTransactionStartTime();
+
+        if (AbsoluteTimeIsAfter(a, b))
+            return (false);
+        else
+            return (true);
     }
-    
+
     /* TimeQualNewer */
-    if (((InternalTimeQual)qual)->mode & TimeQualNewer) {
-	AbsoluteTime a, b;
-	
-	a = ((InternalTimeQual)qual)->start;
-	b = GetCurrentTransactionStartTime();
-	
-	if (AbsoluteTimeIsAfter(a, b))
-	    return (false);
-	else
-	    return (true);
+    if (((InternalTimeQual) qual)->mode & TimeQualNewer) {
+        AbsoluteTime a, b;
+
+        a = ((InternalTimeQual) qual)->start;
+        b = GetCurrentTransactionStartTime();
+
+        if (AbsoluteTimeIsAfter(a, b))
+            return (false);
+        else
+            return (true);
     }
-    
+
     /* TimeQualEvery */
     return (true);
 }
@@ -222,23 +222,22 @@ TimeQualIsLegal(TimeQual qual)
  *	Assumes time qualification is valid.
  */
 bool
-TimeQualIncludesNow(TimeQual qual)
-{
+TimeQualIncludesNow(TimeQual qual) {
     Assert(TimeQualIsValid(qual));
-    
+
     if (qual == NowTimeQual || qual == SelfTimeQual) {
-	return (true);
+        return (true);
     }
-    
-    if (((InternalTimeQual)qual)->mode & TimeQualAt) {
-	return (false);
+
+    if (((InternalTimeQual) qual)->mode & TimeQualAt) {
+        return (false);
     }
-    if (((InternalTimeQual)qual)->mode & TimeQualOlder &&
-	!AbsoluteTimeIsAfter(
-			     ((InternalTimeQual)qual)->end,
-			     GetCurrentTransactionStartTime())) {
-	
-	return (false);
+    if (((InternalTimeQual) qual)->mode & TimeQualOlder &&
+        !AbsoluteTimeIsAfter(
+                ((InternalTimeQual) qual)->end,
+                GetCurrentTransactionStartTime())) {
+
+        return (false);
     }
     return (true);
 }
@@ -252,14 +251,13 @@ TimeQualIncludesNow(TimeQual qual)
  *	XXX may not be needed?
  */
 bool
-TimeQualIncludesPast(TimeQual qual)
-{
+TimeQualIncludesPast(TimeQual qual) {
     Assert(TimeQualIsValid(qual));
-    
+
     if (qual == NowTimeQual || qual == SelfTimeQual) {
-	return (false);
+        return (false);
     }
-    
+
     /* otherwise, must check archive (setting locks as appropriate) */
     return (true);
 }
@@ -272,15 +270,14 @@ TimeQualIncludesPast(TimeQual qual)
  *	Assumes time qualification is valid.
  */
 bool
-TimeQualIsSnapshot(TimeQual qual)
-{
+TimeQualIsSnapshot(TimeQual qual) {
     Assert(TimeQualIsValid(qual));
-    
+
     if (qual == NowTimeQual || qual == SelfTimeQual) {
-	return (false);
+        return (false);
     }
-    
-    return ((bool)!!(((InternalTimeQual)qual)->mode & TimeQualAt));
+
+    return ((bool) !!(((InternalTimeQual) qual)->mode & TimeQualAt));
 }
 
 /*
@@ -291,15 +288,14 @@ TimeQualIsSnapshot(TimeQual qual)
  *	Assumes time qualification is valid.
  */
 bool
-TimeQualIsRanged(TimeQual qual)
-{
+TimeQualIsRanged(TimeQual qual) {
     Assert(TimeQualIsValid(qual));
-    
+
     if (qual == NowTimeQual || qual == SelfTimeQual) {
-	return (false);
+        return (false);
     }
-    
-    return ((bool)!(((InternalTimeQual)qual)->mode & TimeQualAt));
+
+    return ((bool) !(((InternalTimeQual) qual)->mode & TimeQualAt));
 }
 
 /*
@@ -311,16 +307,15 @@ TimeQualIsRanged(TimeQual qual)
  *	XXX This should not be implemented since this does not make sense.
  */
 bool
-TimeQualIndicatesDisableValidityChecking(TimeQual qual)
-{
+TimeQualIndicatesDisableValidityChecking(TimeQual qual) {
     Assert (TimeQualIsValid(qual));
-    
+
     if (qual == NowTimeQual || qual == SelfTimeQual) {
-	return (false);
+        return (false);
     }
-    
-    if (((InternalTimeQual)qual)->mode & TimeQualAll) {
-	return (true);
+
+    if (((InternalTimeQual) qual)->mode & TimeQualAll) {
+        return (true);
     }
     return (false);
 }
@@ -333,11 +328,10 @@ TimeQualIndicatesDisableValidityChecking(TimeQual qual)
  *	Assumes time qual is valid snapshot time qual.
  */
 AbsoluteTime
-TimeQualGetSnapshotTime(TimeQual qual)
-{
+TimeQualGetSnapshotTime(TimeQual qual) {
     Assert(TimeQualIsSnapshot(qual));
-    
-    return (((InternalTimeQual)qual)->start);
+
+    return (((InternalTimeQual) qual)->start);
 }
 
 /*
@@ -348,11 +342,10 @@ TimeQualGetSnapshotTime(TimeQual qual)
  *	Assumes time qual is valid ranged time qual.
  */
 AbsoluteTime
-TimeQualGetStartTime(TimeQual qual)
-{
+TimeQualGetStartTime(TimeQual qual) {
     Assert(TimeQualIsRanged(qual));
-    
-    return (((InternalTimeQual)qual)->start);
+
+    return (((InternalTimeQual) qual)->start);
 }
 
 /*
@@ -363,11 +356,10 @@ TimeQualGetStartTime(TimeQual qual)
  *	Assumes time qual is valid ranged time qual.
  */
 AbsoluteTime
-TimeQualGetEndTime(TimeQual qual)
-{
+TimeQualGetEndTime(TimeQual qual) {
     Assert(TimeQualIsRanged(qual));
-    
-    return (((InternalTimeQual)qual)->end);
+
+    return (((InternalTimeQual) qual)->end);
 }
 
 /*
@@ -378,19 +370,18 @@ TimeQualGetEndTime(TimeQual qual)
  *	Assumes time is valid.
  */
 TimeQual
-TimeFormSnapshotTimeQual(AbsoluteTime time)
-{
-    InternalTimeQual	qual;
-    
+TimeFormSnapshotTimeQual(AbsoluteTime time) {
+    InternalTimeQual qual;
+
     Assert(AbsoluteTimeIsBackwardCompatiblyValid(time));
-    
-    qual = (InternalTimeQual)palloc(sizeof *qual);
-    
+
+    qual = (InternalTimeQual) palloc(sizeof *qual);
+
     qual->start = time;
     qual->end = INVALID_ABSTIME;
     qual->mode = TimeQualAt;
-    
-    return ((TimeQual)qual);
+
+    return ((TimeQual) qual);
 }
 
 /*
@@ -404,24 +395,23 @@ TimeFormSnapshotTimeQual(AbsoluteTime time)
  */
 TimeQual
 TimeFormRangedTimeQual(AbsoluteTime startTime,
-		       AbsoluteTime endTime)
-{
-    InternalTimeQual	qual;
-    
-    qual = (InternalTimeQual)palloc(sizeof *qual);
-    
+                       AbsoluteTime endTime) {
+    InternalTimeQual qual;
+
+    qual = (InternalTimeQual) palloc(sizeof *qual);
+
     qual->start = startTime;
     qual->end = endTime;
     qual->mode = TimeQualEvery;
-    
+
     if (AbsoluteTimeIsBackwardCompatiblyValid(startTime)) {
-	qual->mode |= TimeQualNewer;
+        qual->mode |= TimeQualNewer;
     }
     if (AbsoluteTimeIsBackwardCompatiblyValid(endTime)) {
-	qual->mode |= TimeQualOlder;
+        qual->mode |= TimeQualOlder;
     }
-    
-    return ((TimeQual)qual);
+
+    return ((TimeQual) qual);
 }
 
 /*
@@ -435,44 +425,43 @@ TimeFormRangedTimeQual(AbsoluteTime startTime,
  *	XXX Partial answers to the checks may be cached in an ItemId.
  */
 bool
-HeapTupleSatisfiesTimeQual(HeapTuple tuple, TimeQual qual)
-{
+HeapTupleSatisfiesTimeQual(HeapTuple tuple, TimeQual qual) {
 /*    extern TransactionId AmiTransactionId; */
-    
+
     Assert(HeapTupleIsValid(tuple));
     Assert(TimeQualIsValid(qual));
-    
+
     if (TransactionIdEquals(tuple->t_xmax, AmiTransactionId))
-	return(false);
-    
+        return (false);
+
     if (qual == SelfTimeQual || heapisoverride()) {
-	return (HeapTupleSatisfiesItself(tuple));
+        return (HeapTupleSatisfiesItself(tuple));
     }
-    
+
     if (qual == NowTimeQual) {
-	return (HeapTupleSatisfiesNow(tuple));
+        return (HeapTupleSatisfiesNow(tuple));
     }
-    
+
     if (!TimeQualIsLegal(qual)) {
-	elog(WARN, "HeapTupleSatisfiesTimeQual: illegal time qual");
+        elog(WARN, "HeapTupleSatisfiesTimeQual: illegal time qual");
     }
-    
+
     if (TimeQualIndicatesDisableValidityChecking(qual)) {
-	elog(WARN, "HeapTupleSatisfiesTimeQual: no disabled validity checking (yet)");
+        elog(WARN, "HeapTupleSatisfiesTimeQual: no disabled validity checking (yet)");
     }
-    
+
     if (TimeQualIsSnapshot(qual)) {
-	return (HeapTupleSatisfiesSnapshotInternalTimeQual(tuple,
-							   (InternalTimeQual)qual));
+        return (HeapTupleSatisfiesSnapshotInternalTimeQual(tuple,
+                                                           (InternalTimeQual) qual));
     }
-    
+
     if (TimeQualIncludesNow(qual)) {
-	return (HeapTupleSatisfiesUpperUnboundedInternalTimeQual(tuple,
-								 (InternalTimeQual)qual));
+        return (HeapTupleSatisfiesUpperUnboundedInternalTimeQual(tuple,
+                                                                 (InternalTimeQual) qual));
     }
-    
+
     return (HeapTupleSatisfiesUpperBoundedInternalTimeQual(tuple,
-							   (InternalTimeQual)qual));
+                                                           (InternalTimeQual) qual));
 }
 
 /*
@@ -492,38 +481,37 @@ HeapTupleSatisfiesTimeQual(HeapTuple tuple, TimeQual qual)
  *	(Xmax is null || (Xmax != my-transaction && Xmax is not committed)))
  */
 static bool
-HeapTupleSatisfiesItself(HeapTuple tuple)
-{
+HeapTupleSatisfiesItself(HeapTuple tuple) {
     /*
      * XXX Several evil casts are made in this routine.  Casting XID to be 
      * TransactionId works only because TransactionId->data is the first
      * (and only) field of the structure.
      */
     if (!AbsoluteTimeIsBackwardCompatiblyValid(tuple->t_tmin)) {
-	if (TransactionIdIsCurrentTransactionId((TransactionId)tuple->t_xmin) &&
-	    !TransactionIdIsValid((TransactionId)tuple->t_xmax)) {
-	    return (true);
-	}
-	
-	if (!TransactionIdDidCommit((TransactionId)tuple->t_xmin)) {
-	    return (false);
-	}
+        if (TransactionIdIsCurrentTransactionId((TransactionId) tuple->t_xmin) &&
+            !TransactionIdIsValid((TransactionId) tuple->t_xmax)) {
+            return (true);
+        }
+
+        if (!TransactionIdDidCommit((TransactionId) tuple->t_xmin)) {
+            return (false);
+        }
     }
     /* the tuple was inserted validly */
-    
+
     if (AbsoluteTimeIsBackwardCompatiblyReal(tuple->t_tmax)) {
-	return (false);
+        return (false);
     }
-    
-    if (!TransactionIdIsValid((TransactionId)tuple->t_xmax)) {
-	return (true);
+
+    if (!TransactionIdIsValid((TransactionId) tuple->t_xmax)) {
+        return (true);
     }
-    
-    if (TransactionIdIsCurrentTransactionId((TransactionId)tuple->t_xmax)) {
-	return (false);
+
+    if (TransactionIdIsCurrentTransactionId((TransactionId) tuple->t_xmax)) {
+        return (false);
     }
-    
-    return ((bool)!TransactionIdDidCommit((TransactionId)tuple->t_xmax));
+
+    return ((bool) !TransactionIdDidCommit((TransactionId) tuple->t_xmax));
 }
 
 /*
@@ -556,70 +544,69 @@ HeapTupleSatisfiesItself(HeapTuple tuple)
  *	that do catalog accesses.  this is unfortunate, but not critical.
  */
 static bool
-HeapTupleSatisfiesNow(HeapTuple tuple)
-{
+HeapTupleSatisfiesNow(HeapTuple tuple) {
     if (AMI_OVERRIDE)
-	return true;
+        return true;
     /*
      *  If the transaction system isn't yet initialized, then we assume
      *  that transactions committed.  We only look at system catalogs
      *  during startup, so this is less awful than it seems, but it's
      *  still pretty awful.
      */
-    
+
     if (!PostgresIsInitialized)
-	return ((bool)(TransactionIdIsValid((TransactionId)tuple->t_xmin) &&
-		       !TransactionIdIsValid((TransactionId)tuple->t_xmax)));
-    
+        return ((bool) (TransactionIdIsValid((TransactionId) tuple->t_xmin) &&
+                        !TransactionIdIsValid((TransactionId) tuple->t_xmax)));
+
     /*
      * XXX Several evil casts are made in this routine.  Casting XID to be 
      * TransactionId works only because TransactionId->data is the first
      * (and only) field of the structure.
      */
     if (!AbsoluteTimeIsBackwardCompatiblyValid(tuple->t_tmin)) {
-	
-	if (TransactionIdIsCurrentTransactionId((TransactionId)tuple->t_xmin)
-	    && CommandIdIsCurrentCommandId(tuple->t_cmin)) {
-	    
-	    return (false);
-	}
-	
-	if (TransactionIdIsCurrentTransactionId((TransactionId)tuple->t_xmin)
-	    && !CommandIdIsCurrentCommandId(tuple->t_cmin)) {
-	    
-	    if (!TransactionIdIsValid((TransactionId)tuple->t_xmax)) {
-		return (true);
-	    }
-	    
-	    Assert(TransactionIdIsCurrentTransactionId((TransactionId)tuple->t_xmax));
-	    
-	    if (CommandIdIsCurrentCommandId(tuple->t_cmax)) {
-		return (true);
-	    }
-	}
-	
-	/*
-	 * this call is VERY expensive - requires a log table lookup.
-	 */
-	
-	if (!TransactionIdDidCommit((TransactionId)tuple->t_xmin)) {
-	    return (false);
-	}
+
+        if (TransactionIdIsCurrentTransactionId((TransactionId) tuple->t_xmin)
+            && CommandIdIsCurrentCommandId(tuple->t_cmin)) {
+
+            return (false);
+        }
+
+        if (TransactionIdIsCurrentTransactionId((TransactionId) tuple->t_xmin)
+            && !CommandIdIsCurrentCommandId(tuple->t_cmin)) {
+
+            if (!TransactionIdIsValid((TransactionId) tuple->t_xmax)) {
+                return (true);
+            }
+
+            Assert(TransactionIdIsCurrentTransactionId((TransactionId) tuple->t_xmax));
+
+            if (CommandIdIsCurrentCommandId(tuple->t_cmax)) {
+                return (true);
+            }
+        }
+
+        /*
+         * this call is VERY expensive - requires a log table lookup.
+         */
+
+        if (!TransactionIdDidCommit((TransactionId) tuple->t_xmin)) {
+            return (false);
+        }
     }
-    
+
     /* by here, the inserting transaction has committed */
-    if (!TransactionIdIsValid((TransactionId)tuple->t_xmax)) {
-	return (true);
+    if (!TransactionIdIsValid((TransactionId) tuple->t_xmax)) {
+        return (true);
     }
-    
-    if (TransactionIdIsCurrentTransactionId((TransactionId)tuple->t_xmax)) {
-	return (false);
+
+    if (TransactionIdIsCurrentTransactionId((TransactionId) tuple->t_xmax)) {
+        return (false);
     }
-    
-    if (!TransactionIdDidCommit((TransactionId)tuple->t_xmax)) {
-	return (true);
+
+    if (!TransactionIdDidCommit((TransactionId) tuple->t_xmax)) {
+        return (true);
     }
-    
+
     /* by here, deleting transaction has committed */
     return (false);
 }
@@ -641,41 +628,40 @@ HeapTupleSatisfiesNow(HeapTuple tuple)
  */
 static bool
 HeapTupleSatisfiesSnapshotInternalTimeQual(HeapTuple tuple,
-					   InternalTimeQual qual)
-{
+                                           InternalTimeQual qual) {
     /*
      * XXX Several evil casts are made in this routine.  Casting XID to be 
      * TransactionId works only because TransactionId->data is the first
      * (and only) field of the structure.
      */
     if (!AbsoluteTimeIsBackwardCompatiblyValid(tuple->t_tmin)) {
-	
-	if (!TransactionIdDidCommit((TransactionId)tuple->t_xmin)) {
-	    return (false);
-	}
-	
-	tuple->t_tmin = TransactionIdGetCommitTime(tuple->t_xmin);
+
+        if (!TransactionIdDidCommit((TransactionId) tuple->t_xmin)) {
+            return (false);
+        }
+
+        tuple->t_tmin = TransactionIdGetCommitTime(tuple->t_xmin);
     }
-    
-    if (AbsoluteTimeIsBefore(TimeQualGetSnapshotTime((TimeQual)qual), tuple->t_tmin)) {
-	return (false);
+
+    if (AbsoluteTimeIsBefore(TimeQualGetSnapshotTime((TimeQual) qual), tuple->t_tmin)) {
+        return (false);
     }
     /* the tuple was inserted validly before the snapshot time */
-    
+
     if (!AbsoluteTimeIsBackwardCompatiblyReal(tuple->t_tmax)) {
-	
-	if (!TransactionIdIsValid((TransactionId)tuple->t_xmax) ||
-	    !TransactionIdDidCommit((TransactionId)tuple->t_xmax)) {
-	    
-	    return (true);
-	}
-	
-	tuple->t_tmax = TransactionIdGetCommitTime(tuple->t_xmax);
+
+        if (!TransactionIdIsValid((TransactionId) tuple->t_xmax) ||
+            !TransactionIdDidCommit((TransactionId) tuple->t_xmax)) {
+
+            return (true);
+        }
+
+        tuple->t_tmax = TransactionIdGetCommitTime(tuple->t_xmax);
     }
-    
+
     return ((bool)
-	    AbsoluteTimeIsAfter(tuple->t_tmax,
-				TimeQualGetSnapshotTime((TimeQual)qual)));
+            AbsoluteTimeIsAfter(tuple->t_tmax,
+                                TimeQualGetSnapshotTime((TimeQual) qual)));
 }
 
 /*
@@ -696,44 +682,43 @@ HeapTupleSatisfiesSnapshotInternalTimeQual(HeapTuple tuple,
  */
 static bool
 HeapTupleSatisfiesUpperBoundedInternalTimeQual(HeapTuple tuple,
-					       InternalTimeQual qual)
-{
+                                               InternalTimeQual qual) {
     /*
      * XXX Several evil casts are made in this routine.  Casting XID to be 
      * TransactionId works only because TransactionId->data is the first
      * (and only) field of the structure.
      */
     if (!AbsoluteTimeIsBackwardCompatiblyValid(tuple->t_tmin)) {
-	
-	if (!TransactionIdDidCommit((TransactionId)tuple->t_xmin)) {
-	    return (false);
-	}
-	
-	tuple->t_tmin = TransactionIdGetCommitTime(tuple->t_xmin);
+
+        if (!TransactionIdDidCommit((TransactionId) tuple->t_xmin)) {
+            return (false);
+        }
+
+        tuple->t_tmin = TransactionIdGetCommitTime(tuple->t_xmin);
     }
-    
-    if (AbsoluteTimeIsBefore(TimeQualGetEndTime((TimeQual)qual), tuple->t_tmin)) {
-	return (false);
+
+    if (AbsoluteTimeIsBefore(TimeQualGetEndTime((TimeQual) qual), tuple->t_tmin)) {
+        return (false);
     }
     /* the tuple was inserted validly before the range end */
-    
-    if (!AbsoluteTimeIsBackwardCompatiblyValid(TimeQualGetStartTime((TimeQual)qual))) {
-	return (true);
+
+    if (!AbsoluteTimeIsBackwardCompatiblyValid(TimeQualGetStartTime((TimeQual) qual))) {
+        return (true);
     }
-    
+
     if (!AbsoluteTimeIsBackwardCompatiblyReal(tuple->t_tmax)) {
-	
-	if (!TransactionIdIsValid((TransactionId)tuple->t_xmax) ||
-	    !TransactionIdDidCommit((TransactionId)tuple->t_xmax)) {
-	    
-	    return (true);
-	}
-	
-	tuple->t_tmax = TransactionIdGetCommitTime(tuple->t_xmax);
+
+        if (!TransactionIdIsValid((TransactionId) tuple->t_xmax) ||
+            !TransactionIdDidCommit((TransactionId) tuple->t_xmax)) {
+
+            return (true);
+        }
+
+        tuple->t_tmax = TransactionIdGetCommitTime(tuple->t_xmax);
     }
-    
-    return ((bool)AbsoluteTimeIsAfter(tuple->t_tmax,
-				      TimeQualGetStartTime((TimeQual)qual)));
+
+    return ((bool) AbsoluteTimeIsAfter(tuple->t_tmax,
+                                       TimeQualGetStartTime((TimeQual) qual)));
 }
 
 /*
@@ -759,57 +744,56 @@ HeapTupleSatisfiesUpperBoundedInternalTimeQual(HeapTuple tuple,
  */
 static bool
 HeapTupleSatisfiesUpperUnboundedInternalTimeQual(HeapTuple tuple,
-						 InternalTimeQual qual)
-{
+                                                 InternalTimeQual qual) {
     if (!AbsoluteTimeIsBackwardCompatiblyValid(tuple->t_tmin)) {
-	
-	if (TransactionIdIsCurrentTransactionId((TransactionId)tuple->t_xmin) &&
-	    CommandIdIsCurrentCommandId(tuple->t_cmin)) {
-	    
-	    return (false);
-	}
-	
-	if (TransactionIdIsCurrentTransactionId((TransactionId)tuple->t_xmin) &&
-	    !CommandIdIsCurrentCommandId(tuple->t_cmin)) {
-	    
-	    if (!TransactionIdIsValid((TransactionId)tuple->t_xmax)) {
-		return (true);
-	    }
-	    
-	    Assert(TransactionIdIsCurrentTransactionId((TransactionId)tuple->t_xmax));
-	    
-	    return ((bool) !CommandIdIsCurrentCommandId(tuple->t_cmax));
-	}
-	
-	if (!TransactionIdDidCommit((TransactionId)tuple->t_xmin)) {
-	    return (false);
-	}
-	
-	tuple->t_tmin = TransactionIdGetCommitTime(tuple->t_xmin);
+
+        if (TransactionIdIsCurrentTransactionId((TransactionId) tuple->t_xmin) &&
+            CommandIdIsCurrentCommandId(tuple->t_cmin)) {
+
+            return (false);
+        }
+
+        if (TransactionIdIsCurrentTransactionId((TransactionId) tuple->t_xmin) &&
+            !CommandIdIsCurrentCommandId(tuple->t_cmin)) {
+
+            if (!TransactionIdIsValid((TransactionId) tuple->t_xmax)) {
+                return (true);
+            }
+
+            Assert(TransactionIdIsCurrentTransactionId((TransactionId) tuple->t_xmax));
+
+            return ((bool) !CommandIdIsCurrentCommandId(tuple->t_cmax));
+        }
+
+        if (!TransactionIdDidCommit((TransactionId) tuple->t_xmin)) {
+            return (false);
+        }
+
+        tuple->t_tmin = TransactionIdGetCommitTime(tuple->t_xmin);
     }
     /* the tuple was inserted validly */
-    
-    if (!AbsoluteTimeIsBackwardCompatiblyValid(TimeQualGetStartTime((TimeQual)qual))) {
-	return (true);
+
+    if (!AbsoluteTimeIsBackwardCompatiblyValid(TimeQualGetStartTime((TimeQual) qual))) {
+        return (true);
     }
-    
+
     if (!AbsoluteTimeIsBackwardCompatiblyReal(tuple->t_tmax)) {
-	
-	if (!TransactionIdIsValid((TransactionId)tuple->t_xmax)) {
-	    return (true);
-	}
-	
-	if (TransactionIdIsCurrentTransactionId((TransactionId)tuple->t_xmax)) {
-	    return (CommandIdIsCurrentCommandId(tuple->t_cmin));
-	}
-	
-	if (!TransactionIdDidCommit((TransactionId)tuple->t_xmax)) {
-	    return (true);
-	}
-	
-	tuple->t_tmax = TransactionIdGetCommitTime(tuple->t_xmax);
+
+        if (!TransactionIdIsValid((TransactionId) tuple->t_xmax)) {
+            return (true);
+        }
+
+        if (TransactionIdIsCurrentTransactionId((TransactionId) tuple->t_xmax)) {
+            return (CommandIdIsCurrentCommandId(tuple->t_cmin));
+        }
+
+        if (!TransactionIdDidCommit((TransactionId) tuple->t_xmax)) {
+            return (true);
+        }
+
+        tuple->t_tmax = TransactionIdGetCommitTime(tuple->t_xmax);
     }
-    
-    return ((bool)AbsoluteTimeIsAfter(tuple->t_tmax,
-				      TimeQualGetStartTime((TimeQual)qual)));
+
+    return ((bool) AbsoluteTimeIsAfter(tuple->t_tmax,
+                                       TimeQualGetStartTime((TimeQual) qual)));
 }

@@ -15,8 +15,8 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef PG_DEMON_H	
-#define PG_DEMON_H	
+#ifndef PG_DEMON_H
+#define PG_DEMON_H
 
 /* ----------------
  *	postgres.h contains the system type definintions and the
@@ -30,29 +30,31 @@
  *	pg_demon definition.  cpp turns this into
  *	typedef struct FormData_pg_demon
  * ----------------
- */ 
-CATALOG(pg_demon) BOOTSTRAP {
-    Oid 	demserid;
-    NameData 	demname;
-    Oid 	demowner;
-    regproc 	demcode;
-} FormData_pg_demon;
+ */
+CATALOG(pg_demon)
+BOOTSTRAP {
+Oid demserid;
+NameData demname;
+Oid demowner;
+regproc demcode;
+}
+FormData_pg_demon;
 
 /* ----------------
  *	Form_pg_demon corresponds to a pointer to a tuple with
  *	the format of pg_demon relation.
  * ----------------
  */
-typedef FormData_pg_demon	*Form_pg_demon;
+typedef FormData_pg_demon *Form_pg_demon;
 
 /* ----------------
  *	compiler constants for pg_demon
  * ----------------
  */
-#define Natts_pg_demon			4
-#define Anum_pg_demon_demserid		1
-#define Anum_pg_demon_demname		2
-#define Anum_pg_demon_demowner		3
-#define Anum_pg_demon_demcode		4
+#define Natts_pg_demon            4
+#define Anum_pg_demon_demserid        1
+#define Anum_pg_demon_demname        2
+#define Anum_pg_demon_demowner        3
+#define Anum_pg_demon_demcode        4
 
 #endif /* PG_DEMON_H */

@@ -17,7 +17,7 @@
  */
 #include "postgres.h"
 
-#include "machine.h"		/* in port/ directory (needed for BLCKSZ) */
+#include "machine.h"        /* in port/ directory (needed for BLCKSZ) */
 
 #include "storage/buf.h"
 #include "storage/bufmgr.h"
@@ -28,8 +28,8 @@
 #include "utils/nabstime.h"
 
 #include "catalog/heap.h"
-#include "access/transam.h"	/* where the declarations go */
-#include "access/xact.h"	/* where the declarations go */
+#include "access/transam.h"    /* where the declarations go */
+#include "access/xact.h"    /* where the declarations go */
 
 #include "storage/smgr.h"
 
@@ -45,8 +45,7 @@
  * --------------------------------
  */
 void
-AmiTransactionOverride(bool flag)
-{
+AmiTransactionOverride(bool flag) {
     AMI_OVERRIDE = flag;
 }
 
@@ -56,11 +55,10 @@ AmiTransactionOverride(bool flag)
  */
 void
 TransComputeBlockNumber(Relation relation, /* relation to test */
-			TransactionId transactionId, /* transaction id to test */
-			BlockNumber *blockNumberOutP)
-{
-    long	itemsPerBlock;
-    
+                        TransactionId transactionId, /* transaction id to test */
+                        BlockNumber *blockNumberOutP) {
+    long itemsPerBlock;
+
     /* ----------------
      *  we calculate the block number of our transaction
      *  by dividing the transaction id by the number of
@@ -68,12 +66,12 @@ TransComputeBlockNumber(Relation relation, /* relation to test */
      * ----------------
      */
     if (relation == LogRelation)
-	itemsPerBlock = TP_NumXidStatusPerBlock;
+        itemsPerBlock = TP_NumXidStatusPerBlock;
     else if (relation == TimeRelation)
-	itemsPerBlock = TP_NumTimePerBlock;
+        itemsPerBlock = TP_NumTimePerBlock;
     else
-	elog(WARN, "TransComputeBlockNumber: unknown relation");
-    
+        elog(WARN, "TransComputeBlockNumber: unknown relation");
+
     /* ----------------
      *	warning! if the transaction id's get too large
      *  then a BlockNumber may not be large enough to hold the results
@@ -105,22 +103,21 @@ TransComputeBlockNumber(Relation relation, /* relation to test */
 
 XidStatus
 TransBlockGetLastTransactionIdStatus(Block tblock,
-				     TransactionId baseXid,
-				     TransactionId *returnXidP)
-{
-    Index         index;
-    Index         maxIndex;
-    bits8         bit1;
-    bits8	  bit2;
-    BitIndex      offset;
-    XidStatus     xstatus;
-    
+                                     TransactionId baseXid,
+                                     TransactionId *returnXidP) {
+    Index index;
+    Index maxIndex;
+    bits8 bit1;
+    bits8 bit2;
+    BitIndex offset;
+    XidStatus xstatus;
+
     /* ----------------
      *	sanity check
      * ----------------
      */
     Assert((tblock != NULL));
-    
+
     /* ----------------
      *	search downward from the top of the block data, looking
      *  for the first Non-in progress transaction status.  Since we
@@ -129,28 +126,28 @@ TransBlockGetLastTransactionIdStatus(Block tblock,
      * ----------------
      */
     maxIndex = TP_NumXidStatusPerBlock;
-    for (index = maxIndex-1; index>=0; index--) {
-	offset =  BitIndexOf(index);
-	bit1 =    ((bits8) BitArrayBitIsSet((BitArray) tblock, offset++)) << 1;
-	bit2 =    (bits8)  BitArrayBitIsSet((BitArray) tblock, offset);
-	
-	xstatus =  (bit1 | bit2) ;
-	
-	/* ----------------
-	 *  here we have the status of some transaction, so test
-	 *  if the status is recorded as "in progress".  If so, then
-	 *  we save the transaction id in the place specified by the caller.
-	 * ----------------
-	 */
-	if (xstatus != XID_INPROGRESS) {
-	    if (returnXidP != NULL) {
-		TransactionIdStore(baseXid, returnXidP);
-		TransactionIdAdd(returnXidP, index);
-	    }
-	    break;
-	}
+    for (index = maxIndex - 1; index >= 0; index--) {
+        offset = BitIndexOf(index);
+        bit1 = ((bits8) BitArrayBitIsSet((BitArray) tblock, offset++)) << 1;
+        bit2 = (bits8) BitArrayBitIsSet((BitArray) tblock, offset);
+
+        xstatus = (bit1 | bit2);
+
+        /* ----------------
+         *  here we have the status of some transaction, so test
+         *  if the status is recorded as "in progress".  If so, then
+         *  we save the transaction id in the place specified by the caller.
+         * ----------------
+         */
+        if (xstatus != XID_INPROGRESS) {
+            if (returnXidP != NULL) {
+                TransactionIdStore(baseXid, returnXidP);
+                TransactionIdAdd(returnXidP, index);
+            }
+            break;
+        }
     }
-    
+
     /* ----------------
      *	if we get here and index is 0 it means we couldn't find
      *  a non-inprogress transaction on the block.  For now we just
@@ -159,10 +156,10 @@ TransBlockGetLastTransactionIdStatus(Block tblock,
      * ----------------
      */
     if (index == 0) {
-	if (returnXidP != NULL)
-	    TransactionIdStore(baseXid, returnXidP);
+        if (returnXidP != NULL)
+            TransactionIdStore(baseXid, returnXidP);
     }
-    
+
     /* ----------------
      *	return the status to the user
      * ----------------
@@ -179,21 +176,20 @@ TransBlockGetLastTransactionIdStatus(Block tblock,
 
 XidStatus
 TransBlockGetXidStatus(Block tblock,
-		       TransactionId transactionId)
-{
-    Index       		index;
-    bits8       		bit1;
-    bits8			bit2;
-    BitIndex    		offset;
-    
+                       TransactionId transactionId) {
+    Index index;
+    bits8 bit1;
+    bits8 bit2;
+    BitIndex offset;
+
     /* ----------------
      *	sanity check
      * ----------------
      */
     if (tblock == NULL) {
-	return XID_INVALID;
+        return XID_INVALID;
     }
-    
+
     /* ----------------
      *	calculate the index into the transaction data where
      *  our transaction status is located
@@ -205,21 +201,21 @@ TransBlockGetXidStatus(Block tblock,
      * ----------------
      */
     index = transactionId % TP_NumXidStatusPerBlock;
-    
+
     /* ----------------
      *	get the data at the specified index
      * ----------------
      */
-    offset =    BitIndexOf(index);
-    bit1 =      ((bits8)   BitArrayBitIsSet((BitArray) tblock, offset++)) << 1;
-    bit2 =      (bits8)    BitArrayBitIsSet((BitArray) tblock, offset);
-    
+    offset = BitIndexOf(index);
+    bit1 = ((bits8) BitArrayBitIsSet((BitArray) tblock, offset++)) << 1;
+    bit2 = (bits8) BitArrayBitIsSet((BitArray) tblock, offset);
+
     /* ----------------
      *	return the transaction status to the caller
      * ----------------
      */
     return (XidStatus)
-	(bit1 | bit2);
+            (bit1 | bit2);
 }
 
 /* --------------------------------
@@ -230,19 +226,18 @@ TransBlockGetXidStatus(Block tblock,
  */
 void
 TransBlockSetXidStatus(Block tblock,
-		       TransactionId transactionId, 
-		       XidStatus xstatus)
-{
-    Index       		index;
-    BitIndex    		offset;
-    
+                       TransactionId transactionId,
+                       XidStatus xstatus) {
+    Index index;
+    BitIndex offset;
+
     /* ----------------
      *	sanity check
      * ----------------
      */
     if (tblock == NULL)
-	return;
-    
+        return;
+
     /* ----------------
      *	calculate the index into the transaction data where
      *  we sould store our transaction status.
@@ -254,31 +249,31 @@ TransBlockSetXidStatus(Block tblock,
      * ----------------
      */
     index = transactionId % TP_NumXidStatusPerBlock;
-    
-    offset =    BitIndexOf(index);
-    
+
+    offset = BitIndexOf(index);
+
     /* ----------------
      *	store the transaction value at the specified offset
      * ----------------
      */
-    switch(xstatus) {
-    case XID_COMMIT:             /* set 10 */
-	BitArraySetBit((BitArray) tblock, offset);
-	BitArrayClearBit((BitArray) tblock, offset + 1);
-	break;
-    case XID_ABORT:             /* set 01 */
-	BitArrayClearBit((BitArray) tblock, offset);
-	BitArraySetBit((BitArray) tblock, offset + 1);
-	break;
-    case XID_INPROGRESS:        /* set 00 */
-	BitArrayClearBit((BitArray) tblock, offset);
-	BitArrayClearBit((BitArray) tblock, offset + 1);
-	break;
-    default:
-	elog(NOTICE,
-	     "TransBlockSetXidStatus: invalid status: %d (ignored)",
-	     xstatus);
-	break;
+    switch (xstatus) {
+        case XID_COMMIT:             /* set 10 */
+            BitArraySetBit((BitArray) tblock, offset);
+            BitArrayClearBit((BitArray) tblock, offset + 1);
+            break;
+        case XID_ABORT:             /* set 01 */
+            BitArrayClearBit((BitArray) tblock, offset);
+            BitArraySetBit((BitArray) tblock, offset + 1);
+            break;
+        case XID_INPROGRESS:        /* set 00 */
+            BitArrayClearBit((BitArray) tblock, offset);
+            BitArrayClearBit((BitArray) tblock, offset + 1);
+            break;
+        default:
+            elog(NOTICE,
+                 "TransBlockSetXidStatus: invalid status: %d (ignored)",
+                 xstatus);
+            break;
     }
 }
 
@@ -291,18 +286,17 @@ TransBlockSetXidStatus(Block tblock,
  */
 AbsoluteTime
 TransBlockGetCommitTime(Block tblock,
-			TransactionId transactionId)
-{
-    Index			index;
-    AbsoluteTime		*timeArray;
-    
+                        TransactionId transactionId) {
+    Index index;
+    AbsoluteTime *timeArray;
+
     /* ----------------
      *	sanity check
      * ----------------
      */
     if (tblock == NULL)
-	return INVALID_ABSTIME;
-    
+        return INVALID_ABSTIME;
+
     /* ----------------
      *	calculate the index into the transaction data where
      *  our transaction commit time is located
@@ -314,14 +308,14 @@ TransBlockGetCommitTime(Block tblock,
      * ----------------
      */
     index = transactionId % TP_NumTimePerBlock;
-    
+
     /* ----------------
      *	return the commit time to the caller
      * ----------------
      */
-    timeArray =  (AbsoluteTime *) tblock;
+    timeArray = (AbsoluteTime *) tblock;
     return (AbsoluteTime)
-	timeArray[ index ];
+            timeArray[index];
 }
 
 /* --------------------------------
@@ -332,20 +326,19 @@ TransBlockGetCommitTime(Block tblock,
  */
 void
 TransBlockSetCommitTime(Block tblock,
-			TransactionId transactionId,
-			AbsoluteTime commitTime)
-{
-    Index		index;
-    AbsoluteTime	*timeArray;
-    
+                        TransactionId transactionId,
+                        AbsoluteTime commitTime) {
+    Index index;
+    AbsoluteTime *timeArray;
+
     /* ----------------
      *	sanity check
      * ----------------
      */
     if (tblock == NULL)
-	return;
-    
-    
+        return;
+
+
     /* ----------------
      *	calculate the index into the transaction data where
      *  we sould store our transaction status.  
@@ -357,13 +350,13 @@ TransBlockSetCommitTime(Block tblock,
      * ----------------
      */
     index = transactionId % TP_NumTimePerBlock;
-    
+
     /* ----------------
      *	store the transaction commit time at the specified index
      * ----------------
      */
-    timeArray =  (AbsoluteTime *) tblock;
-    timeArray[ index ] = commitTime;
+    timeArray = (AbsoluteTime *) tblock;
+    timeArray[index] = commitTime;
 }
 
 /* ----------------------------------------------------------------
@@ -377,54 +370,53 @@ TransBlockSetCommitTime(Block tblock,
  */
 XidStatus
 TransBlockNumberGetXidStatus(Relation relation,
-			     BlockNumber blockNumber,
-			     TransactionId xid,
-			     bool *failP)
-{
-    Buffer	   	buffer;		/* buffer associated with block */
-    Block		block;		/* block containing xstatus */
-    XidStatus		xstatus;	/* recorded status of xid */
-    bool		localfail;      /* bool used if failP = NULL */
-    
+                             BlockNumber blockNumber,
+                             TransactionId xid,
+                             bool *failP) {
+    Buffer buffer;        /* buffer associated with block */
+    Block block;        /* block containing xstatus */
+    XidStatus xstatus;    /* recorded status of xid */
+    bool localfail;      /* bool used if failP = NULL */
+
     /* ----------------
      *	SOMEDAY place a read lock on the log relation
      *  That someday is today 5 Aug 1991 -mer
      * ----------------
      */
     RelationSetLockForRead(relation);
-    
+
     /* ----------------
      *	get the page containing the transaction information
      * ----------------
      */
-    buffer = 	   ReadBuffer(relation, blockNumber);
-    block =   	   BufferGetBlock(buffer);
-    
+    buffer = ReadBuffer(relation, blockNumber);
+    block = BufferGetBlock(buffer);
+
     /* ----------------
      *	get the status from the block.  note, for now we always
      *  return false in failP.
      * ----------------
      */
     if (failP == NULL)
-	failP = &localfail;
+        failP = &localfail;
     (*failP) = false;
-    
+
     xstatus = TransBlockGetXidStatus(block, xid);
-    
+
     /* ----------------
      *	release the buffer and return the status
      * ----------------
      */
     ReleaseBuffer(buffer);
-    
+
     /* ----------------
      *	SOMEDAY release our lock on the log relation
      * ----------------
      */
     RelationUnsetLockForRead(relation);
-    
+
     return
-	xstatus;
+            xstatus;
 }
 
 /* --------------------------------
@@ -433,15 +425,14 @@ TransBlockNumberGetXidStatus(Relation relation,
  */
 void
 TransBlockNumberSetXidStatus(Relation relation,
-			     BlockNumber blockNumber,
-			     TransactionId xid,
-			     XidStatus xstatus,
-			     bool *failP)
-{
-    Buffer	   	buffer;		/* buffer associated with block */
-    Block		block;		/* block containing xstatus */
-    bool		localfail;      /* bool used if failP = NULL */
-    
+                             BlockNumber blockNumber,
+                             TransactionId xid,
+                             XidStatus xstatus,
+                             bool *failP) {
+    Buffer buffer;        /* buffer associated with block */
+    Block block;        /* block containing xstatus */
+    bool localfail;      /* bool used if failP = NULL */
+
     /* ----------------
      *	SOMEDAY gain exclusive access to the log relation
      *
@@ -449,14 +440,14 @@ TransBlockNumberSetXidStatus(Relation relation,
      * ----------------
      */
     RelationSetLockForWrite(relation);
-    
+
     /* ----------------
      *	get the block containing the transaction status
      * ----------------
      */
-    buffer = 	ReadBuffer(relation, blockNumber);
-    block =   	BufferGetBlock(buffer);
-    
+    buffer = ReadBuffer(relation, blockNumber);
+    block = BufferGetBlock(buffer);
+
     /* ----------------
      *	attempt to update the status of the transaction on the block.
      *  if we are successful, write the block. otherwise release the buffer.
@@ -464,20 +455,20 @@ TransBlockNumberSetXidStatus(Relation relation,
      * ----------------
      */
     if (failP == NULL)
-	failP = &localfail;
+        failP = &localfail;
     (*failP) = false;
-    
+
     TransBlockSetXidStatus(block, xid, xstatus);
-    
+
     if ((*failP) == false)
-	WriteBuffer(buffer);
+        WriteBuffer(buffer);
     else
-	ReleaseBuffer(buffer);
-    
+        ReleaseBuffer(buffer);
+
     /* ----------------
      *	SOMEDAY release our lock on the log relation
      * ----------------
-     */    
+     */
     RelationUnsetLockForWrite(relation);
 }
 
@@ -487,15 +478,14 @@ TransBlockNumberSetXidStatus(Relation relation,
  */
 AbsoluteTime
 TransBlockNumberGetCommitTime(Relation relation,
-			      BlockNumber blockNumber,
-			      TransactionId xid,
-			      bool *failP)
-{
-    Buffer	   	buffer;		/* buffer associated with block */
-    Block		block;		/* block containing commit time */
-    bool		localfail;      /* bool used if failP = NULL */
-    AbsoluteTime	xtime;		/* commit time */
-    
+                              BlockNumber blockNumber,
+                              TransactionId xid,
+                              bool *failP) {
+    Buffer buffer;        /* buffer associated with block */
+    Block block;        /* block containing commit time */
+    bool localfail;      /* bool used if failP = NULL */
+    AbsoluteTime xtime;        /* commit time */
+
     /* ----------------
      *	SOMEDAY place a read lock on the time relation
      *
@@ -503,42 +493,42 @@ TransBlockNumberGetCommitTime(Relation relation,
      * ----------------
      */
     RelationSetLockForRead(relation);
-    
+
     /* ----------------
      *	get the block containing the transaction information
      * ----------------
      */
-    buffer = 		ReadBuffer(relation, blockNumber);
-    block =   		BufferGetBlock(buffer);
-    
+    buffer = ReadBuffer(relation, blockNumber);
+    block = BufferGetBlock(buffer);
+
     /* ----------------
      *	get the commit time from the block
      *  note, for now we always return false in failP.
      * ----------------
      */
     if (failP == NULL)
-	failP = &localfail;
+        failP = &localfail;
     (*failP) = false;
-    
+
     xtime = TransBlockGetCommitTime(block, xid);
-    
+
     /* ----------------
      *	release the buffer and return the commit time
      * ----------------
      */
     ReleaseBuffer(buffer);
-    
+
     /* ----------------
      *	SOMEDAY release our lock on the time relation
      * ----------------
      */
     RelationUnsetLockForRead(relation);
-    
+
     if ((*failP) == false)
-	return xtime;
+        return xtime;
     else
-	return INVALID_ABSTIME;
-    
+        return INVALID_ABSTIME;
+
 }
 
 /* --------------------------------
@@ -547,15 +537,14 @@ TransBlockNumberGetCommitTime(Relation relation,
  */
 void
 TransBlockNumberSetCommitTime(Relation relation,
-			      BlockNumber blockNumber,
-			      TransactionId xid,
-			      AbsoluteTime xtime,
-			      bool *failP)
-{
-    Buffer	   	buffer;		/* buffer associated with block */
-    Block		block;		/* block containing commit time */
-    bool		localfail;      /* bool used if failP = NULL */
-    
+                              BlockNumber blockNumber,
+                              TransactionId xid,
+                              AbsoluteTime xtime,
+                              bool *failP) {
+    Buffer buffer;        /* buffer associated with block */
+    Block block;        /* block containing commit time */
+    bool localfail;      /* bool used if failP = NULL */
+
     /* ----------------
      *	SOMEDAY gain exclusive access to the time relation
      *
@@ -563,14 +552,14 @@ TransBlockNumberSetCommitTime(Relation relation,
      * ----------------
      */
     RelationSetLockForWrite(relation);
-    
+
     /* ----------------
      *	get the block containing our commit time
      * ----------------
      */
-    buffer = 	   ReadBuffer(relation, blockNumber);
-    block =   	   BufferGetBlock(buffer);
-    
+    buffer = ReadBuffer(relation, blockNumber);
+    block = BufferGetBlock(buffer);
+
     /* ----------------
      *	attempt to update the commit time of the transaction on the block.
      *  if we are successful, write the block. otherwise release the buffer.
@@ -578,22 +567,22 @@ TransBlockNumberSetCommitTime(Relation relation,
      * ----------------
      */
     if (failP == NULL)
-	failP = &localfail;
+        failP = &localfail;
     (*failP) = false;
-    
+
     TransBlockSetCommitTime(block, xid, xtime);
-    
+
     if ((*failP) == false)
-	WriteBuffer(buffer);
+        WriteBuffer(buffer);
     else
-	ReleaseBuffer(buffer);
-    
+        ReleaseBuffer(buffer);
+
     /* ----------------
      *	SOMEDAY release our lock on the time relation
      * ----------------
      */
     RelationUnsetLockForWrite(relation);
-    
+
 }
 
 /* --------------------------------
@@ -602,17 +591,16 @@ TransBlockNumberSetCommitTime(Relation relation,
  */
 void
 TransGetLastRecordedTransaction(Relation relation,
-				TransactionId xid, /* return: transaction id */
-				bool *failP)
-{
-    BlockNumber	  	blockNumber;	/* block number */
-    Buffer	   	buffer;		/* buffer associated with block */
-    Block		block;		/* block containing xid status */
-    BlockNumber		n;		/* number of blocks in the relation */
-    TransactionId	baseXid;
-    
+                                TransactionId xid, /* return: transaction id */
+                                bool *failP) {
+    BlockNumber blockNumber;    /* block number */
+    Buffer buffer;        /* buffer associated with block */
+    Block block;        /* block containing xid status */
+    BlockNumber n;        /* number of blocks in the relation */
+    TransactionId baseXid;
+
     (*failP) = false;
-    
+
     /* ----------------
      *	SOMEDAY gain exclusive access to the log relation
      *
@@ -623,7 +611,7 @@ TransGetLastRecordedTransaction(Relation relation,
      * ----------------
      */
     RelationSetLockForRead(relation);
-    
+
     /* ----------------
      *	we assume the last block of the log contains the last
      *  recorded transaction.  If the relation is empty we return
@@ -632,18 +620,18 @@ TransGetLastRecordedTransaction(Relation relation,
      */
     n = RelationGetNumberOfBlocks(relation);
     if (n == 0) {
-	(*failP) = true;
-	return;
+        (*failP) = true;
+        return;
     }
-    
+
     /* ----------------
      *	get the block containing the transaction information
      * ----------------
      */
-    blockNumber =  n-1;
-    buffer = 	ReadBuffer(relation, blockNumber);
-    block =   	BufferGetBlock(buffer);
-    
+    blockNumber = n - 1;
+    buffer = ReadBuffer(relation, blockNumber);
+    block = BufferGetBlock(buffer);
+
     /* ----------------
      *	get the last xid on the block
      * ----------------
@@ -652,9 +640,9 @@ TransGetLastRecordedTransaction(Relation relation,
 
 /* XXX ???? xid won't get returned! - AY '94 */
     (void) TransBlockGetLastTransactionIdStatus(block, baseXid, &xid);
-    
+
     ReleaseBuffer(buffer);
-    
+
     /* ----------------
      *	SOMEDAY release our lock on the log relation
      * ----------------

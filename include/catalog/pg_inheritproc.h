@@ -30,30 +30,31 @@
  *	pg_inheritproc definition.  cpp turns this into
  *	typedef struct FormData_pg_inheritproc
  * ----------------
- */ 
+ */
 CATALOG(pg_inheritproc) {
-     NameData 	inhproname;
-     Oid 	inhargrel;
-     Oid 	inhdefrel;
-     Oid 	inhproc;
-} FormData_pg_inheritproc;
+        NameData    inhproname;
+        Oid    inhargrel;
+        Oid    inhdefrel;
+        Oid    inhproc;
+}
+FormData_pg_inheritproc;
 
 /* ----------------
  *	Form_pg_inheritproc corresponds to a pointer to a tuple with
  *	the format of pg_inheritproc relation.
  * ----------------
  */
-typedef FormData_pg_inheritproc	*Form_pg_inheritproc;
+typedef FormData_pg_inheritproc *Form_pg_inheritproc;
 
 /* ----------------
  *	compiler constants for pg_inheritproc
  * ----------------
  */
-#define Natts_pg_inheritproc		4
-#define Anum_pg_inheritproc_inhproname	1
-#define Anum_pg_inheritproc_inhargrel	2
-#define Anum_pg_inheritproc_inhdefrel	3
-#define Anum_pg_inheritproc_inhproc	4
+#define Natts_pg_inheritproc        4
+#define Anum_pg_inheritproc_inhproname    1
+#define Anum_pg_inheritproc_inhargrel    2
+#define Anum_pg_inheritproc_inhdefrel    3
+#define Anum_pg_inheritproc_inhproc    4
 
 
 #endif /* PG_INHERITPROC_H */

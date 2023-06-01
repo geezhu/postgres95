@@ -10,13 +10,13 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	BIT_H
+#ifndef    BIT_H
 #define BIT_H
 
-typedef bits8	*BitArray;
-typedef uint32	BitIndex;
+typedef bits8 *BitArray;
+typedef uint32 BitIndex;
 
-#define BitsPerByte	8
+#define BitsPerByte    8
 
 /*
  * BitArraySetBit --
@@ -36,4 +36,4 @@ extern void BitArrayClearBit(BitArray bitArray, BitIndex bitIndex);
  */
 extern bool BitArrayBitIsSet(BitArray bitArray, BitIndex bitIndex);
 
-#endif	/* BIT_H */
+#endif    /* BIT_H */

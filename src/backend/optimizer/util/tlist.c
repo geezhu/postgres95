@@ -45,16 +45,15 @@ static Node *flatten_tlistentry(Node *tlistentry, List *flat_tlist);
  *	     targetlist = valid sequence
  */
 TargetEntry *
-tlistentry_member(Var *var, List *targetlist)
-{
+tlistentry_member(Var *var, List *targetlist) {
     if (var) {
-	List *temp = NIL;
+        List *temp = NIL;
 
-	foreach (temp,targetlist) {
-	    if (var_equal(var,
-			  get_expr(lfirst(temp))))
-		return((TargetEntry*)lfirst(temp));
-	}
+        foreach (temp, targetlist) {
+            if (var_equal(var,
+                          get_expr(lfirst(temp))))
+                return ((TargetEntry *) lfirst(temp));
+        }
     }
     return (NULL);
 }
@@ -68,15 +67,14 @@ tlistentry_member(Var *var, List *targetlist)
  * 
  */
 Expr *
-matching_tlvar(Var *var, List *targetlist)
-{
+matching_tlvar(Var *var, List *targetlist) {
     TargetEntry *tlentry;
 
-    tlentry = tlistentry_member(var,targetlist);
-    if (tlentry) 
-	return((Expr*)get_expr (tlentry) );
+    tlentry = tlistentry_member(var, targetlist);
+    if (tlentry)
+        return ((Expr *) get_expr(tlentry));
 
-    return((Expr*) NULL);
+    return ((Expr *) NULL);
 }
 
 /*    
@@ -92,27 +90,26 @@ matching_tlvar(Var *var, List *targetlist)
  * CREATES:  new var-node iff no matching var-node exists in targetlist
  */
 void
-add_tl_element(Rel *rel, Var *var)
-{
-    Expr *oldvar = (Expr *)NULL;
-    
+add_tl_element(Rel *rel, Var *var) {
+    Expr *oldvar = (Expr *) NULL;
+
     oldvar = matching_tlvar(var, rel->targetlist);
-    
+
     /*
      * If 'var' is not already in 'rel's target list, add a new node. 
      */
-    if (oldvar==NULL) {
-	List *tlist = rel->targetlist;
-	Var *newvar = makeVar(var->varno,
-			      var->varattno,
-			      var->vartype,
-			      var->varno,
-			      var->varoattno);
+    if (oldvar == NULL) {
+        List *tlist = rel->targetlist;
+        Var *newvar = makeVar(var->varno,
+                              var->varattno,
+                              var->vartype,
+                              var->varno,
+                              var->varoattno);
 
-	rel->targetlist =
-	    lappend (tlist,
-		      create_tl_element(newvar,
-					length(tlist) + 1));
+        rel->targetlist =
+                lappend(tlist,
+                        create_tl_element(newvar,
+                                          length(tlist) + 1));
 
     }
 }
@@ -126,22 +123,21 @@ add_tl_element(Rel *rel, Var *var)
  * RETURNS:  newly created tlist-entry
  * CREATES:  new targetlist entry (always).
  */
-TargetEntry*
-create_tl_element(Var *var, int resdomno)
-{
-    TargetEntry *tlelement= makeNode(TargetEntry);
-    
+TargetEntry *
+create_tl_element(Var *var, int resdomno) {
+    TargetEntry *tlelement = makeNode(TargetEntry);
+
     tlelement->resdom =
-	makeResdom(resdomno, 
-		   var->vartype,
-		   get_typlen(var->vartype),
-		   NULL,
-		   (Index)0,
-		   (Oid)0,
-		   0);
-    tlelement->expr = (Node*)var;
-    
-    return(tlelement);
+            makeResdom(resdomno,
+                       var->vartype,
+                       get_typlen(var->vartype),
+                       NULL,
+                       (Index) 0,
+                       (Oid) 0,
+                       0);
+    tlelement->expr = (Node *) var;
+
+    return (tlelement);
 }
 
 /*    
@@ -150,25 +146,24 @@ create_tl_element(Var *var, int resdomno)
  *    
  */
 List *
-get_actual_tlist(List *tlist)
-{
+get_actual_tlist(List *tlist) {
     /*
      * this function is not making sense. - ay 10/94
      */
-#if 0 
+#if 0
     List *element = NIL;
     List *result = NIL;
     
     if (tlist==NULL) {
-	elog(DEBUG,"calling get_actual_tlist with empty tlist");
-	return(NIL);
+    elog(DEBUG,"calling get_actual_tlist with empty tlist");
+    return(NIL);
     }
     /* XXX - it is unclear to me what exactly get_entry 
        should be doing, as it is unclear to me the exact
        relationship between "TL" "TLE" and joinlists */
 
     foreach(element,tlist)
-	result = lappend(result, lfirst((List*)lfirst(element)));
+    result = lappend(result, lfirst((List*)lfirst(element)));
     
     return(result);
 #endif
@@ -192,47 +187,45 @@ get_actual_tlist(List *tlist)
  *    
  */
 Resdom *
-tlist_member(Var *var, List *tlist)
-{
+tlist_member(Var *var, List *tlist) {
     List *i = NIL;
-    TargetEntry *temp_tle = (TargetEntry *)NULL;
-    TargetEntry *tl_elt = (TargetEntry *)NULL;
+    TargetEntry *temp_tle = (TargetEntry *) NULL;
+    TargetEntry *tl_elt = (TargetEntry *) NULL;
 
     if (var) {
-	foreach (i,tlist) {
-	    temp_tle = (TargetEntry *)lfirst(i);
-	    if (var_equal(var, get_expr(temp_tle))) {
-		tl_elt = temp_tle;
-		break;
-	    }
-	}
+        foreach (i, tlist) {
+            temp_tle = (TargetEntry *) lfirst(i);
+            if (var_equal(var, get_expr(temp_tle))) {
+                tl_elt = temp_tle;
+                break;
+            }
+        }
 
-	if (tl_elt != NULL)
-	    return(tl_elt->resdom);
-	else 
-	    return((Resdom*)NULL);
+        if (tl_elt != NULL)
+            return (tl_elt->resdom);
+        else
+            return ((Resdom *) NULL);
     }
-    return ((Resdom*)NULL);
+    return ((Resdom *) NULL);
 }
 
 /*
  *   Routine to get the resdom out of a targetlist.
  */
 Resdom *
-tlist_resdom(List *tlist, Resdom *resnode)
-{
-    Resdom *resdom = (Resdom*)NULL;
+tlist_resdom(List *tlist, Resdom *resnode) {
+    Resdom *resdom = (Resdom *) NULL;
     List *i = NIL;
-    TargetEntry *temp_tle = (TargetEntry *)NULL;
+    TargetEntry *temp_tle = (TargetEntry *) NULL;
 
-    foreach(i,tlist) {
-	temp_tle = (TargetEntry *)lfirst(i);
-	resdom = temp_tle->resdom;
-	/*  Since resnos are supposed to be unique */
-	if (resnode->resno == resdom->resno)  
-	    return(resdom);
+    foreach(i, tlist) {
+        temp_tle = (TargetEntry *) lfirst(i);
+        resdom = temp_tle->resdom;
+        /*  Since resnos are supposed to be unique */
+        if (resnode->resno == resdom->resno)
+            return (resdom);
     }
-    return((Resdom*)NULL);
+    return ((Resdom *) NULL);
 }
 
 
@@ -253,30 +246,29 @@ tlist_resdom(List *tlist, Resdom *resnode)
  *  varoattno. Also, nested attnos are long gone. - ay 2/95]
  */
 TargetEntry *
-match_varid(Var *test_var, List *tlist)
-{
+match_varid(Var *test_var, List *tlist) {
     List *tl;
     Oid type_var;
 
     type_var = (Oid) test_var->vartype;
 
     foreach (tl, tlist) {
-	TargetEntry *entry;
-	Var *tlvar;
+        TargetEntry *entry;
+        Var *tlvar;
 
-	entry = lfirst(tl);
-	tlvar = get_expr(entry);
+        entry = lfirst(tl);
+        tlvar = get_expr(entry);
 
-	/*
-	 * we test the original varno (instead of varno which might
-	 * be changed to INNER/OUTER.
-	 */
-	if (tlvar->varnoold == test_var->varnoold &&
-	    tlvar->varoattno == test_var->varoattno) {
+        /*
+         * we test the original varno (instead of varno which might
+         * be changed to INNER/OUTER.
+         */
+        if (tlvar->varnoold == test_var->varnoold &&
+            tlvar->varoattno == test_var->varoattno) {
 
-	    if (tlvar->vartype == type_var)
-		return(entry);
-	}
+            if (tlvar->vartype == type_var)
+                return (entry);
+        }
     }
 
     return (NULL);
@@ -294,17 +286,16 @@ match_varid(Var *test_var, List *tlist)
  *    
  */
 List *
-new_unsorted_tlist(List *targetlist)
-{
-    List *new_targetlist = (List*)copyObject ((Node*)targetlist);
+new_unsorted_tlist(List *targetlist) {
+    List *new_targetlist = (List *) copyObject((Node *) targetlist);
     List *x = NIL;
 
     foreach (x, new_targetlist) {
-	TargetEntry *tle = (TargetEntry *)lfirst(x);
-	tle->resdom->reskey = 0;
-	tle->resdom->reskeyop = (Oid)0;
+        TargetEntry *tle = (TargetEntry *) lfirst(x);
+        tle->resdom->reskey = 0;
+        tle->resdom->reskeyop = (Oid) 0;
     }
-    return(new_targetlist);
+    return (new_targetlist);
 }
 
 /*    
@@ -320,19 +311,18 @@ new_unsorted_tlist(List *targetlist)
  *    
  */
 List *
-copy_vars(List *target, List *source)
-{
+copy_vars(List *target, List *source) {
     List *result = NIL;
     List *src = NIL;
     List *dest = NIL;
-    
-    for ( src = source, dest = target; src != NIL &&
-	 dest != NIL; src = lnext(src), dest = lnext(dest)) {
-	TargetEntry *temp = MakeTLE(((TargetEntry *)lfirst(dest))->resdom,
-				 (Node*)get_expr(lfirst(src)));
-	result = lappend(result,temp);
+
+    for (src = source, dest = target; src != NIL &&
+                                      dest != NIL; src = lnext(src), dest = lnext(dest)) {
+        TargetEntry *temp = MakeTLE(((TargetEntry *) lfirst(dest))->resdom,
+                                    (Node *) get_expr(lfirst(src)));
+        result = lappend(result, temp);
     }
-    return(result);
+    return (result);
 }
 
 /*    
@@ -346,39 +336,38 @@ copy_vars(List *target, List *source)
  *    
  */
 List *
-flatten_tlist(List *tlist)
-{
+flatten_tlist(List *tlist) {
     int last_resdomno = 1;
     List *new_tlist = NIL;
     List *tlist_vars = NIL;
     List *temp;
 
-    foreach (temp, tlist)  {
-	TargetEntry *temp_entry = NULL;
-	List *vars;
+    foreach (temp, tlist) {
+        TargetEntry *temp_entry = NULL;
+        List *vars;
 
-	temp_entry = lfirst(temp);
-	vars = pull_var_clause((Node*)get_expr(temp_entry));
-	if(vars != NULL) {
-	    tlist_vars = nconc(tlist_vars, vars);
-	}
+        temp_entry = lfirst(temp);
+        vars = pull_var_clause((Node *) get_expr(temp_entry));
+        if (vars != NULL) {
+            tlist_vars = nconc(tlist_vars, vars);
+        }
     }
 
     foreach (temp, tlist_vars) {
-	Var *var = lfirst(temp);
-	if (!(tlist_member(var, new_tlist))) {
-	    Resdom *r;
+        Var *var = lfirst(temp);
+        if (!(tlist_member(var, new_tlist))) {
+            Resdom *r;
 
-	    r = makeResdom(last_resdomno,
-			   var->vartype,
-			   get_typlen(var->vartype),
-			   NULL,
-			   (Index)0,
-			   (Oid)0,
-			   0);
-	    last_resdomno++;
-	    new_tlist = lappend(new_tlist, MakeTLE (r, (Node*)var));
-	}
+            r = makeResdom(last_resdomno,
+                           var->vartype,
+                           get_typlen(var->vartype),
+                           NULL,
+                           (Index) 0,
+                           (Oid) 0,
+                           0);
+            last_resdomno++;
+            new_tlist = lappend(new_tlist, MakeTLE(r, (Node *) var));
+        }
     }
 
     return new_tlist;
@@ -397,21 +386,20 @@ flatten_tlist(List *tlist)
  *    
  */
 List *
-flatten_tlist_vars(List *full_tlist, List *flat_tlist)
-{
+flatten_tlist_vars(List *full_tlist, List *flat_tlist) {
     List *x = NIL;
     List *result = NIL;
-    
-    foreach(x,full_tlist) {
-	TargetEntry *tle= lfirst(x);
-	result =
-	    lappend(result,
-		     MakeTLE(tle->resdom,
-			     flatten_tlistentry((Node*)get_expr(tle),
-						flat_tlist)));
+
+    foreach(x, full_tlist) {
+        TargetEntry *tle = lfirst(x);
+        result =
+                lappend(result,
+                        MakeTLE(tle->resdom,
+                                flatten_tlistentry((Node *) get_expr(tle),
+                                                   flat_tlist)));
     }
 
-    return(result);
+    return (result);
 }
 
 /*    
@@ -426,83 +414,78 @@ flatten_tlist_vars(List *full_tlist, List *flat_tlist)
  *    
  */
 static Node *
-flatten_tlistentry(Node *tlistentry, List *flat_tlist)
-{
-    if (tlistentry==NULL) {
+flatten_tlistentry(Node *tlistentry, List *flat_tlist) {
+    if (tlistentry == NULL) {
 
-	return NULL;
+        return NULL;
 
-    } else if (IsA (tlistentry,Var)) {
+    } else if (IsA (tlistentry, Var)) {
 
-	return
-	    ((Node *)get_expr(match_varid((Var*)tlistentry,
-					  flat_tlist)));
-    } else if (IsA (tlistentry,Iter)) {
+        return
+                ((Node *) get_expr(match_varid((Var *) tlistentry,
+                                               flat_tlist)));
+    } else if (IsA (tlistentry, Iter)) {
 
-	((Iter*)tlistentry)->iterexpr = 
-	    flatten_tlistentry((Node*)((Iter*)tlistentry)->iterexpr,
-			       flat_tlist);
-	return tlistentry;
+        ((Iter *) tlistentry)->iterexpr =
+                flatten_tlistentry((Node *) ((Iter *) tlistentry)->iterexpr,
+                                   flat_tlist);
+        return tlistentry;
 
     } else if (single_node(tlistentry)) {
 
-	return tlistentry;
+        return tlistentry;
 
-    } else if (is_funcclause (tlistentry)) {
-	Expr *expr = (Expr*)tlistentry;
-	List *temp_result = NIL;
-	List *elt = NIL;
-	
-	foreach(elt, expr->args)
-	    temp_result = lappend(temp_result,
-				   flatten_tlistentry(lfirst(elt),flat_tlist));
-	
-	return
-	    ((Node *)make_funcclause((Func*)expr->oper, temp_result));
+    } else if (is_funcclause(tlistentry)) {
+        Expr *expr = (Expr *) tlistentry;
+        List *temp_result = NIL;
+        List *elt = NIL;
 
-    } else if (IsA(tlistentry,Aggreg)) {
+        foreach(elt, expr->args) temp_result = lappend(temp_result,
+                                                       flatten_tlistentry(lfirst(elt), flat_tlist));
 
-	return tlistentry;
+        return
+                ((Node *) make_funcclause((Func *) expr->oper, temp_result));
 
-    } else if (IsA(tlistentry,ArrayRef)) {
-	ArrayRef *aref = (ArrayRef *)tlistentry;
-	List *temp = NIL;
-	List *elt = NIL;
+    } else if (IsA(tlistentry, Aggreg)) {
 
-	foreach(elt, aref->refupperindexpr)
-	    temp = lappend(temp, flatten_tlistentry(lfirst(elt), flat_tlist));
-	aref->refupperindexpr = temp;
+        return tlistentry;
 
-	temp = NIL;
-	foreach(elt, aref->reflowerindexpr)
-	    temp = lappend(temp, flatten_tlistentry(lfirst(elt), flat_tlist));
-	aref->reflowerindexpr = temp;
+    } else if (IsA(tlistentry, ArrayRef)) {
+        ArrayRef *aref = (ArrayRef *) tlistentry;
+        List *temp = NIL;
+        List *elt = NIL;
 
-	aref->refexpr = 
-	    flatten_tlistentry(aref->refexpr, flat_tlist);
+        foreach(elt, aref->refupperindexpr) temp = lappend(temp, flatten_tlistentry(lfirst(elt), flat_tlist));
+        aref->refupperindexpr = temp;
 
-	aref->refassgnexpr = 
-	    flatten_tlistentry(aref->refassgnexpr, flat_tlist);
+        temp = NIL;
+        foreach(elt, aref->reflowerindexpr) temp = lappend(temp, flatten_tlistentry(lfirst(elt), flat_tlist));
+        aref->reflowerindexpr = temp;
 
-	return tlistentry;
+        aref->refexpr =
+                flatten_tlistentry(aref->refexpr, flat_tlist);
+
+        aref->refassgnexpr =
+                flatten_tlistentry(aref->refassgnexpr, flat_tlist);
+
+        return tlistentry;
     } else {
-	Expr *expr = (Expr*)tlistentry;
-	Var *left =
-	    (Var*)flatten_tlistentry((Node*)get_leftop(expr),
-				     flat_tlist);
-	Var *right =
-	    (Var*)flatten_tlistentry((Node*)get_rightop(expr),
-				     flat_tlist);
+        Expr *expr = (Expr *) tlistentry;
+        Var *left =
+                (Var *) flatten_tlistentry((Node *) get_leftop(expr),
+                                           flat_tlist);
+        Var *right =
+                (Var *) flatten_tlistentry((Node *) get_rightop(expr),
+                                           flat_tlist);
 
-	return((Node *)
-	       make_opclause((Oper*)expr->oper, left, right));
+        return ((Node *)
+                make_opclause((Oper *) expr->oper, left, right));
     }
 }
 
 
 TargetEntry *
-MakeTLE(Resdom *resdom, Node *expr)
-{
+MakeTLE(Resdom *resdom, Node *expr) {
     TargetEntry *rt = makeNode(TargetEntry);
 
     rt->resdom = resdom;
@@ -511,12 +494,11 @@ MakeTLE(Resdom *resdom, Node *expr)
 }
 
 Var *
-get_expr(TargetEntry *tle)
-{
-    Assert(tle!=NULL);
-    Assert(tle->expr!=NULL);
+get_expr(TargetEntry *tle) {
+    Assert(tle != NULL);
+    Assert(tle->expr != NULL);
 
-    return ((Var *)tle->expr); 
+    return ((Var *) tle->expr);
 }
 
 
@@ -530,46 +512,44 @@ get_expr(TargetEntry *tle)
  *    in there.
  */
 void
-AddGroupAttrToTlist(List *tlist, List *grpCl)
-{
+AddGroupAttrToTlist(List *tlist, List *grpCl) {
     List *gl;
     int last_resdomno = length(tlist) + 1;
-    
+
     foreach (gl, grpCl) {
-	GroupClause *gc = (GroupClause*)lfirst(gl);
-	Var *var = gc->grpAttr;
+        GroupClause *gc = (GroupClause *) lfirst(gl);
+        Var *var = gc->grpAttr;
 
-	if (!(tlist_member(var, tlist))) {
-	    Resdom *r;
+        if (!(tlist_member(var, tlist))) {
+            Resdom *r;
 
-	    r = makeResdom(last_resdomno,
-			   var->vartype,
-			   get_typlen(var->vartype),
-			   NULL,
-			   (Index)0,
-			   (Oid)0,
-			   0);
-	    last_resdomno++;
-	    tlist = lappend(tlist, MakeTLE(r, (Node*)var));
-	}
+            r = makeResdom(last_resdomno,
+                           var->vartype,
+                           get_typlen(var->vartype),
+                           NULL,
+                           (Index) 0,
+                           (Oid) 0,
+                           0);
+            last_resdomno++;
+            tlist = lappend(tlist, MakeTLE(r, (Node *) var));
+        }
     }
 }
 
 /* was ExecTargetListLength() in execQual.c, 
    moved here to reduce dependencies on the executor module */
 int
-exec_tlist_length(List *targetlist)
-{
+exec_tlist_length(List *targetlist) {
     int len;
     List *tl;
     TargetEntry *curTle;
-    
+
     len = 0;
     foreach (tl, targetlist) {
-	curTle = lfirst(tl);
-	
-	if (curTle->resdom != NULL)
-	    len++;
+        curTle = lfirst(tl);
+
+        if (curTle->resdom != NULL)
+            len++;
     }
     return len;
 }

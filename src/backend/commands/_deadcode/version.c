@@ -31,7 +31,7 @@
 #include "utils/elog.h"
 #include "nodes/pg_list.h"
 #include "commands/version.h"
-#include "access/xact.h"		/* for GetCurrentXactStartTime */
+#include "access/xact.h"        /* for GetCurrentXactStartTime */
 #include "tcop/tcopprot.h"
 
 #define MAX_QUERY_LEN 1024
@@ -85,8 +85,7 @@ static void setAttrList(char *bname);
  *							_sp.
  */
 static void
-eval_as_new_xact(char *query)
-{
+eval_as_new_xact(char *query) {
     /* WARNING! do not uncomment the following lines WARNING!
      *  CommitTransactionCommand();
      * StartTransactionCommand();
@@ -99,25 +98,24 @@ eval_as_new_xact(char *query)
  *  Define a version.
  */
 void
-DefineVersion(char *name, char *fromRelname, char *date)
-{
+DefineVersion(char *name, char *fromRelname, char *date) {
     char *bname;
     static char saved_basename[512];
     static char saved_snapshot[512];
 
     if (date == NULL) {
-	/* no time ranges */
-	bname = fromRelname;
-	(void) strcpy(saved_basename, (char *) bname);
-	*saved_snapshot = (char)NULL;
+        /* no time ranges */
+        bname = fromRelname;
+        (void) strcpy(saved_basename, (char *) bname);
+        *saved_snapshot = (char) NULL;
     } else {
-	/* version is a snapshot */
-	bname = fromRelname;
-	(void) strcpy(saved_basename, (char *) bname);
-	sprintf(saved_snapshot, "['%s']", date);
+        /* version is a snapshot */
+        bname = fromRelname;
+        (void) strcpy(saved_basename, (char *) bname);
+        sprintf(saved_snapshot, "['%s']", date);
     }
-    
-    
+
+
     /*
      * Calls the routine ``GetAttrList'' get the list of attributes
      * from the base relation. 
@@ -126,11 +124,11 @@ DefineVersion(char *name, char *fromRelname, char *date)
      */
     setAttrList(bname);
 
-    VersionCreate (name, saved_basename);
-    VersionAppend (name, saved_basename);
-    VersionDelete (name, saved_basename,saved_snapshot);
-    VersionReplace (name, saved_basename,saved_snapshot);
-    VersionRetrieve (name, saved_basename, saved_snapshot);
+    VersionCreate(name, saved_basename);
+    VersionAppend(name, saved_basename);
+    VersionDelete(name, saved_basename, saved_snapshot);
+    VersionReplace(name, saved_basename, saved_snapshot);
+    VersionRetrieve(name, saved_basename, saved_snapshot);
 }
 
 
@@ -138,30 +136,29 @@ DefineVersion(char *name, char *fromRelname, char *date)
  *  Creates the deltas.
  */
 void
-VersionCreate(char *vname, char *bname)
-{
-    static char query_buf [MAX_QUERY_LEN];
-    
+VersionCreate(char *vname, char *bname) {
+    static char query_buf[MAX_QUERY_LEN];
+
     /*
      *  Creating the dummy version relation for triggering rules.
      */
     sprintf(query_buf, "SELECT * INTO TABLE %s from %s where 1 =2",
-	    vname, bname);
-    
-    pg_eval (query_buf, (char **) NULL, (Oid *) NULL, 0);  
-    
+            vname, bname);
+
+    pg_eval(query_buf, (char **) NULL, (Oid *) NULL, 0);
+
     /* 
      * Creating the ``v_added'' relation 
      */
-    sprintf (query_buf, "SELECT * INTO TABLE %s_added from %s where 1 = 2", 
-	     vname, bname);
-    eval_as_new_xact (query_buf); 
-    
+    sprintf(query_buf, "SELECT * INTO TABLE %s_added from %s where 1 = 2",
+            vname, bname);
+    eval_as_new_xact(query_buf);
+
     /* 
      * Creating the ``v_deleted'' relation. 
      */
-    sprintf (query_buf, "CREATE TABLE %s_del (DOID oid)", vname);
-    eval_as_new_xact (query_buf); 
+    sprintf(query_buf, "CREATE TABLE %s_del (DOID oid)", vname);
+    eval_as_new_xact(query_buf);
 }
 
 
@@ -171,38 +168,37 @@ VersionCreate(char *vname, char *bname)
  * for that relation. 
  */
 static void
-setAttrList(char *bname)
-{
+setAttrList(char *bname) {
     Relation rdesc;
     int i = 0;
     int maxattrs = 0;
     char *attrname;
     char temp_buf[512];
-    int notfirst = 0;    
+    int notfirst = 0;
 
     rdesc = heap_openr(bname);
-    if (rdesc == NULL ) {
-	elog(WARN,"Unable to expand all -- amopenr failed ");
-	return;
+    if (rdesc == NULL) {
+        elog(WARN, "Unable to expand all -- amopenr failed ");
+        return;
     }
     maxattrs = RelationGetNumberOfAttributes(rdesc);
 
     attr_list[0] = '\0';
-    
-    for ( i = maxattrs-1 ; i > -1 ; --i ) {
-	attrname = (rdesc->rd_att->attrs[i]->attname).data;
 
-	if (notfirst == 1) {
-	    sprintf(temp_buf, ", %s = new.%s", attrname, attrname);
-	} else {
-	    sprintf(temp_buf, "%s = new.%s", attrname, attrname);
-	    notfirst = 1;
-	}
-	strcat(attr_list, temp_buf);  
+    for (i = maxattrs - 1; i > -1; --i) {
+        attrname = (rdesc->rd_att->attrs[i]->attname).data;
+
+        if (notfirst == 1) {
+            sprintf(temp_buf, ", %s = new.%s", attrname, attrname);
+        } else {
+            sprintf(temp_buf, "%s = new.%s", attrname, attrname);
+            notfirst = 1;
+        }
+        strcat(attr_list, temp_buf);
     }
-    
+
     heap_close(rdesc);
-    
+
     return;
 }
 
@@ -212,13 +208,12 @@ setAttrList(char *bname)
  * <vname>_added relation.
  */
 void
-VersionAppend(char *vname, char *bname)
-{
+VersionAppend(char *vname, char *bname) {
     sprintf(rule_buf,
-	    "define rewrite rule %s_append is on INSERT to %s do instead append %s_added(%s)",
-	    vname, vname, vname, attr_list);
-    
-    eval_as_new_xact(rule_buf); 
+            "define rewrite rule %s_append is on INSERT to %s do instead append %s_added(%s)",
+            vname, vname, vname, attr_list);
+
+    eval_as_new_xact(rule_buf);
 }
 
 
@@ -231,21 +226,20 @@ VersionAppend(char *vname, char *bname)
  *         the <vname>_del relation.
  */
 void
-VersionRetrieve(char *vname, char *bname, char *snapshot)
-{
-    
-    sprintf(rule_buf, 
-	    "define rewrite rule %s_retrieve is on SELECT to %s do instead\n\
+VersionRetrieve(char *vname, char *bname, char *snapshot) {
+
+    sprintf(rule_buf,
+            "define rewrite rule %s_retrieve is on SELECT to %s do instead\n\
 SELECT %s_1.oid, %s_1.* from _%s in %s%s, %s_1 in (%s_added | _%s) \
 where _%s.oid !!= '%s_del.DOID'",
-	    vname, vname, vname, vname, bname,
-	    bname, snapshot,
-	    vname, vname, bname, bname, vname);
-    
-    eval_as_new_xact(rule_buf); 
-    
+            vname, vname, vname, vname, bname,
+            bname, snapshot,
+            vname, vname, bname, bname, vname);
+
+    eval_as_new_xact(rule_buf);
+
     /*  printf("%s\n",rule_buf); */
-    
+
 }
 
 /*
@@ -260,26 +254,25 @@ where _%s.oid !!= '%s_del.DOID'",
  *        it to the <vname>_del relation.
  */
 void
-VersionDelete(char *vname, char *bname, char *snapshot)
-{
-    
+VersionDelete(char *vname, char *bname, char *snapshot) {
+
     sprintf(rule_buf,
-	    "define rewrite rule %s_delete1 is on delete to %s do instead\n \
+            "define rewrite rule %s_delete1 is on delete to %s do instead\n \
 [delete %s_added where current.oid = %s_added.oid\n \
  append %s_del(DOID = current.oid) from _%s in %s%s \
  where current.oid = _%s.oid] \n",
-	  vname,vname,vname,vname,vname,
-bname,bname,snapshot,bname); 
+            vname, vname, vname, vname, vname,
+            bname, bname, snapshot, bname);
 
-  eval_as_new_xact(rule_buf); 
+    eval_as_new_xact(rule_buf);
 #ifdef OLD_REWRITE
-   sprintf(rule_buf,
-         "define rewrite rule %s_delete2 is on delete to %s do instead \n \
-    append %s_del(DOID = current.oid) from _%s in %s%s \
-    where current.oid = _%s.oid \n",
-         vname,vname,vname,bname,bname,snapshot,bname);
-
-   eval_as_new_xact(rule_buf);
+    sprintf(rule_buf,
+          "define rewrite rule %s_delete2 is on delete to %s do instead \n \
+     append %s_del(DOID = current.oid) from _%s in %s%s \
+     where current.oid = _%s.oid \n",
+          vname,vname,vname,bname,bname,snapshot,bname);
+ 
+    eval_as_new_xact(rule_buf);
 #endif /*  OLD_REWRITE */
 }
 
@@ -296,39 +289,38 @@ bname,bname,snapshot,bname);
  *         2.2  A copy of the tuple is appended to the <vname>_added relation
  */
 void
-VersionReplace(char *vname, char *bname, char *snapshot)
-{
+VersionReplace(char *vname, char *bname, char *snapshot) {
     sprintf(rule_buf,
-	    "define rewrite rule %s_replace1 is on replace to %s do instead \n\
+            "define rewrite rule %s_replace1 is on replace to %s do instead \n\
 [replace %s_added(%s) where current.oid = %s_added.oid \n\
  append %s_del(DOID = current.oid) from _%s in %s%s \
  where current.oid = _%s.oid\n\
  append %s_added(%s) from _%s in %s%s \
  where current.oid !!= '%s_added.oid' and current.oid = _%s.oid]\n",
-	  vname,vname,vname,attr_list,vname,
-          vname,bname,bname,snapshot,bname,
-vname,attr_list,bname,bname,snapshot,vname,bname);
+            vname, vname, vname, attr_list, vname,
+            vname, bname, bname, snapshot, bname,
+            vname, attr_list, bname, bname, snapshot, vname, bname);
 
-  eval_as_new_xact(rule_buf); 
+    eval_as_new_xact(rule_buf);
 
 /*  printf("%s\n",rule_buf); */
 #ifdef OLD_REWRITE
-  sprintf(rule_buf,
-	  "define rewrite rule %s_replace2 is on replace to %s do \n\
-    append %s_del(DOID = current.oid) from _%s in %s%s \
-    where current.oid = _%s.oid\n",
-	  vname,vname,vname,bname,bname,snapshot,bname);
-
-  eval_as_new_xact(rule_buf); 
-
-  sprintf(rule_buf,
-	  "define rewrite rule %s_replace3 is on replace to %s do instead\n\
-    append %s_added(%s) from _%s in %s%s \
-    where current.oid !!= '%s_added.oid' and current.oid = \
-    _%s.oid\n",
-	  vname,vname, vname,attr_list,bname,bname,snapshot,vname,bname);
-
-  eval_as_new_xact(rule_buf); 
+    sprintf(rule_buf,
+        "define rewrite rule %s_replace2 is on replace to %s do \n\
+      append %s_del(DOID = current.oid) from _%s in %s%s \
+      where current.oid = _%s.oid\n",
+        vname,vname,vname,bname,bname,snapshot,bname);
+  
+    eval_as_new_xact(rule_buf); 
+  
+    sprintf(rule_buf,
+        "define rewrite rule %s_replace3 is on replace to %s do instead\n\
+      append %s_added(%s) from _%s in %s%s \
+      where current.oid !!= '%s_added.oid' and current.oid = \
+      _%s.oid\n",
+        vname,vname, vname,attr_list,bname,bname,snapshot,vname,bname);
+  
+    eval_as_new_xact(rule_buf);
 #endif /* OLD_REWRITE */
 /*  printf("%s\n",rule_buf); */
 

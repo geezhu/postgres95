@@ -63,9 +63,8 @@ static Dllist *be_portalstack;
  * ----------------
  */
 void
-be_portalinit()
-{
-  be_portalstack = DLNewList();
+be_portalinit() {
+    be_portalstack = DLNewList();
 }
 
 /* ----------------
@@ -75,9 +74,8 @@ be_portalinit()
  * ----------------
  */
 void
-be_portalpush(PortalEntry *entry)
-{
-  DLAddTail(be_portalstack, DLNewElem(entry));
+be_portalpush(PortalEntry *entry) {
+    DLAddTail(be_portalstack, DLNewElem(entry));
 }
 
 /* ----------------
@@ -87,16 +85,15 @@ be_portalpush(PortalEntry *entry)
  * ----------------
  */
 PortalEntry *
-be_portalpop()
-{
-  PortalEntry *p;
-  Dlelem* elt;
-  elt = DLRemTail(be_portalstack);
+be_portalpop() {
+    PortalEntry *p;
+    Dlelem *elt;
+    elt = DLRemTail(be_portalstack);
 
-  p = (elt ? (PortalEntry*)DLE_VAL(elt) : NULL);
-  DLFreeElem(elt);
-  return p;
-    
+    p = (elt ? (PortalEntry *) DLE_VAL(elt) : NULL);
+    DLFreeElem(elt);
+    return p;
+
 
 }
 
@@ -107,11 +104,10 @@ be_portalpop()
  * ----------------
  */
 PortalEntry *
-be_currentportal()
-{
-  Dlelem* elt;
-  elt = DLGetTail(be_portalstack);
-  return (elt ? (PortalEntry*)DLE_VAL(elt) : NULL);
+be_currentportal() {
+    Dlelem *elt;
+    elt = DLGetTail(be_portalstack);
+    return (elt ? (PortalEntry *) DLE_VAL(elt) : NULL);
 }
 
 /* ----------------
@@ -126,24 +122,23 @@ be_currentportal()
  * ----------------
  */
 
-static Oid	be_portaloid;
-static u_int	be_portalcnt = 0;
+static Oid be_portaloid;
+static u_int be_portalcnt = 0;
 
 PortalEntry *
-be_newportal()   
-{
+be_newportal() {
     PortalEntry *entry;
-    char 	buf[PortalNameLength];
-    
+    char buf[PortalNameLength];
+
     /* ----------------
      *	generate a new name
      * ----------------
      */
     if (be_portalcnt == 0)
-	be_portaloid = newoid();
+        be_portaloid = newoid();
     be_portalcnt++;
     sprintf(buf, "be_%d_%d", be_portaloid, be_portalcnt);
-    
+
     /* ----------------
      *	initialize the new portal entry and keep track
      *  of the current memory context for be_printtup().
@@ -154,7 +149,7 @@ be_newportal()
      */
     entry = pbuf_setup(buf);
     entry->portalcxt = (Pointer) CurrentMemoryContext;
-    
+
     return entry;
 }
 
@@ -167,14 +162,13 @@ be_newportal()
  */
 void
 be_typeinit(PortalEntry *entry,
-	    TupleDesc tupDesc,
-	    int natts)
-{
-    PortalBuffer 	*portal;
-    GroupBuffer 	*group;
-    int 		i;
+            TupleDesc tupDesc,
+            int natts) {
+    PortalBuffer *portal;
+    GroupBuffer *group;
+    int i;
     AttributeTupleForm *attrs = tupDesc->attrs;
-    
+
     /* ----------------
      *	add a new portal group to the portal
      * ----------------
@@ -183,18 +177,18 @@ be_typeinit(PortalEntry *entry,
     portal->no_groups++;
     portal->groups = group = pbuf_addGroup(portal);
     group->no_fields = natts;
-    
+
     /* ----------------
      *	initialize portal group type info
      * ----------------
      */
     if (natts > 0) {
-	group->types = pbuf_addTypes(natts);
-	for (i = 0; i < natts; ++i) {
-	    strncpy(group->types[i].name, attrs[i]->attname.data, NAMEDATALEN); 
-	    group->types[i].adtid = attrs[i]->atttypid;
-	    group->types[i].adtsize = attrs[i]->attlen;
-	}
+        group->types = pbuf_addTypes(natts);
+        for (i = 0; i < natts; ++i) {
+            strncpy(group->types[i].name, attrs[i]->attname.data, NAMEDATALEN);
+            group->types[i].adtid = attrs[i]->atttypid;
+            group->types[i].adtsize = attrs[i]->attlen;
+        }
     }
 }
 
@@ -208,22 +202,21 @@ be_typeinit(PortalEntry *entry,
  * ----------------
  */
 void
-be_printtup(HeapTuple tuple, TupleDesc typeinfo)
-{
-    int		i;
-    char	*attr;
-    bool	isnull;
-    Oid	typoutput;
-    
-    PortalEntry  *entry = NULL;
+be_printtup(HeapTuple tuple, TupleDesc typeinfo) {
+    int i;
+    char *attr;
+    bool isnull;
+    Oid typoutput;
+
+    PortalEntry *entry = NULL;
     PortalBuffer *portal = NULL;
-    GroupBuffer  *group = NULL ;
-    TupleBlock 	 *tuples = NULL;
-    char 	 **values;
-    int          *lengths;
-    
+    GroupBuffer *group = NULL;
+    TupleBlock *tuples = NULL;
+    char **values;
+    int *lengths;
+
     MemoryContext savecxt;
-    
+
     /* ----------------
      *  get the current portal and group
      * ----------------
@@ -231,38 +224,38 @@ be_printtup(HeapTuple tuple, TupleDesc typeinfo)
     entry = be_currentportal();
     portal = entry->portal;
     group = portal->groups;
-    
+
     /* ----------------
      *	switch to the portal's memory context so that
      *  the tuples we allocate are returned to the user.
      * ----------------
      */
-    savecxt = MemoryContextSwitchTo((MemoryContext)entry->portalcxt);
-    
+    savecxt = MemoryContextSwitchTo((MemoryContext) entry->portalcxt);
+
     /* ----------------
      *	If no tuple block yet, allocate one.
      *  If the current block is full, allocate another one.
      * ----------------
      */
     if (group->tuples == NULL) {
-	tuples = group->tuples = pbuf_addTuples();
-	tuples->tuple_index = 0;
+        tuples = group->tuples = pbuf_addTuples();
+        tuples->tuple_index = 0;
     } else {
-	tuples = group->tuples;
-	/* walk to the end of the linked list of TupleBlocks */
-	while (tuples->next)
-	    tuples = tuples->next;
-	/* now, tuples is the last TupleBlock, check to see if it is full.  
-	   If so, allocate a new TupleBlock and add it to the end of 
-	   the chain */
-	
-	if (tuples->tuple_index == TupleBlockSize) {
-	    tuples->next = pbuf_addTuples();
-	    tuples = tuples->next;
-	    tuples->tuple_index = 0;
-	}
+        tuples = group->tuples;
+        /* walk to the end of the linked list of TupleBlocks */
+        while (tuples->next)
+            tuples = tuples->next;
+        /* now, tuples is the last TupleBlock, check to see if it is full.  
+           If so, allocate a new TupleBlock and add it to the end of 
+           the chain */
+
+        if (tuples->tuple_index == TupleBlockSize) {
+            tuples->next = pbuf_addTuples();
+            tuples = tuples->next;
+            tuples->tuple_index = 0;
+        }
     }
-    
+
     /* ----------------
      *	Allocate space for a tuple.
      * ----------------
@@ -284,29 +277,29 @@ be_printtup(HeapTuple tuple, TupleDesc typeinfo)
      *  -cim 2/11/91
      * ----------------
      */
-    
+
     values = tuples->values[tuples->tuple_index];
     lengths = tuples->lengths[tuples->tuple_index];
-    
+
     for (i = 0; i < tuple->t_natts; i++) {
-	attr = heap_getattr(tuple, InvalidBuffer, i+1, typeinfo, &isnull);
-	typoutput = typtoout((Oid) typeinfo->attrs[i]->atttypid);
-	
-	lengths[i] = typeinfo->attrs[i]->attlen;
-	
-	if (lengths[i] == -1) /* variable length attribute */
-	    if (!isnull)
-		lengths[i] = VARSIZE(attr)-VARHDRSZ;
-	    else
-		lengths[i] = 0;
-	
-	if (!isnull && OidIsValid(typoutput)) {
-	  values[i] = fmgr(typoutput, attr, gettypelem(typeinfo->attrs[i]->atttypid));
-	} else 
-	  values[i] = NULL;
-	
+        attr = heap_getattr(tuple, InvalidBuffer, i + 1, typeinfo, &isnull);
+        typoutput = typtoout((Oid) typeinfo->attrs[i]->atttypid);
+
+        lengths[i] = typeinfo->attrs[i]->attlen;
+
+        if (lengths[i] == -1) /* variable length attribute */
+            if (!isnull)
+                lengths[i] = VARSIZE(attr) - VARHDRSZ;
+            else
+                lengths[i] = 0;
+
+        if (!isnull && OidIsValid(typoutput)) {
+            values[i] = fmgr(typoutput, attr, gettypelem(typeinfo->attrs[i]->atttypid));
+        } else
+            values[i] = NULL;
+
     }
-    
+
     /* ----------------
      *	increment tuple group counters
      * ----------------
@@ -314,7 +307,7 @@ be_printtup(HeapTuple tuple, TupleDesc typeinfo)
     portal->no_tuples++;
     group->no_tuples++;
     tuples->tuple_index++;
-    
+
     /* ----------------
      *	return to the original memory context
      * ----------------

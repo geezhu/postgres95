@@ -10,8 +10,8 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	DATUM_H
-#define	DATUM_H
+#ifndef    DATUM_H
+#define    DATUM_H
 
 #include "postgres.h"
 
@@ -58,7 +58,7 @@ extern void datumFree(Datum value, Oid type, bool byVal, Size len);
  * return true if thwo datums are equal, false otherwise.
  * XXX : See comments in the code for restrictions!
  */
-extern bool datumIsEqual(Datum value1, Datum value2, Oid type, 
-			 bool byVal, Size len);
+extern bool datumIsEqual(Datum value1, Datum value2, Oid type,
+                         bool byVal, Size len);
 
-#endif	/* DATUM_H */
+#endif    /* DATUM_H */

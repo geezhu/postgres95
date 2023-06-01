@@ -14,13 +14,12 @@
 #include <string.h>
 #include "c.h"
 #include "miscadmin.h"
-#include "bootstrap/bootstrap.h"	/* for BootstrapMain() */
-#include "tcop/tcopprot.h"		/* for PostgresMain() */
-#include "port-protos.h"		/* for init_address_fixup() */
+#include "bootstrap/bootstrap.h"    /* for BootstrapMain() */
+#include "tcop/tcopprot.h"        /* for PostgresMain() */
+#include "port-protos.h"        /* for init_address_fixup() */
 
 int
-main(int argc, char *argv[])
-{
+main(int argc, char *argv[]) {
     int len;
 #if defined(NOFIXADE) || defined(NOPRINTADE)
     /*
@@ -29,17 +28,17 @@ main(int argc, char *argv[])
      */
     init_address_fixup();
 #endif /* NOFIXADE || NOPRINTADE */
-    
+
     /* use one executable for both postgres and postmaster,
        invoke one or the other depending on the name of the executable */
     len = strlen(argv[0]);
-    if(len >= 10 && ! strcmp(argv[0] + len - 10, "postmaster"))
+    if (len >= 10 && !strcmp(argv[0] + len - 10, "postmaster"))
         exit(PostmasterMain(argc, argv));
 
     /* if the first argument is "-boot", then invoke the backend in
        bootstrap mode */
     if (argc > 1 && strcmp(argv[1], "-boot") == 0)
-	exit(BootstrapMain(argc-1, argv+1)); /* remove the -boot arg from the command line */
+        exit(BootstrapMain(argc - 1, argv + 1)); /* remove the -boot arg from the command line */
     else
-	exit(PostgresMain(argc, argv));
+        exit(PostgresMain(argc, argv));
 }

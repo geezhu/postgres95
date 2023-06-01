@@ -65,9 +65,9 @@
 
 #ifdef FASTBUILD
 
-#define	MAXTAPES	(7)
-#define	TAPEBLCKSZ	(BLCKSZ << 2)
-#define	TAPETEMP	"pg_btsortXXXXXX"
+#define    MAXTAPES    (7)
+#define    TAPEBLCKSZ    (BLCKSZ << 2)
+#define    TAPETEMP    "pg_btsortXXXXXX"
 
 
 /*-------------------------------------------------------------------------
@@ -91,32 +91,30 @@
 static Relation _bt_sortrel;
 
 static void
-_bt_isortcmpinit(Relation index)
-{
+_bt_isortcmpinit(Relation index) {
     _bt_sortrel = index;
 }
 
 static int
-_bt_isortcmp(BTItem *bti1p, BTItem *bti2p)
-{
+_bt_isortcmp(BTItem *bti1p, BTItem *bti2p) {
     BTItem bti1 = *bti1p;
     BTItem bti2 = *bti2p;
 
     if (bti1 == (BTItem) NULL) {
-	if (bti2 == (BTItem) NULL) {
-	    return(0);	/* 1 = 2 */
-	}
-	return(1);	/* 1 > 2 */
+        if (bti2 == (BTItem) NULL) {
+            return (0);    /* 1 = 2 */
+        }
+        return (1);    /* 1 > 2 */
     } else if (bti2 == (BTItem) NULL) {
-	return(-1);	/* 1 < 2 */
+        return (-1);    /* 1 < 2 */
     } else if (_bt_itemcmp(_bt_sortrel, 1, bti1, bti2,
-			   BTGreaterStrategyNumber)) {
-	return(1);	/* 1 > 2 */
+                           BTGreaterStrategyNumber)) {
+        return (1);    /* 1 > 2 */
     } else if (_bt_itemcmp(_bt_sortrel, 1, bti2, bti1,
-			   BTGreaterStrategyNumber)) {
-	return(-1);	/* 1 < 2 */
+                           BTGreaterStrategyNumber)) {
+        return (-1);    /* 1 < 2 */
     }
-    return(0);		/* 1 = 2 */
+    return (0);        /* 1 = 2 */
 }
 
 /*-------------------------------------------------------------------------
@@ -132,15 +130,15 @@ _bt_isortcmp(BTItem *bti1p, BTItem *bti2p)
  */
 
 typedef struct {
-    int		btpqe_tape;	/* tape identifier */
-    BTItem	btpqe_item;	/* pointer to BTItem in tape buffer */
+    int btpqe_tape;    /* tape identifier */
+    BTItem btpqe_item;    /* pointer to BTItem in tape buffer */
 } BTPriQueueElem;
 
-#define	MAXELEM	MAXTAPES
+#define    MAXELEM    MAXTAPES
 typedef struct {
-    int			btpq_nelem;
-    BTPriQueueElem	btpq_queue[MAXELEM];
-    Relation		btpq_rel;
+    int btpq_nelem;
+    BTPriQueueElem btpq_queue[MAXELEM];
+    Relation btpq_rel;
 } BTPriQueue;
 
 /* be sure to call _bt_isortcmpinit first */
@@ -148,67 +146,64 @@ typedef struct {
     (_bt_isortcmp(&((a)->btpqe_item), &((b)->btpqe_item)) > 0)
 
 static void
-_bt_pqsift(BTPriQueue *q, int parent)
-{
+_bt_pqsift(BTPriQueue *q, int parent) {
     int child;
     BTPriQueueElem e;
 
     for (child = parent * 2 + 1;
-	 child < q->btpq_nelem;
-	 child = parent * 2 + 1) {
-	if (child < q->btpq_nelem - 1) {
-	    if (GREATER(&(q->btpq_queue[child]), &(q->btpq_queue[child+1]))) {
-		++child;
-	    }
-	}
-	if (GREATER(&(q->btpq_queue[parent]), &(q->btpq_queue[child]))) {
-	    e = q->btpq_queue[child];				/* struct = */
-	    q->btpq_queue[child] = q->btpq_queue[parent];	/* struct = */
-	    q->btpq_queue[parent] = e;				/* struct = */
-	    parent = child;
-	} else {
-	    parent = child + 1;
-	}
+         child < q->btpq_nelem;
+         child = parent * 2 + 1) {
+        if (child < q->btpq_nelem - 1) {
+            if (GREATER(&(q->btpq_queue[child]), &(q->btpq_queue[child + 1]))) {
+                ++child;
+            }
+        }
+        if (GREATER(&(q->btpq_queue[parent]), &(q->btpq_queue[child]))) {
+            e = q->btpq_queue[child];                /* struct = */
+            q->btpq_queue[child] = q->btpq_queue[parent];    /* struct = */
+            q->btpq_queue[parent] = e;                /* struct = */
+            parent = child;
+        } else {
+            parent = child + 1;
+        }
     }
 }
 
 static int
-_bt_pqnext(BTPriQueue *q, BTPriQueueElem *e)
-{
-    if (q->btpq_nelem < 1) {	/* already empty */
-	return(-1);
+_bt_pqnext(BTPriQueue *q, BTPriQueueElem *e) {
+    if (q->btpq_nelem < 1) {    /* already empty */
+        return (-1);
     }
-    *e = q->btpq_queue[0];					/* struct = */
+    *e = q->btpq_queue[0];                    /* struct = */
 
-    if (--q->btpq_nelem < 1) {	/* now empty, don't sift */
-	return(0);
+    if (--q->btpq_nelem < 1) {    /* now empty, don't sift */
+        return (0);
     }
-    q->btpq_queue[0] = q->btpq_queue[q->btpq_nelem];		/* struct = */
+    q->btpq_queue[0] = q->btpq_queue[q->btpq_nelem];        /* struct = */
     _bt_pqsift(q, 0);
-    return(0);
+    return (0);
 }
 
 static void
-_bt_pqadd(BTPriQueue *q, BTPriQueueElem *e)
-{
+_bt_pqadd(BTPriQueue *q, BTPriQueueElem *e) {
     int child, parent;
 
     if (q->btpq_nelem >= MAXELEM) {
-	elog(WARN, "_bt_pqadd: queue overflow");
+        elog(WARN, "_bt_pqadd: queue overflow");
     }
 
     child = q->btpq_nelem++;
     while (child > 0) {
-	parent = child / 2;
-	if (GREATER(e, &(q->btpq_queue[parent]))) {
-	    break;
-	} else {
-	    q->btpq_queue[child] = q->btpq_queue[parent];	/* struct = */
-	    child = parent;
-	}
+        parent = child / 2;
+        if (GREATER(e, &(q->btpq_queue[parent]))) {
+            break;
+        } else {
+            q->btpq_queue[child] = q->btpq_queue[parent];    /* struct = */
+            child = parent;
+        }
     }
 
-    q->btpq_queue[child] = *e;					/* struct = */
+    q->btpq_queue[child] = *e;                    /* struct = */
 }
 
 /*-------------------------------------------------------------------------
@@ -216,16 +211,16 @@ _bt_pqadd(BTPriQueue *q, BTPriQueueElem *e)
  *-------------------------------------------------------------------------
  */
 
-#define	BTITEMSZ(btitem) \
+#define    BTITEMSZ(btitem) \
     ((btitem) ? \
      (IndexTupleDSize((btitem)->bti_itup) + \
       (sizeof(BTItemData) - sizeof(IndexTupleData))) : \
      0)
-#define	SPCLEFT(tape) \
+#define    SPCLEFT(tape) \
     (sizeof((tape)->bttb_data) - (tape)->bttb_top)
-#define	EMPTYTAPE(tape) \
+#define    EMPTYTAPE(tape) \
     ((tape)->bttb_ntup <= 0)
-#define	BTTAPEMAGIC	0x19660226
+#define    BTTAPEMAGIC    0x19660226
 
 /*
  * this is what we use to shovel BTItems in and out of memory.  it's
@@ -241,12 +236,12 @@ _bt_pqadd(BTPriQueue *q, BTPriQueueElem *e)
  * few bytes.
  */
 typedef struct {
-    int		bttb_magic;	/* magic number */
-    int		bttb_fd;	/* file descriptor */
-    int		bttb_top;	/* top of free space within bttb_data */
-    short	bttb_ntup;	/* number of tuples in this block */
-    short	bttb_eor;	/* End-Of-Run marker */
-    char	bttb_data[TAPEBLCKSZ - 2 * sizeof(double)];
+    int bttb_magic;    /* magic number */
+    int bttb_fd;    /* file descriptor */
+    int bttb_top;    /* top of free space within bttb_data */
+    short bttb_ntup;    /* number of tuples in this block */
+    short bttb_eor;    /* End-Of-Run marker */
+    char bttb_data[TAPEBLCKSZ - 2 * sizeof(double)];
 } BTTapeBlock;
 
 
@@ -256,8 +251,7 @@ typedef struct {
  * empty.)
  */
 static void
-_bt_tapereset(BTTapeBlock *tape)
-{
+_bt_tapereset(BTTapeBlock *tape) {
     tape->bttb_eor = 0;
     tape->bttb_top = 0;
     tape->bttb_ntup = 0;
@@ -267,8 +261,7 @@ _bt_tapereset(BTTapeBlock *tape)
  * rewind the physical tape file.
  */
 static void
-_bt_taperewind(BTTapeBlock *tape)
-{
+_bt_taperewind(BTTapeBlock *tape) {
     (void) FileSeek(tape->bttb_fd, 0, SEEK_SET);
 }
 
@@ -282,8 +275,7 @@ _bt_taperewind(BTTapeBlock *tape)
  * least you don't have to delete and reinsert the directory entries.
  */
 static void
-_bt_tapeclear(BTTapeBlock *tape)
-{
+_bt_tapeclear(BTTapeBlock *tape) {
     /* blow away the contents of the old file */
     _bt_taperewind(tape);
 #if 0
@@ -300,31 +292,29 @@ _bt_tapeclear(BTTapeBlock *tape)
  * as well as opening a physical tape file.
  */
 static BTTapeBlock *
-_bt_tapecreate(char *fname)
-{
+_bt_tapecreate(char *fname) {
     BTTapeBlock *tape = (BTTapeBlock *) palloc(sizeof(BTTapeBlock));
 
     if (tape == (BTTapeBlock *) NULL) {
-	elog(WARN, "_bt_tapecreate: out of memory");
+        elog(WARN, "_bt_tapecreate: out of memory");
     }
 
     tape->bttb_magic = BTTAPEMAGIC;
 
-    tape->bttb_fd = FileNameOpenFile(fname, O_RDWR|O_CREAT|O_TRUNC, 0600);
+    tape->bttb_fd = FileNameOpenFile(fname, O_RDWR | O_CREAT | O_TRUNC, 0600);
     Assert(tape->bttb_fd >= 0);
 
     /* initialize the buffer */
     _bt_tapereset(tape);
 
-    return(tape);
+    return (tape);
 }
 
 /*
  * destroy the BTTapeBlock structure and its physical tape file.
  */
 static void
-_bt_tapedestroy(BTTapeBlock *tape)
-{
+_bt_tapedestroy(BTTapeBlock *tape) {
     FileUnlink(tape->bttb_fd);
     pfree((void *) tape);
 }
@@ -333,10 +323,9 @@ _bt_tapedestroy(BTTapeBlock *tape)
  * flush the tape block to the file, marking End-Of-Run if requested.
  */
 static void
-_bt_tapewrite(BTTapeBlock *tape, int eor)
-{
+_bt_tapewrite(BTTapeBlock *tape, int eor) {
     tape->bttb_eor = eor;
-    FileWrite(tape->bttb_fd, (char*)tape, TAPEBLCKSZ);
+    FileWrite(tape->bttb_fd, (char *) tape, TAPEBLCKSZ);
     _bt_tapereset(tape);
 }
 
@@ -350,13 +339,12 @@ _bt_tapewrite(BTTapeBlock *tape, int eor)
  * - 1 if a valid block was read
  */
 static int
-_bt_taperead(BTTapeBlock *tape)
-{
+_bt_taperead(BTTapeBlock *tape) {
     int fd;
     int nread;
 
     if (tape->bttb_eor) {
-	return(0);		/* we are at End-Of-Run */
+        return (0);        /* we are at End-Of-Run */
     }
 
     /*
@@ -364,15 +352,15 @@ _bt_taperead(BTTapeBlock *tape)
      * VFD (the one in the block we're reading is bogus).
      */
     fd = tape->bttb_fd;
-    nread = FileRead(fd, (char*) tape, TAPEBLCKSZ);
+    nread = FileRead(fd, (char *) tape, TAPEBLCKSZ);
     tape->bttb_fd = fd;
 
     if (nread != TAPEBLCKSZ) {
-	Assert(nread == 0);	/* we are at EOF */
-	return(0);
+        Assert(nread == 0);    /* we are at EOF */
+        return (0);
     }
     Assert(tape->bttb_magic == BTTAPEMAGIC);
-    return(1);
+    return (1);
 }
 
 /*
@@ -386,18 +374,17 @@ _bt_taperead(BTTapeBlock *tape)
  * - sets 'pos' to the current position within the block.
  */
 static BTItem
-_bt_tapenext(BTTapeBlock *tape, char **pos)
-{
+_bt_tapenext(BTTapeBlock *tape, char **pos) {
     Size itemsz;
     BTItem bti;
 
     if (*pos >= tape->bttb_data + tape->bttb_top) {
-	return((BTItem) NULL);
+        return ((BTItem) NULL);
     }
     bti = (BTItem) *pos;
     itemsz = BTITEMSZ(bti);
     *pos += DOUBLEALIGN(itemsz);
-    return(bti);
+    return (bti);
 }
 
 /*
@@ -412,8 +399,7 @@ _bt_tapenext(BTTapeBlock *tape, char **pos)
  * the beginning of free space.
  */
 static void
-_bt_tapeadd(BTTapeBlock *tape, BTItem item, int itemsz)
-{
+_bt_tapeadd(BTTapeBlock *tape, BTItem item, int itemsz) {
     (void) memcpy(tape->bttb_data + tape->bttb_top, item, itemsz);
     ++tape->bttb_ntup;
     tape->bttb_top += DOUBLEALIGN(itemsz);
@@ -432,10 +418,10 @@ _bt_tapeadd(BTTapeBlock *tape, BTItem item, int itemsz)
  * to do this, you bet i would.)
  */
 typedef struct {
-    int		bts_ntapes;
-    int		bts_tape;
-    BTTapeBlock	**bts_itape;	/* input tape blocks */
-    BTTapeBlock	**bts_otape;	/* output tape blocks */
+    int bts_ntapes;
+    int bts_tape;
+    BTTapeBlock **bts_itape;    /* input tape blocks */
+    BTTapeBlock **bts_otape;    /* output tape blocks */
 } BTSpool;
 
 /*
@@ -443,8 +429,7 @@ typedef struct {
  * files.
  */
 void *
-_bt_spoolinit(Relation index, int ntapes)
-{
+_bt_spoolinit(Relation index, int ntapes) {
     char *mktemp();
 
     BTSpool *btspool = (BTSpool *) palloc(sizeof(BTSpool));
@@ -452,46 +437,45 @@ _bt_spoolinit(Relation index, int ntapes)
     char *fname = (char *) palloc(sizeof(TAPETEMP) + 1);
 
     if (btspool == (BTSpool *) NULL || fname == (char *) NULL) {
-	elog(WARN, "_bt_spoolinit: out of memory");
+        elog(WARN, "_bt_spoolinit: out of memory");
     }
     (void) memset((char *) btspool, 0, sizeof(BTSpool));
     btspool->bts_ntapes = ntapes;
     btspool->bts_tape = 0;
 
     btspool->bts_itape =
-	(BTTapeBlock **) palloc(sizeof(BTTapeBlock *) * ntapes);
+            (BTTapeBlock **) palloc(sizeof(BTTapeBlock *) * ntapes);
     btspool->bts_otape =
-	(BTTapeBlock **) palloc(sizeof(BTTapeBlock *) * ntapes);
+            (BTTapeBlock **) palloc(sizeof(BTTapeBlock *) * ntapes);
     if (btspool->bts_itape == (BTTapeBlock **) NULL ||
-	btspool->bts_otape == (BTTapeBlock **) NULL) {
-	elog(WARN, "_bt_spoolinit: out of memory");
+        btspool->bts_otape == (BTTapeBlock **) NULL) {
+        elog(WARN, "_bt_spoolinit: out of memory");
     }
 
     for (i = 0; i < ntapes; ++i) {
-	btspool->bts_itape[i] =
-	    _bt_tapecreate(mktemp(strcpy(fname, TAPETEMP)));
-	btspool->bts_otape[i] =
-	    _bt_tapecreate(mktemp(strcpy(fname, TAPETEMP)));
+        btspool->bts_itape[i] =
+                _bt_tapecreate(mktemp(strcpy(fname, TAPETEMP)));
+        btspool->bts_otape[i] =
+                _bt_tapecreate(mktemp(strcpy(fname, TAPETEMP)));
     }
     pfree((void *) fname);
 
     _bt_isortcmpinit(index);
 
-    return((void *) btspool);
+    return ((void *) btspool);
 }
 
 /*
  * clean up a spool structure and its substructures.
  */
 void
-_bt_spooldestroy(void *spool)
-{
+_bt_spooldestroy(void *spool) {
     BTSpool *btspool = (BTSpool *) spool;
     int i;
 
     for (i = 0; i < btspool->bts_ntapes; ++i) {
-	_bt_tapedestroy(btspool->bts_otape[i]);
-	_bt_tapedestroy(btspool->bts_itape[i]);
+        _bt_tapedestroy(btspool->bts_otape[i]);
+        _bt_tapedestroy(btspool->bts_itape[i]);
     }
     pfree((void *) btspool);
 }
@@ -500,14 +484,13 @@ _bt_spooldestroy(void *spool)
  * flush out any dirty output tape blocks
  */
 static void
-_bt_spoolflush(BTSpool *btspool)
-{
+_bt_spoolflush(BTSpool *btspool) {
     int i;
 
     for (i = 0; i < btspool->bts_ntapes; ++i) {
-	if (!EMPTYTAPE(btspool->bts_otape[i])) {
-	    _bt_tapewrite(btspool->bts_otape[i], 1);
-	}
+        if (!EMPTYTAPE(btspool->bts_otape[i])) {
+            _bt_tapewrite(btspool->bts_otape[i], 1);
+        }
     }
 }
 
@@ -518,36 +501,35 @@ _bt_spoolflush(BTSpool *btspool)
  * output tapes.
  */
 static void
-_bt_spoolswap(BTSpool *btspool)
-{
+_bt_spoolswap(BTSpool *btspool) {
     File tmpfd;
     BTTapeBlock *itape;
     BTTapeBlock *otape;
     int i;
 
     for (i = 0; i < btspool->bts_ntapes; ++i) {
-	itape = btspool->bts_itape[i];
-	otape = btspool->bts_otape[i];
+        itape = btspool->bts_itape[i];
+        otape = btspool->bts_otape[i];
 
-	/*
-	 * swap the input and output VFDs.
-	 */
-	tmpfd = itape->bttb_fd;
-	itape->bttb_fd = otape->bttb_fd;
-	otape->bttb_fd = tmpfd;
+        /*
+         * swap the input and output VFDs.
+         */
+        tmpfd = itape->bttb_fd;
+        itape->bttb_fd = otape->bttb_fd;
+        otape->bttb_fd = tmpfd;
 
-	/*
-	 * rewind the new input tape.
-	 */
-	_bt_taperewind(itape);
-	_bt_tapereset(itape);
+        /*
+         * rewind the new input tape.
+         */
+        _bt_taperewind(itape);
+        _bt_tapereset(itape);
 
-	/*
-	 * clear the new output tape -- it's ok to throw away the old
-	 * inputs.
-	 */
-	_bt_tapeclear(otape);
-    }    
+        /*
+         * clear the new output tape -- it's ok to throw away the old
+         * inputs.
+         */
+        _bt_tapeclear(otape);
+    }
 }
 
 /*-------------------------------------------------------------------------
@@ -562,8 +544,7 @@ _bt_spoolswap(BTSpool *btspool)
  * initial runs are therefore always just one block.
  */
 void
-_bt_spool(Relation index, BTItem btitem, void *spool)
-{
+_bt_spool(Relation index, BTItem btitem, void *spool) {
     BTSpool *btspool = (BTSpool *) spool;
     BTTapeBlock *itape;
     Size itemsz;
@@ -579,86 +560,86 @@ _bt_spool(Relation index, BTItem btitem, void *spool)
      * buffer.
      */
     if (btitem == (BTItem) NULL || SPCLEFT(itape) < itemsz) {
-	BTItem *parray;
-	BTTapeBlock *otape;
-	BTItem bti;
-	char *pos;
-	int btisz;
-	int i;
+        BTItem *parray;
+        BTTapeBlock *otape;
+        BTItem bti;
+        char *pos;
+        int btisz;
+        int i;
 
-	/*
-	 * build an array of pointers to the BTItemDatas on the input
-	 * block.
-	 */
-	parray = (BTItem *) palloc(itape->bttb_ntup * sizeof(BTItem));
-	if (parray == (BTItem *) NULL) {
-	    elog(WARN, "_bt_spool: out of memory");
-	}
-	pos = itape->bttb_data;
-	for (i = 0; i < itape->bttb_ntup; ++i) {
-	    parray[i] = _bt_tapenext(itape, &pos);
-	}
+        /*
+         * build an array of pointers to the BTItemDatas on the input
+         * block.
+         */
+        parray = (BTItem *) palloc(itape->bttb_ntup * sizeof(BTItem));
+        if (parray == (BTItem *) NULL) {
+            elog(WARN, "_bt_spool: out of memory");
+        }
+        pos = itape->bttb_data;
+        for (i = 0; i < itape->bttb_ntup; ++i) {
+            parray[i] = _bt_tapenext(itape, &pos);
+        }
 
-	/*
-	 * qsort the pointer array.
-	 */
-	_bt_isortcmpinit(index);
-	qsort((void *) parray, itape->bttb_ntup, sizeof(BTItem), _bt_isortcmp);
+        /*
+         * qsort the pointer array.
+         */
+        _bt_isortcmpinit(index);
+        qsort((void *) parray, itape->bttb_ntup, sizeof(BTItem), _bt_isortcmp);
 
-	/*
-	 * write the spooled run into the output tape.  we copy the
-	 * BTItemDatas in the order dictated by the sorted array of
-	 * BTItems, not the original order.
-	 *
-	 * (since everything was DOUBLEALIGN'd and is all on a single
-	 * page, everything had *better* still fit on one page..)
-	 */
-	otape = btspool->bts_otape[btspool->bts_tape];
-	for (i = 0; i < itape->bttb_ntup; ++i) {
-	    bti = parray[i];
-	    btisz = BTITEMSZ(bti);
-	    btisz = DOUBLEALIGN(btisz);
-	    _bt_tapeadd(otape, bti, btisz);
+        /*
+         * write the spooled run into the output tape.  we copy the
+         * BTItemDatas in the order dictated by the sorted array of
+         * BTItems, not the original order.
+         *
+         * (since everything was DOUBLEALIGN'd and is all on a single
+         * page, everything had *better* still fit on one page..)
+         */
+        otape = btspool->bts_otape[btspool->bts_tape];
+        for (i = 0; i < itape->bttb_ntup; ++i) {
+            bti = parray[i];
+            btisz = BTITEMSZ(bti);
+            btisz = DOUBLEALIGN(btisz);
+            _bt_tapeadd(otape, bti, btisz);
 #ifdef FASTBUILD_DEBUG
-	    {
-		bool isnull;
-		Datum d = index_getattr(&(bti->bti_itup), 1,
-					RelationGetTupleDescriptor(index),
-					&isnull);
-		printf("_bt_spool: inserted <%x> into output tape %d\n",
-		       d, btspool->bts_tape);
-	    }
+            {
+            bool isnull;
+            Datum d = index_getattr(&(bti->bti_itup), 1,
+                        RelationGetTupleDescriptor(index),
+                        &isnull);
+            printf("_bt_spool: inserted <%x> into output tape %d\n",
+                   d, btspool->bts_tape);
+            }
 #endif /* FASTBUILD_DEBUG */
-	}
+        }
 
-	/*
-	 * the initial runs are always single tape blocks.  flush the
-	 * output block, marking End-Of-Run.
-	 */
-	_bt_tapewrite(otape, 1);
+        /*
+         * the initial runs are always single tape blocks.  flush the
+         * output block, marking End-Of-Run.
+         */
+        _bt_tapewrite(otape, 1);
 
-	/*
-	 * reset the input buffer for the next run.  we don't have to
-	 * write it out or anything -- we only use it to hold the
-	 * unsorted BTItemDatas, the output tape contains all the
-	 * sorted stuff.
-	 *
-	 * changing bts_tape changes the output tape and input tape;
-	 * we change itape for the code below.
-	 */
-	_bt_tapereset(itape);
-	btspool->bts_tape = (btspool->bts_tape + 1) % btspool->bts_ntapes;
-	itape = btspool->bts_itape[btspool->bts_tape];
+        /*
+         * reset the input buffer for the next run.  we don't have to
+         * write it out or anything -- we only use it to hold the
+         * unsorted BTItemDatas, the output tape contains all the
+         * sorted stuff.
+         *
+         * changing bts_tape changes the output tape and input tape;
+         * we change itape for the code below.
+         */
+        _bt_tapereset(itape);
+        btspool->bts_tape = (btspool->bts_tape + 1) % btspool->bts_ntapes;
+        itape = btspool->bts_itape[btspool->bts_tape];
 
-	/*
-	 * destroy the pointer array.
-	 */
-	pfree((void *) parray);
+        /*
+         * destroy the pointer array.
+         */
+        pfree((void *) parray);
     }
 
     /* insert this item into the current buffer */
     if (btitem != (BTItem) NULL) {
-	_bt_tapeadd(itape, btitem, itemsz);
+        _bt_tapeadd(itape, btitem, itemsz);
     }
 }
 
@@ -666,8 +647,7 @@ _bt_spool(Relation index, BTItem btitem, void *spool)
  * allocate a new, clean btree page, not linked to any siblings.
  */
 static void
-_bt_blnewpage(Relation index, Buffer *buf, Page *page, int flags)
-{
+_bt_blnewpage(Relation index, Buffer *buf, Page *page, int flags) {
     BTPageOpaque opaque;
 
     *buf = _bt_getbuf(index, P_NEW, BT_WRITE);
@@ -684,8 +664,7 @@ _bt_blnewpage(Relation index, Buffer *buf, Page *page, int flags)
  * an ItemId array in what has turned out to be a P_RIGHTMOST page.
  */
 static void
-_bt_slideleft(Relation index, Buffer buf, Page page)
-{
+_bt_slideleft(Relation index, Buffer buf, Page page) {
     OffsetNumber off;
     OffsetNumber maxoff;
     ItemId previi;
@@ -694,19 +673,19 @@ _bt_slideleft(Relation index, Buffer buf, Page page)
     maxoff = PageGetMaxOffsetNumber(page);
     previi = PageGetItemId(page, P_HIKEY);
     for (off = P_FIRSTKEY; off <= maxoff; off = OffsetNumberNext(off)) {
-	thisii = PageGetItemId(page, off);
-	*previi = *thisii;
-	previi = thisii;
+        thisii = PageGetItemId(page, off);
+        *previi = *thisii;
+        previi = thisii;
     }
     ((PageHeader) page)->pd_lower -= sizeof(ItemIdData);
 }
 
 typedef struct {
-    Buffer		btps_buf;
-    Page		btps_page;
-    BTItem		btps_lastbti;
-    OffsetNumber	btps_lastoff;
-    OffsetNumber	btps_firstoff;
+    Buffer btps_buf;
+    Page btps_page;
+    BTItem btps_lastbti;
+    OffsetNumber btps_lastoff;
+    OffsetNumber btps_firstoff;
 } BTPageState;
 
 /*
@@ -749,8 +728,7 @@ typedef struct {
  * if all keys are unique, 'first' will always be the same as 'last'.
  */
 static void
-_bt_buildadd(Relation index, BTPageState *state, BTItem bti, int flags)
-{
+_bt_buildadd(Relation index, BTPageState *state, BTItem bti, int flags) {
     Buffer nbuf;
     Page npage;
     BTItem last_bti;
@@ -770,86 +748,86 @@ _bt_buildadd(Relation index, BTPageState *state, BTItem bti, int flags)
     btisz = BTITEMSZ(bti);
     btisz = DOUBLEALIGN(btisz);
     if (pgspc < btisz) {
-	Buffer obuf = nbuf;
-	Page opage = npage;
-	OffsetNumber o, n;
-	ItemId ii;
-	ItemId hii;
+        Buffer obuf = nbuf;
+        Page opage = npage;
+        OffsetNumber o, n;
+        ItemId ii;
+        ItemId hii;
 
-	_bt_blnewpage(index, &nbuf, &npage, flags);
+        _bt_blnewpage(index, &nbuf, &npage, flags);
 
-	/*
-	 * if 'last' is part of a chain of duplicates that does not
-	 * start at the beginning of the old page, the entire chain is
-	 * copied to the new page; we delete all of the duplicates
-	 * from the old page except the first, which becomes the high
-	 * key item of the old page.
-	 *
-	 * if the chain starts at the beginning of the page or there
-	 * is no chain ('first' == 'last'), we need only copy 'last'
-	 * to the new page.  again, 'first' (== 'last') becomes the
-	 * high key of the old page.
-	 *
-	 * note that in either case, we copy at least one item to the
-	 * new page, so 'last_bti' will always be valid.  'bti' will
-	 * never be the first data item on the new page.
-	 */
-	if (first_off == P_FIRSTKEY) {
-	    Assert(last_off != P_FIRSTKEY);
-	    first_off = last_off;
-	}
-	for (o = first_off, n = P_FIRSTKEY;
-	     o <= last_off;
-	     o = OffsetNumberNext(o), n = OffsetNumberNext(n)) {
-	    ii = PageGetItemId(opage, o);
-	    (void) PageAddItem(npage, PageGetItem(opage, ii),
-			       ii->lp_len, n, LP_USED);
+        /*
+         * if 'last' is part of a chain of duplicates that does not
+         * start at the beginning of the old page, the entire chain is
+         * copied to the new page; we delete all of the duplicates
+         * from the old page except the first, which becomes the high
+         * key item of the old page.
+         *
+         * if the chain starts at the beginning of the page or there
+         * is no chain ('first' == 'last'), we need only copy 'last'
+         * to the new page.  again, 'first' (== 'last') becomes the
+         * high key of the old page.
+         *
+         * note that in either case, we copy at least one item to the
+         * new page, so 'last_bti' will always be valid.  'bti' will
+         * never be the first data item on the new page.
+         */
+        if (first_off == P_FIRSTKEY) {
+            Assert(last_off != P_FIRSTKEY);
+            first_off = last_off;
+        }
+        for (o = first_off, n = P_FIRSTKEY;
+             o <= last_off;
+             o = OffsetNumberNext(o), n = OffsetNumberNext(n)) {
+            ii = PageGetItemId(opage, o);
+            (void) PageAddItem(npage, PageGetItem(opage, ii),
+                               ii->lp_len, n, LP_USED);
 #ifdef FASTBUILD_DEBUG
-	    {
-		bool isnull;
-		BTItem tmpbti =
-		    (BTItem) PageGetItem(npage, PageGetItemId(npage, n));
-		Datum d = index_getattr(&(tmpbti->bti_itup), 1,
-					RelationGetTupleDescriptor(index),
-					&isnull);
-		printf("_bt_buildadd: moved <%x> to offset %d\n",
-		       d, n);
-	    }
+            {
+            bool isnull;
+            BTItem tmpbti =
+                (BTItem) PageGetItem(npage, PageGetItemId(npage, n));
+            Datum d = index_getattr(&(tmpbti->bti_itup), 1,
+                        RelationGetTupleDescriptor(index),
+                        &isnull);
+            printf("_bt_buildadd: moved <%x> to offset %d\n",
+                   d, n);
+            }
 #endif /* FASTBUILD_DEBUG */
-	}
-	for (o = last_off; o > first_off; o = OffsetNumberPrev(o)) {
-	    PageIndexTupleDelete(opage, o);
-	}
-	hii = PageGetItemId(opage, P_HIKEY);
-	ii = PageGetItemId(opage, first_off);
-	*hii = *ii;
-	ii->lp_flags &= ~LP_USED;
-	((PageHeader) opage)->pd_lower -= sizeof(ItemIdData);
+        }
+        for (o = last_off; o > first_off; o = OffsetNumberPrev(o)) {
+            PageIndexTupleDelete(opage, o);
+        }
+        hii = PageGetItemId(opage, P_HIKEY);
+        ii = PageGetItemId(opage, first_off);
+        *hii = *ii;
+        ii->lp_flags &= ~LP_USED;
+        ((PageHeader) opage)->pd_lower -= sizeof(ItemIdData);
 
-	first_off = P_FIRSTKEY;
-	last_off = PageGetMaxOffsetNumber(npage);
-	last_bti = (BTItem) PageGetItem(npage, PageGetItemId(npage, last_off));
+        first_off = P_FIRSTKEY;
+        last_off = PageGetMaxOffsetNumber(npage);
+        last_bti = (BTItem) PageGetItem(npage, PageGetItemId(npage, last_off));
 
-	/*
-	 * set the page (side link) pointers.
-	 */
-	{
-	    BTPageOpaque oopaque = (BTPageOpaque) PageGetSpecialPointer(opage);
-	    BTPageOpaque nopaque = (BTPageOpaque) PageGetSpecialPointer(npage);
+        /*
+         * set the page (side link) pointers.
+         */
+        {
+            BTPageOpaque oopaque = (BTPageOpaque) PageGetSpecialPointer(opage);
+            BTPageOpaque nopaque = (BTPageOpaque) PageGetSpecialPointer(npage);
 
-	    oopaque->btpo_next = BufferGetBlockNumber(nbuf);
-	    nopaque->btpo_prev = BufferGetBlockNumber(obuf);
-	    nopaque->btpo_next = P_NONE;
-	}
+            oopaque->btpo_next = BufferGetBlockNumber(nbuf);
+            nopaque->btpo_prev = BufferGetBlockNumber(obuf);
+            nopaque->btpo_next = P_NONE;
+        }
 
-	/*
-	 * write out the old stuff.  we never want to see it again, so
-	 * we can give up our lock (if we had one; BuildingBtree is
-	 * set, so we aren't locking).
-	 */
-	_bt_wrtbuf(index, obuf);
+        /*
+         * write out the old stuff.  we never want to see it again, so
+         * we can give up our lock (if we had one; BuildingBtree is
+         * set, so we aren't locking).
+         */
+        _bt_wrtbuf(index, obuf);
     }
-    
+
     /*
      * if this item is different from the last item added, we start a
      * new chain of duplicates.
@@ -858,18 +836,18 @@ _bt_buildadd(Relation index, BTPageState *state, BTItem bti, int flags)
     (void) PageAddItem(npage, (Item) bti, btisz, off, LP_USED);
 #ifdef FASTBUILD_DEBUG
     {
-	bool isnull;
-	Datum d = index_getattr(&(bti->bti_itup), 1, 
-				RelationGetTupleDescriptor(index),
-				&isnull);
-	printf("_bt_buildadd: inserted <%x> at offset %d\n",
-	       d, off);
+    bool isnull;
+    Datum d = index_getattr(&(bti->bti_itup), 1, 
+                RelationGetTupleDescriptor(index),
+                &isnull);
+    printf("_bt_buildadd: inserted <%x> at offset %d\n",
+           d, off);
     }
 #endif /* FASTBUILD_DEBUG */
     if (last_bti == (BTItem) NULL) {
-	first_off = P_FIRSTKEY;
+        first_off = P_FIRSTKEY;
     } else if (!_bt_itemcmp(index, 1, bti, last_bti, BTEqualStrategyNumber)) {
-	first_off = off;
+        first_off = off;
     }
     last_off = off;
     last_bti = (BTItem) PageGetItem(npage, PageGetItemId(npage, off));
@@ -889,8 +867,7 @@ _bt_buildadd(Relation index, BTPageState *state, BTItem bti, int flags)
  * XXX three nested loops?  gross.  cut me up into smaller routines.
  */
 static BlockNumber
-_bt_merge(Relation index, BTSpool *btspool)
-{
+_bt_merge(Relation index, BTSpool *btspool) {
     BTPageState state;
     BlockNumber firstblk;
     BTPriQueue q;
@@ -915,158 +892,158 @@ _bt_merge(Relation index, BTSpool *btspool)
     state.btps_lastbti = (BTItem) NULL;
     firstblk = BufferGetBlockNumber(state.btps_buf);
 
-    do {							/* pass */
-	/*
-	 * each pass starts by flushing the previous outputs and
-	 * swapping inputs and outputs.  this process also clears the
-	 * new output tapes and rewinds the new input tapes.
-	 */
-	btspool->bts_tape = btspool->bts_ntapes - 1;
-	_bt_spoolflush(btspool);
-	_bt_spoolswap(btspool);
+    do {                            /* pass */
+        /*
+         * each pass starts by flushing the previous outputs and
+         * swapping inputs and outputs.  this process also clears the
+         * new output tapes and rewinds the new input tapes.
+         */
+        btspool->bts_tape = btspool->bts_ntapes - 1;
+        _bt_spoolflush(btspool);
+        _bt_spoolswap(btspool);
 
-	nruns = 0;
+        nruns = 0;
 
-	for (;;) {						/* run */
-	    /*
-	     * each run starts by selecting a new output tape.  the
-	     * merged results of a given run are always sent to this
-	     * one tape.
-	     */
-	    btspool->bts_tape = (btspool->bts_tape + 1) % btspool->bts_ntapes;
-	    otape = btspool->bts_otape[btspool->bts_tape];
+        for (;;) {                        /* run */
+            /*
+             * each run starts by selecting a new output tape.  the
+             * merged results of a given run are always sent to this
+             * one tape.
+             */
+            btspool->bts_tape = (btspool->bts_tape + 1) % btspool->bts_ntapes;
+            otape = btspool->bts_otape[btspool->bts_tape];
 
-	    /*
-	     * initialize the priority queue by loading it with the
-	     * first element of the given run in each tape.  since we
-	     * are starting a new run, we reset the tape (clearing the
-	     * End-Of-Run marker) before reading it.  this means that
-	     * _bt_taperead will return 0 only if the tape is actually
-	     * at EOF.
-	     */
-	    (void) memset((char *) &q, 0, sizeof(BTPriQueue));
-	    goodtapes = 0;
-	    for (t = 0; t < btspool->bts_ntapes; ++t) {
-		itape = btspool->bts_itape[t];
-		tapepos[t] = itape->bttb_data;
-		_bt_tapereset(itape);
-		if (_bt_taperead(itape) == 0) {
-		    tapedone[t] = 1;
-		} else {
-		    ++goodtapes;
-		    tapedone[t] = 0;
-		    e.btpqe_tape = t;
-		    e.btpqe_item = _bt_tapenext(itape, &tapepos[t]);
-		    if (e.btpqe_item != (BTItem) NULL) {
-			_bt_pqadd(&q, &e);
-		    }
-		}
-	    }
-	    /*
-	     * if we don't have any tapes with any input (i.e., they
-	     * are all at EOF), we must be done with this pass.
-	     */
-	    if (goodtapes == 0) {
-		break;	/* for */
-	    }
-	    ++nruns;
-	
-	    /*
-	     * output the smallest element from the queue until there are no
-	     * more.
-	     */
-	    while (_bt_pqnext(&q, &e) >= 0) {			/* item */
-		/*
-		 * replace the element taken from priority queue,
-		 * fetching a new block if needed.  a tape can run out
-		 * if it hits either End-Of-Run or EOF.
-		 */
-		t = e.btpqe_tape;
-		bti = e.btpqe_item;
-		if (bti != (BTItem) NULL) {
-		    btisz = BTITEMSZ(bti);
-		    btisz = DOUBLEALIGN(btisz);
-		    if (doleaf) {
-			_bt_buildadd(index, &state, bti, BTP_LEAF);
+            /*
+             * initialize the priority queue by loading it with the
+             * first element of the given run in each tape.  since we
+             * are starting a new run, we reset the tape (clearing the
+             * End-Of-Run marker) before reading it.  this means that
+             * _bt_taperead will return 0 only if the tape is actually
+             * at EOF.
+             */
+            (void) memset((char *) &q, 0, sizeof(BTPriQueue));
+            goodtapes = 0;
+            for (t = 0; t < btspool->bts_ntapes; ++t) {
+                itape = btspool->bts_itape[t];
+                tapepos[t] = itape->bttb_data;
+                _bt_tapereset(itape);
+                if (_bt_taperead(itape) == 0) {
+                    tapedone[t] = 1;
+                } else {
+                    ++goodtapes;
+                    tapedone[t] = 0;
+                    e.btpqe_tape = t;
+                    e.btpqe_item = _bt_tapenext(itape, &tapepos[t]);
+                    if (e.btpqe_item != (BTItem) NULL) {
+                        _bt_pqadd(&q, &e);
+                    }
+                }
+            }
+            /*
+             * if we don't have any tapes with any input (i.e., they
+             * are all at EOF), we must be done with this pass.
+             */
+            if (goodtapes == 0) {
+                break;    /* for */
+            }
+            ++nruns;
+
+            /*
+             * output the smallest element from the queue until there are no
+             * more.
+             */
+            while (_bt_pqnext(&q, &e) >= 0) {            /* item */
+                /*
+                 * replace the element taken from priority queue,
+                 * fetching a new block if needed.  a tape can run out
+                 * if it hits either End-Of-Run or EOF.
+                 */
+                t = e.btpqe_tape;
+                bti = e.btpqe_item;
+                if (bti != (BTItem) NULL) {
+                    btisz = BTITEMSZ(bti);
+                    btisz = DOUBLEALIGN(btisz);
+                    if (doleaf) {
+                        _bt_buildadd(index, &state, bti, BTP_LEAF);
 #ifdef FASTBUILD_DEBUG
-			{
-			    bool isnull;
-			    Datum d = index_getattr(&(bti->bti_itup), 1,
-				    RelationGetTupleDescriptor(index),
-						    &isnull);
-			    printf("_bt_merge: inserted <%x> into block %d\n",
-				   d, BufferGetBlockNumber(state.btps_buf));
-			}
+                        {
+                            bool isnull;
+                            Datum d = index_getattr(&(bti->bti_itup), 1,
+                                RelationGetTupleDescriptor(index),
+                                        &isnull);
+                            printf("_bt_merge: inserted <%x> into block %d\n",
+                               d, BufferGetBlockNumber(state.btps_buf));
+                        }
 #endif /* FASTBUILD_DEBUG */
-		    } else {
-			if (SPCLEFT(otape) < btisz) {
-			    /*
-			     * if it's full, write it out and add the
-			     * item to the next block.  (since we know
-			     * there will be at least one more block,
-			     * we know we do *not* want to set
-			     * End-Of-Run here!)
-			     */
-			    _bt_tapewrite(otape, 0);
-			}
-			_bt_tapeadd(otape, bti, btisz);
+                    } else {
+                        if (SPCLEFT(otape) < btisz) {
+                            /*
+                             * if it's full, write it out and add the
+                             * item to the next block.  (since we know
+                             * there will be at least one more block,
+                             * we know we do *not* want to set
+                             * End-Of-Run here!)
+                             */
+                            _bt_tapewrite(otape, 0);
+                        }
+                        _bt_tapeadd(otape, bti, btisz);
 #ifdef FASTBUILD_DEBUG
-			{
-			    bool isnull;
-			    Datum d = index_getattr(&(bti->bti_itup), 1,
-				  RelationGetTupleDescriptor(index), &isnull);
-			    printf("_bt_merge: inserted <%x> into tape %d\n",
-				   d, btspool->bts_tape);
-			}
+                        {
+                            bool isnull;
+                            Datum d = index_getattr(&(bti->bti_itup), 1,
+                              RelationGetTupleDescriptor(index), &isnull);
+                            printf("_bt_merge: inserted <%x> into tape %d\n",
+                               d, btspool->bts_tape);
+                        }
 #endif /* FASTBUILD_DEBUG */
-		    }
-		}
+                    }
+                }
 #ifdef FASTBUILD_DEBUG
-		{
-		    bool isnull;
-		    Datum d = index_getattr(&(bti->bti_itup), 1,
-					   RelationGetTupleDescriptor(index),
-					    &isnull);
-		    printf("_bt_merge: got <%x> from tape %d\n", d, t);
-		}
+                {
+                    bool isnull;
+                    Datum d = index_getattr(&(bti->bti_itup), 1,
+                               RelationGetTupleDescriptor(index),
+                                &isnull);
+                    printf("_bt_merge: got <%x> from tape %d\n", d, t);
+                }
 #endif /* FASTBUILD_DEBUG */
 
-		itape = btspool->bts_itape[t];
-		if (!tapedone[t]) {
-		    BTItem newbti = _bt_tapenext(itape, &tapepos[t]);
+                itape = btspool->bts_itape[t];
+                if (!tapedone[t]) {
+                    BTItem newbti = _bt_tapenext(itape, &tapepos[t]);
 
-		    if (newbti == (BTItem) NULL) {
-			if (_bt_taperead(itape) == 0) {
-			    tapedone[t] = 1;
-			} else {
-			    tapepos[t] = itape->bttb_data;
-			    newbti = _bt_tapenext(itape, &tapepos[t]);
-			}
-		    }
-		    if (newbti != (BTItem) NULL) {
-			BTPriQueueElem nexte;
-			
-			nexte.btpqe_tape = t;
-			nexte.btpqe_item = newbti;
-			_bt_pqadd(&q, &nexte);
-		    }
-		}
-	    } 							/* item */
-	}							/* run */
-	
-	/*
-	 * we are here because we ran out of input on all of the input
-	 * tapes.
-	 *
-	 * if this pass did not generate more actual output runs than
-	 * we have tapes, we know we have at most one run in each
-	 * tape.  this means that we are ready to merge into the final
-	 * btree leaf pages instead of merging into a tape file.
-	 */
-	if (nruns <= btspool->bts_ntapes) {
-	    doleaf = true;
-	}
-    } while (nruns > 0);					/* pass */
+                    if (newbti == (BTItem) NULL) {
+                        if (_bt_taperead(itape) == 0) {
+                            tapedone[t] = 1;
+                        } else {
+                            tapepos[t] = itape->bttb_data;
+                            newbti = _bt_tapenext(itape, &tapepos[t]);
+                        }
+                    }
+                    if (newbti != (BTItem) NULL) {
+                        BTPriQueueElem nexte;
+
+                        nexte.btpqe_tape = t;
+                        nexte.btpqe_item = newbti;
+                        _bt_pqadd(&q, &nexte);
+                    }
+                }
+            }                            /* item */
+        }                            /* run */
+
+        /*
+         * we are here because we ran out of input on all of the input
+         * tapes.
+         *
+         * if this pass did not generate more actual output runs than
+         * we have tapes, we know we have at most one run in each
+         * tape.  this means that we are ready to merge into the final
+         * btree leaf pages instead of merging into a tape file.
+         */
+        if (nruns <= btspool->bts_ntapes) {
+            doleaf = true;
+        }
+    } while (nruns > 0);                    /* pass */
 
     /*
      * this is the rightmost page, so the ItemId array needs to be
@@ -1075,7 +1052,7 @@ _bt_merge(Relation index, BTSpool *btspool)
     _bt_slideleft(index, state.btps_buf, state.btps_page);
     _bt_wrtbuf(index, state.btps_buf);
 
-    return(firstblk);
+    return (firstblk);
 }
 
 
@@ -1087,8 +1064,7 @@ _bt_merge(Relation index, BTSpool *btspool)
  * the internal pages is otherwise the same as for leaf pages.
  */
 void
-_bt_upperbuild(Relation index, BlockNumber blk, int level)
-{
+_bt_upperbuild(Relation index, BlockNumber blk, int level) {
     Buffer rbuf;
     Page rpage;
     BTPageOpaque ropaque;
@@ -1107,60 +1083,60 @@ _bt_upperbuild(Relation index, BlockNumber blk, int level)
      * root.
      */
     if (P_RIGHTMOST(ropaque)) {
-	ropaque->btpo_flags |= BTP_ROOT;
-	_bt_wrtbuf(index, rbuf);
-	_bt_metaproot(index, blk);
-	return;
+        ropaque->btpo_flags |= BTP_ROOT;
+        _bt_wrtbuf(index, rbuf);
+        _bt_metaproot(index, blk);
+        return;
     }
     _bt_relbuf(index, rbuf, BT_WRITE);
-	
+
     (void) memset((char *) &state, 0, sizeof(BTPageState));
     _bt_blnewpage(index, &(state.btps_buf), &(state.btps_page), 0);
     state.btps_lastoff = P_HIKEY;
     state.btps_lastbti = (BTItem) NULL;
     firstblk = BufferGetBlockNumber(state.btps_buf);
-    
+
     /* for each page... */
     do {
-	rbuf = _bt_getbuf(index, blk, BT_READ);
-	rpage = BufferGetPage(rbuf);
-	ropaque = (BTPageOpaque) PageGetSpecialPointer(rpage);
-	
-	/* for each item... */
-	if (!PageIsEmpty(rpage)) {
-	    /*
-	     * form a new index tuple corresponding to the minimum key
-	     * of the lower page and insert it into a page at this
-	     * level.
-	     */
-	    off = P_RIGHTMOST(ropaque) ? P_HIKEY : P_FIRSTKEY;
-	    bti = (BTItem) PageGetItem(rpage, PageGetItemId(rpage, off));
-	    nbti = _bt_formitem(&(bti->bti_itup));
-	    ItemPointerSet(&(nbti->bti_itup.t_tid), blk, P_HIKEY);
+        rbuf = _bt_getbuf(index, blk, BT_READ);
+        rpage = BufferGetPage(rbuf);
+        ropaque = (BTPageOpaque) PageGetSpecialPointer(rpage);
+
+        /* for each item... */
+        if (!PageIsEmpty(rpage)) {
+            /*
+             * form a new index tuple corresponding to the minimum key
+             * of the lower page and insert it into a page at this
+             * level.
+             */
+            off = P_RIGHTMOST(ropaque) ? P_HIKEY : P_FIRSTKEY;
+            bti = (BTItem) PageGetItem(rpage, PageGetItemId(rpage, off));
+            nbti = _bt_formitem(&(bti->bti_itup));
+            ItemPointerSet(&(nbti->bti_itup.t_tid), blk, P_HIKEY);
 #ifdef FASTBUILD_DEBUG
-	    {
-		bool isnull;
-		Datum d = index_getattr(&(nbti->bti_itup), 1, 
-					RelationGetTupleDescriptor(index),
-					&isnull);
-		printf("_bt_upperbuild: inserting <%x> at %d\n",
-		       d, level);
-	    }
+            {
+            bool isnull;
+            Datum d = index_getattr(&(nbti->bti_itup), 1, 
+                        RelationGetTupleDescriptor(index),
+                        &isnull);
+            printf("_bt_upperbuild: inserting <%x> at %d\n",
+                   d, level);
+            }
 #endif /* FASTBUILD_DEBUG */
-	    _bt_buildadd(index, &state, nbti, 0);
-	    pfree((void *) nbti);
-	}
-	blk = ropaque->btpo_next;
-	_bt_relbuf(index, rbuf, BT_READ);
+            _bt_buildadd(index, &state, nbti, 0);
+            pfree((void *) nbti);
+        }
+        blk = ropaque->btpo_next;
+        _bt_relbuf(index, rbuf, BT_READ);
     } while (blk != P_NONE);
-	
+
     /*
      * this is the rightmost page, so the ItemId array needs to be
      * slid back one slot.
      */
     _bt_slideleft(index, state.btps_buf, state.btps_page);
     _bt_wrtbuf(index, state.btps_buf);
-    
+
     _bt_upperbuild(index, firstblk, level + 1);
 }
 
@@ -1169,8 +1145,7 @@ _bt_upperbuild(Relation index, BlockNumber blk, int level)
  * entire btree.
  */
 void
-_bt_leafbuild(Relation index, void *spool)
-{
+_bt_leafbuild(Relation index, void *spool) {
     BTSpool *btspool = (BTSpool *) spool;
     BlockNumber firstblk;
 

@@ -39,8 +39,8 @@
 
 #include "catalog/index.h"
 
-bool	BuildingBtree = false;
-bool	FastBuild = false; /* turn this on to make bulk builds work*/
+bool BuildingBtree = false;
+bool FastBuild = false; /* turn this on to make bulk builds work*/
 
 /*
  *  btbuild() -- build a new btree index.
@@ -52,15 +52,14 @@ bool	FastBuild = false; /* turn this on to make bulk builds work*/
  */
 void
 btbuild(Relation heap,
-	Relation index,
-	int natts,
-	AttrNumber *attnum,
-	IndexStrategy istrat,
-	uint16 pcount,
-	Datum *params,
-	FuncIndexInfo *finfo,
-	PredInfo *predInfo)
-{
+        Relation index,
+        int natts,
+        AttrNumber *attnum,
+        IndexStrategy istrat,
+        uint16 pcount,
+        Datum *params,
+        FuncIndexInfo *finfo,
+        PredInfo *predInfo) {
     HeapScanDesc hscan;
     Buffer buffer;
     HeapTuple htup;
@@ -78,25 +77,25 @@ btbuild(Relation heap,
     Oid hrelid, irelid;
     Node *pred, *oldPred;
     void *spool;
-    
+
     /* note that this is a new btree */
     BuildingBtree = true;
-    
+
     pred = predInfo->pred;
     oldPred = predInfo->oldPred;
 
     /* initialize the btree index metadata page (if this is a new index) */
     if (oldPred == NULL)
-	_bt_metapinit(index);
-    
+        _bt_metapinit(index);
+
     /* get tuple descriptors for heap and index relations */
     htupdesc = RelationGetTupleDescriptor(heap);
     itupdesc = RelationGetTupleDescriptor(index);
-    
+
     /* get space for data items that'll appear in the index tuple */
     attdata = (Datum *) palloc(natts * sizeof(Datum));
     nulls = (bool *) palloc(natts * sizeof(bool));
-    
+
     /*
      * If this is a predicate (partial) index, we will need to evaluate the
      * predicate using ExecQual, which requires the current tuple to be in a
@@ -106,134 +105,134 @@ btbuild(Relation heap,
      */
 #ifndef OMIT_PARTIAL_INDEX
     if (pred != NULL || oldPred != NULL) {
-	tupleTable = ExecCreateTupleTable(1);
-	slot = ExecAllocTableSlot(tupleTable);
-	econtext = makeNode(ExprContext);
-	FillDummyExprContext(econtext, slot, htupdesc, InvalidBuffer);
+        tupleTable = ExecCreateTupleTable(1);
+        slot = ExecAllocTableSlot(tupleTable);
+        econtext = makeNode(ExprContext);
+        FillDummyExprContext(econtext, slot, htupdesc, InvalidBuffer);
     }
 #endif /* OMIT_PARTIAL_INDEX */
-    
+
     /* start a heap scan */
     hscan = heap_beginscan(heap, 0, NowTimeQual, 0, (ScanKey) NULL);
     htup = heap_getnext(hscan, 0, &buffer);
-    
+
     /* build the index */
     nhtups = nitups = 0;
-    
+
     if (FastBuild) {
-	spool = _bt_spoolinit(index, 7);
-	res = (InsertIndexResult) NULL;
+        spool = _bt_spoolinit(index, 7);
+        res = (InsertIndexResult) NULL;
     }
 
     for (; HeapTupleIsValid(htup); htup = heap_getnext(hscan, 0, &buffer)) {
-	
-	nhtups++;
-	
-	/*
-	 * If oldPred != NULL, this is an EXTEND INDEX command, so skip
-	 * this tuple if it was already in the existing partial index
-	 */
-	if (oldPred != NULL) {
+
+        nhtups++;
+
+        /*
+         * If oldPred != NULL, this is an EXTEND INDEX command, so skip
+         * this tuple if it was already in the existing partial index
+         */
+        if (oldPred != NULL) {
 #ifndef OMIT_PARTIAL_INDEX
 
-	    /*SetSlotContents(slot, htup);*/
-	    slot->val = htup;
-	    if (ExecQual((List*)oldPred, econtext) == true) {
-		nitups++;
-		continue;
-	    }
-#endif /* OMIT_PARTIAL_INDEX */    	
-	}
-	
-	/* Skip this tuple if it doesn't satisfy the partial-index predicate */
-	if (pred != NULL) {
+            /*SetSlotContents(slot, htup);*/
+            slot->val = htup;
+            if (ExecQual((List *) oldPred, econtext) == true) {
+                nitups++;
+                continue;
+            }
+#endif /* OMIT_PARTIAL_INDEX */
+        }
+
+        /* Skip this tuple if it doesn't satisfy the partial-index predicate */
+        if (pred != NULL) {
 #ifndef OMIT_PARTIAL_INDEX
-	    /* SetSlotContents(slot, htup); */
-	    slot->val = htup;
-	    if (ExecQual((List*)pred, econtext) == false)
-		continue;
-#endif /* OMIT_PARTIAL_INDEX */    	
-	}
-	
-	nitups++;
-	
-	/*
-	 *  For the current heap tuple, extract all the attributes
-	 *  we use in this index, and note which are null.
-	 */
-	
-	for (i = 1; i <= natts; i++) {
-	    int  attoff;
-	    bool attnull;
-	    
-	    /*
-	     *  Offsets are from the start of the tuple, and are
-	     *  zero-based; indices are one-based.  The next call
-	     *  returns i - 1.  That's data hiding for you.
-	     */
-	    
-	    attoff = AttrNumberGetAttrOffset(i);
-	    attdata[attoff] = GetIndexValue(htup, 
-					    htupdesc,
-					    attoff, 
-					    attnum, 
-					    finfo, 
-					    &attnull,
-					    buffer);
-	    nulls[attoff] = (attnull ? 'n' : ' ');
-	}
-	
-	/* form an index tuple and point it at the heap tuple */
-	itup = index_formtuple(itupdesc, attdata, nulls);
-	
-	/*
-	 *  If the single index key is null, we don't insert it into
-	 *  the index.  Btrees support scans on <, <=, =, >=, and >.
-	 *  Relational algebra says that A op B (where op is one of the
-	 *  operators above) returns null if either A or B is null.  This
-	 *  means that no qualification used in an index scan could ever
-	 *  return true on a null attribute.  It also means that indices
-	 *  can't be used by ISNULL or NOTNULL scans, but that's an
-	 *  artifact of the strategy map architecture chosen in 1986, not
-	 *  of the way nulls are handled here.
-	 */
-	
-	if (itup->t_info & INDEX_NULL_MASK) {
-	    pfree(itup);
-	    continue;
-	}
-	
-	itup->t_tid = htup->t_ctid;
-	btitem = _bt_formitem(itup);
+            /* SetSlotContents(slot, htup); */
+            slot->val = htup;
+            if (ExecQual((List *) pred, econtext) == false)
+                continue;
+#endif /* OMIT_PARTIAL_INDEX */
+        }
 
-	/*
-	 * if we are doing bottom-up btree build, we insert the index
-	 * into a spool page for subsequent processing.  otherwise, we
-	 * insert into the btree.
-	 */
-	if (FastBuild) {
-	    _bt_spool(index, btitem, spool);
-	} else {
-	    res = _bt_doinsert(index, btitem);
-	}
+        nitups++;
 
-	pfree(btitem);
-	pfree(itup);
-	if (res) {
-	    pfree(res);
-	}
+        /*
+         *  For the current heap tuple, extract all the attributes
+         *  we use in this index, and note which are null.
+         */
+
+        for (i = 1; i <= natts; i++) {
+            int attoff;
+            bool attnull;
+
+            /*
+             *  Offsets are from the start of the tuple, and are
+             *  zero-based; indices are one-based.  The next call
+             *  returns i - 1.  That's data hiding for you.
+             */
+
+            attoff = AttrNumberGetAttrOffset(i);
+            attdata[attoff] = GetIndexValue(htup,
+                                            htupdesc,
+                                            attoff,
+                                            attnum,
+                                            finfo,
+                                            &attnull,
+                                            buffer);
+            nulls[attoff] = (attnull ? 'n' : ' ');
+        }
+
+        /* form an index tuple and point it at the heap tuple */
+        itup = index_formtuple(itupdesc, attdata, nulls);
+
+        /*
+         *  If the single index key is null, we don't insert it into
+         *  the index.  Btrees support scans on <, <=, =, >=, and >.
+         *  Relational algebra says that A op B (where op is one of the
+         *  operators above) returns null if either A or B is null.  This
+         *  means that no qualification used in an index scan could ever
+         *  return true on a null attribute.  It also means that indices
+         *  can't be used by ISNULL or NOTNULL scans, but that's an
+         *  artifact of the strategy map architecture chosen in 1986, not
+         *  of the way nulls are handled here.
+         */
+
+        if (itup->t_info & INDEX_NULL_MASK) {
+            pfree(itup);
+            continue;
+        }
+
+        itup->t_tid = htup->t_ctid;
+        btitem = _bt_formitem(itup);
+
+        /*
+         * if we are doing bottom-up btree build, we insert the index
+         * into a spool page for subsequent processing.  otherwise, we
+         * insert into the btree.
+         */
+        if (FastBuild) {
+            _bt_spool(index, btitem, spool);
+        } else {
+            res = _bt_doinsert(index, btitem);
+        }
+
+        pfree(btitem);
+        pfree(itup);
+        if (res) {
+            pfree(res);
+        }
     }
-    
+
     /* okay, all heap tuples are indexed */
     heap_endscan(hscan);
-    
+
     if (pred != NULL || oldPred != NULL) {
 #ifndef OMIT_PARTIAL_INDEX
-	ExecDestroyTupleTable(tupleTable, true);
-	pfree(econtext);
-#endif /* OMIT_PARTIAL_INDEX */    	
+        ExecDestroyTupleTable(tupleTable, true);
+        pfree(econtext);
+#endif /* OMIT_PARTIAL_INDEX */
     }
-    
+
     /*
      * if we are doing bottom-up btree build, we now have a bunch of
      * sorted runs in the spool pages.  finish the build by (1)
@@ -241,9 +240,9 @@ btbuild(Relation heap,
      * pages and (3) building the upper levels.
      */
     if (FastBuild) {
-	_bt_spool(index, (BTItem) NULL, spool);	/* flush spool */
-	_bt_leafbuild(index, spool);
-	_bt_spooldestroy(spool);
+        _bt_spool(index, (BTItem) NULL, spool);    /* flush spool */
+        _bt_leafbuild(index, spool);
+        _bt_spooldestroy(spool);
     }
 
     /*
@@ -255,24 +254,23 @@ btbuild(Relation heap,
      *  before updatings statistics to guarantee that the relcache entries
      *  are flushed when we increment the command counter in UpdateStats().
      */
-    if (IsNormalProcessingMode())
-	{
-	    hrelid = heap->rd_id;
-	    irelid = index->rd_id;
-	    heap_close(heap);
-	    index_close(index);
-	    UpdateStats(hrelid, nhtups, true);
-	    UpdateStats(irelid, nitups, false);
-	    if (oldPred != NULL) {
-		if (nitups == nhtups) pred = NULL;
-		UpdateIndexPredicate(irelid, oldPred, pred);
-	    }  
-	}
-    
+    if (IsNormalProcessingMode()) {
+        hrelid = heap->rd_id;
+        irelid = index->rd_id;
+        heap_close(heap);
+        index_close(index);
+        UpdateStats(hrelid, nhtups, true);
+        UpdateStats(irelid, nitups, false);
+        if (oldPred != NULL) {
+            if (nitups == nhtups) pred = NULL;
+            UpdateIndexPredicate(irelid, oldPred, pred);
+        }
+    }
+
     /* be tidy */
     pfree(nulls);
     pfree(attdata);
-    
+
     /* all done */
     BuildingBtree = false;
 }
@@ -285,19 +283,18 @@ btbuild(Relation heap,
  *	return an InsertIndexResult to the caller.
  */
 InsertIndexResult
-btinsert(Relation rel, IndexTuple itup)
-{
+btinsert(Relation rel, IndexTuple itup) {
     BTItem btitem;
     InsertIndexResult res;
-    
+
     if (itup->t_info & INDEX_NULL_MASK)
-	return ((InsertIndexResult) NULL);
-    
+        return ((InsertIndexResult) NULL);
+
     btitem = _bt_formitem(itup);
-    
+
     res = _bt_doinsert(rel, btitem);
     pfree(btitem);
-    
+
     return (res);
 }
 
@@ -305,21 +302,20 @@ btinsert(Relation rel, IndexTuple itup)
  *  btgettuple() -- Get the next tuple in the scan.
  */
 char *
-btgettuple(IndexScanDesc scan, ScanDirection dir)
-{
+btgettuple(IndexScanDesc scan, ScanDirection dir) {
     RetrieveIndexResult res;
-    
+
     /*
      *  If we've already initialized this scan, we can just advance it
      *  in the appropriate direction.  If we haven't done so yet, we
      *  call a routine to get the first item in the scan.
      */
-    
+
     if (ItemPointerIsValid(&(scan->currentItemData)))
-	res = _bt_next(scan, dir);
+        res = _bt_next(scan, dir);
     else
-	res = _bt_first(scan, dir);
-    
+        res = _bt_first(scan, dir);
+
     return ((char *) res);
 }
 
@@ -327,39 +323,38 @@ btgettuple(IndexScanDesc scan, ScanDirection dir)
  *  btbeginscan() -- start a scan on a btree index
  */
 char *
-btbeginscan(Relation rel, bool fromEnd, uint16 keysz, ScanKey scankey)
-{
+btbeginscan(Relation rel, bool fromEnd, uint16 keysz, ScanKey scankey) {
     IndexScanDesc scan;
     StrategyNumber strat;
     BTScanOpaque so;
-    
+
     /* first order the keys in the qualification */
     if (keysz > 1)
-	_bt_orderkeys(rel, &keysz, scankey);
-    
+        _bt_orderkeys(rel, &keysz, scankey);
+
     /* now get the scan */
     scan = RelationGetIndexScan(rel, fromEnd, keysz, scankey);
     so = (BTScanOpaque) palloc(sizeof(BTScanOpaqueData));
     so->btso_curbuf = so->btso_mrkbuf = InvalidBuffer;
     scan->opaque = so;
-    
+
     /* finally, be sure that the scan exploits the tree order */
     scan->scanFromEnd = false;
     scan->flags = 0x0;
     if (keysz > 0) {
-	strat = _bt_getstrat(scan->relation, 1 /* XXX */,
-			     scankey[0].sk_procedure);
-	
-	if (strat == BTLessStrategyNumber
-	    || strat == BTLessEqualStrategyNumber)
-	    scan->scanFromEnd = true;
+        strat = _bt_getstrat(scan->relation, 1 /* XXX */,
+                             scankey[0].sk_procedure);
+
+        if (strat == BTLessStrategyNumber
+            || strat == BTLessEqualStrategyNumber)
+            scan->scanFromEnd = true;
     } else {
-	scan->scanFromEnd = true;
+        scan->scanFromEnd = true;
     }
-    
+
     /* register scan in case we change pages it's using */
     _bt_regscan(scan);
-    
+
     return ((char *) scan);
 }
 
@@ -367,50 +362,48 @@ btbeginscan(Relation rel, bool fromEnd, uint16 keysz, ScanKey scankey)
  *  btrescan() -- rescan an index relation
  */
 void
-btrescan(IndexScanDesc scan, bool fromEnd, ScanKey scankey)
-{
+btrescan(IndexScanDesc scan, bool fromEnd, ScanKey scankey) {
     ItemPointer iptr;
     BTScanOpaque so;
-    
+
     so = (BTScanOpaque) scan->opaque;
-    
+
     /* we hold a read lock on the current page in the scan */
     if (ItemPointerIsValid(iptr = &(scan->currentItemData))) {
-	_bt_relbuf(scan->relation, so->btso_curbuf, BT_READ);
-	so->btso_curbuf = InvalidBuffer;
-	ItemPointerSetInvalid(iptr);
+        _bt_relbuf(scan->relation, so->btso_curbuf, BT_READ);
+        so->btso_curbuf = InvalidBuffer;
+        ItemPointerSetInvalid(iptr);
     }
-    
+
     /* and we hold a read lock on the last marked item in the scan */
     if (ItemPointerIsValid(iptr = &(scan->currentMarkData))) {
-	_bt_relbuf(scan->relation, so->btso_mrkbuf, BT_READ);
-	so->btso_mrkbuf = InvalidBuffer;
-	ItemPointerSetInvalid(iptr);
+        _bt_relbuf(scan->relation, so->btso_mrkbuf, BT_READ);
+        so->btso_mrkbuf = InvalidBuffer;
+        ItemPointerSetInvalid(iptr);
     }
-    
+
     /* reset the scan key */
     if (scan->numberOfKeys > 0) {
-	memmove(scan->keyData,
-		scankey,
-		scan->numberOfKeys * sizeof(ScanKeyData));
+        memmove(scan->keyData,
+                scankey,
+                scan->numberOfKeys * sizeof(ScanKeyData));
     }
 }
 
 void
-btmovescan(IndexScanDesc scan, Datum v)
-{
+btmovescan(IndexScanDesc scan, Datum v) {
     ItemPointer iptr;
     BTScanOpaque so;
-    
+
     so = (BTScanOpaque) scan->opaque;
-    
+
     /* release any locks we still hold */
     if (ItemPointerIsValid(iptr = &(scan->currentItemData))) {
-	_bt_relbuf(scan->relation, so->btso_curbuf, BT_READ);
-	so->btso_curbuf = InvalidBuffer;
-	ItemPointerSetInvalid(iptr);
+        _bt_relbuf(scan->relation, so->btso_curbuf, BT_READ);
+        so->btso_curbuf = InvalidBuffer;
+        ItemPointerSetInvalid(iptr);
     }
-    
+
     scan->keyData[0].sk_argument = v;
 }
 
@@ -418,31 +411,30 @@ btmovescan(IndexScanDesc scan, Datum v)
  *  btendscan() -- close down a scan
  */
 void
-btendscan(IndexScanDesc scan)
-{
+btendscan(IndexScanDesc scan) {
     ItemPointer iptr;
     BTScanOpaque so;
-    
+
     so = (BTScanOpaque) scan->opaque;
-    
+
     /* release any locks we still hold */
     if (ItemPointerIsValid(iptr = &(scan->currentItemData))) {
-	if (BufferIsValid(so->btso_curbuf))
-	    _bt_relbuf(scan->relation, so->btso_curbuf, BT_READ);
-	so->btso_curbuf = InvalidBuffer;
-	ItemPointerSetInvalid(iptr);
+        if (BufferIsValid(so->btso_curbuf))
+            _bt_relbuf(scan->relation, so->btso_curbuf, BT_READ);
+        so->btso_curbuf = InvalidBuffer;
+        ItemPointerSetInvalid(iptr);
     }
-    
+
     if (ItemPointerIsValid(iptr = &(scan->currentMarkData))) {
-	if (BufferIsValid(so->btso_mrkbuf))
-	    _bt_relbuf(scan->relation, so->btso_mrkbuf, BT_READ);
-	so->btso_mrkbuf = InvalidBuffer;
-	ItemPointerSetInvalid(iptr);
+        if (BufferIsValid(so->btso_mrkbuf))
+            _bt_relbuf(scan->relation, so->btso_mrkbuf, BT_READ);
+        so->btso_mrkbuf = InvalidBuffer;
+        ItemPointerSetInvalid(iptr);
     }
-    
+
     /* don't need scan registered anymore */
     _bt_dropscan(scan);
-    
+
     /* be tidy */
 #ifdef PERFECT_MMGR
     pfree (scan->opaque);
@@ -453,26 +445,25 @@ btendscan(IndexScanDesc scan)
  *  btmarkpos() -- save current scan position
  */
 void
-btmarkpos(IndexScanDesc scan)
-{
+btmarkpos(IndexScanDesc scan) {
     ItemPointer iptr;
     BTScanOpaque so;
-    
+
     so = (BTScanOpaque) scan->opaque;
-    
+
     /* release lock on old marked data, if any */
     if (ItemPointerIsValid(iptr = &(scan->currentMarkData))) {
-	_bt_relbuf(scan->relation, so->btso_mrkbuf, BT_READ);
-	so->btso_mrkbuf = InvalidBuffer;
-	ItemPointerSetInvalid(iptr);
+        _bt_relbuf(scan->relation, so->btso_mrkbuf, BT_READ);
+        so->btso_mrkbuf = InvalidBuffer;
+        ItemPointerSetInvalid(iptr);
     }
-    
+
     /* bump lock on currentItemData and copy to currentMarkData */
     if (ItemPointerIsValid(&(scan->currentItemData))) {
-	so->btso_mrkbuf = _bt_getbuf(scan->relation,
-				     BufferGetBlockNumber(so->btso_curbuf),
-				     BT_READ);
-	scan->currentMarkData = scan->currentItemData;
+        so->btso_mrkbuf = _bt_getbuf(scan->relation,
+                                     BufferGetBlockNumber(so->btso_curbuf),
+                                     BT_READ);
+        scan->currentMarkData = scan->currentItemData;
     }
 }
 
@@ -480,37 +471,35 @@ btmarkpos(IndexScanDesc scan)
  *  btrestrpos() -- restore scan to last saved position
  */
 void
-btrestrpos(IndexScanDesc scan)
-{
+btrestrpos(IndexScanDesc scan) {
     ItemPointer iptr;
     BTScanOpaque so;
-    
+
     so = (BTScanOpaque) scan->opaque;
-    
+
     /* release lock on current data, if any */
     if (ItemPointerIsValid(iptr = &(scan->currentItemData))) {
-	_bt_relbuf(scan->relation, so->btso_curbuf, BT_READ);
-	so->btso_curbuf = InvalidBuffer;
-	ItemPointerSetInvalid(iptr);
+        _bt_relbuf(scan->relation, so->btso_curbuf, BT_READ);
+        so->btso_curbuf = InvalidBuffer;
+        ItemPointerSetInvalid(iptr);
     }
-    
+
     /* bump lock on currentMarkData and copy to currentItemData */
     if (ItemPointerIsValid(&(scan->currentMarkData))) {
-	so->btso_curbuf = _bt_getbuf(scan->relation,
-				     BufferGetBlockNumber(so->btso_mrkbuf),
-				     BT_READ);
-	
-	scan->currentItemData = scan->currentMarkData;
+        so->btso_curbuf = _bt_getbuf(scan->relation,
+                                     BufferGetBlockNumber(so->btso_mrkbuf),
+                                     BT_READ);
+
+        scan->currentItemData = scan->currentMarkData;
     }
 }
 
 /* stubs */
 void
-btdelete(Relation rel, ItemPointer tid)
-{
+btdelete(Relation rel, ItemPointer tid) {
     /* adjust any active scans that will be affected by this deletion */
     _bt_adjscans(rel, tid);
-    
+
     /* delete the data from the page */
     _bt_pagedel(rel, tid);
 }

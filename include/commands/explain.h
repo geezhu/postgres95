@@ -9,9 +9,9 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	EXPLAIN_H
-#define	EXPLAIN_H
+#ifndef    EXPLAIN_H
+#define    EXPLAIN_H
 
 extern void ExplainQuery(Query *query, List *options, CommandDest dest);
 
-#endif	/* EXPLAIN_H*/
+#endif    /* EXPLAIN_H*/

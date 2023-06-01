@@ -10,17 +10,17 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	PAGE_H
+#ifndef    PAGE_H
 #define PAGE_H
 
 #include "c.h"
 
-typedef Pointer	Page;
+typedef Pointer Page;
 
 /*
  * PageIsValid --
  *	True iff page is valid.
  */
-#define	PageIsValid(page) PointerIsValid(page)
+#define    PageIsValid(page) PointerIsValid(page)
 
-#endif	/* PAGE_H */
+#endif    /* PAGE_H */

@@ -15,10 +15,10 @@
 #include <stdarg.h>
 #include "c.h"
 
-#define FormMaxSize	1024
-#define FormMinSize	(FormMaxSize / 8)
+#define FormMaxSize    1024
+#define FormMinSize    (FormMaxSize / 8)
 
-static	char	FormBuf[FormMaxSize];
+static char FormBuf[FormMaxSize];
 
 
 /* ----------------
@@ -26,15 +26,14 @@ static	char	FormBuf[FormMaxSize];
  * ----------------
  */
 char *
-form(char *fmt, ... )
-{
-    va_list	args;
+form(char *fmt, ...) {
+    va_list args;
 
     va_start(args, fmt);
-    
+
     (void) vsprintf(FormBuf, fmt, args);
 
     va_end(args);
-    
+
     return (FormBuf);
 }

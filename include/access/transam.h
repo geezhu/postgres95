@@ -30,7 +30,7 @@
  *	even if their minor versions differ.
  * ----------------
  */
-#define TRANS_SYSTEM_VERSION	101
+#define TRANS_SYSTEM_VERSION    101
 
 /* ----------------
  *	transaction id status values
@@ -39,12 +39,12 @@
  *	starting of run-length encoded log data.
  * ----------------
  */
-#define XID_COMMIT      2       		/* transaction commited */
-#define XID_ABORT       1       		/* transaction aborted */
-#define XID_INPROGRESS  0       		/* transaction in progress */
-#define XID_INVALID     3       		/* other */
+#define XID_COMMIT      2            /* transaction commited */
+#define XID_ABORT       1            /* transaction aborted */
+#define XID_INPROGRESS  0            /* transaction in progress */
+#define XID_INVALID     3            /* other */
 
-typedef unsigned char XidStatus; 		/* (2 bits) */
+typedef unsigned char XidStatus;        /* (2 bits) */
 
 /* ----------------
  *   	BitIndexOf computes the index of the Nth xid on a given block
@@ -56,9 +56,9 @@ typedef unsigned char XidStatus; 		/* (2 bits) */
  *	transaction page definitions
  * ----------------
  */
-#define TP_DataSize		BLCKSZ
-#define TP_NumXidStatusPerBlock	(TP_DataSize * 4)
-#define TP_NumTimePerBlock	(TP_DataSize / 4)
+#define TP_DataSize        BLCKSZ
+#define TP_NumXidStatusPerBlock    (TP_DataSize * 4)
+#define TP_NumTimePerBlock    (TP_DataSize / 4)
 
 /* ----------------
  *	LogRelationContents structure
@@ -73,7 +73,7 @@ typedef unsigned char XidStatus; 		/* (2 bits) */
  * ----------------
  */
 typedef struct LogRelationContentsData {
-    int			TransSystemVersion;
+    int TransSystemVersion;
 } LogRelationContentsData;
 
 typedef LogRelationContentsData *LogRelationContents;
@@ -91,7 +91,7 @@ typedef LogRelationContentsData *LogRelationContents;
  * ----------------
  */
 typedef struct TimeRelationContentsData {
-    int			TransSystemVersion;
+    int TransSystemVersion;
 } TimeRelationContentsData;
 
 typedef TimeRelationContentsData *TimeRelationContents;
@@ -113,10 +113,10 @@ typedef TimeRelationContentsData *TimeRelationContents;
  * ----------------
  */
 typedef struct VariableRelationContentsData {
-    int			TransSystemVersion;
-    TransactionId	nextXidData;
-    TransactionId	lastXidData;
-    Oid			nextOid;
+    int TransSystemVersion;
+    TransactionId nextXidData;
+    TransactionId lastXidData;
+    Oid nextOid;
 } VariableRelationContentsData;
 
 typedef VariableRelationContentsData *VariableRelationContents;
@@ -130,57 +130,89 @@ typedef VariableRelationContentsData *VariableRelationContents;
  * prototypes for functions in transam/transam.c
  */
 extern int RecoveryCheckingEnabled();
+
 extern void SetRecoveryCheckingEnabled(bool state);
+
 extern bool TransactionLogTest(TransactionId transactionId, XidStatus status);
+
 extern void TransactionLogUpdate(TransactionId transactionId,
-				 XidStatus status);
+                                 XidStatus status);
+
 extern AbsoluteTime TransactionIdGetCommitTime(TransactionId transactionId);
+
 extern void TransRecover(Relation logRelation);
+
 extern void InitializeTransactionLog();
+
 extern bool TransactionIdDidCommit(TransactionId transactionId);
+
 extern bool TransactionIdDidAbort(TransactionId transactionId);
+
 extern bool TransactionIdIsInProgress(TransactionId transactionId);
+
 extern void TransactionIdCommit(TransactionId transactionId);
+
 extern void TransactionIdAbort(TransactionId transactionId);
+
 extern void TransactionIdSetInProgress(TransactionId transactionId);
 
 /* in transam/transsup.c */
 extern void AmiTransactionOverride(bool flag);
+
 extern void TransComputeBlockNumber(Relation relation,
-	TransactionId transactionId, BlockNumber *blockNumberOutP);
+                                    TransactionId transactionId, BlockNumber *blockNumberOutP);
+
 extern XidStatus TransBlockGetLastTransactionIdStatus(Block tblock,
-	TransactionId baseXid, TransactionId *returnXidP);
+                                                      TransactionId baseXid, TransactionId *returnXidP);
+
 extern XidStatus TransBlockGetXidStatus(Block tblock,
-					TransactionId transactionId);
+                                        TransactionId transactionId);
+
 extern void TransBlockSetXidStatus(Block tblock,
-	TransactionId transactionId, XidStatus xstatus);
+                                   TransactionId transactionId, XidStatus xstatus);
+
 extern AbsoluteTime TransBlockGetCommitTime(Block tblock,
-	TransactionId transactionId);
+                                            TransactionId transactionId);
+
 extern void TransBlockSetCommitTime(Block tblock,
-	TransactionId transactionId, AbsoluteTime commitTime);
+                                    TransactionId transactionId, AbsoluteTime commitTime);
+
 extern XidStatus TransBlockNumberGetXidStatus(Relation relation,
-	BlockNumber blockNumber, TransactionId xid, bool *failP);
+                                              BlockNumber blockNumber, TransactionId xid, bool *failP);
+
 extern void TransBlockNumberSetXidStatus(Relation relation,
-	BlockNumber blockNumber, TransactionId xid, XidStatus xstatus,
-	bool *failP);
+                                         BlockNumber blockNumber, TransactionId xid, XidStatus xstatus,
+                                         bool *failP);
+
 extern AbsoluteTime TransBlockNumberGetCommitTime(Relation relation,
-	BlockNumber blockNumber, TransactionId xid, bool *failP);
+                                                  BlockNumber blockNumber, TransactionId xid, bool *failP);
+
 extern void TransBlockNumberSetCommitTime(Relation relation,
-	BlockNumber blockNumber, TransactionId xid, AbsoluteTime xtime,
-	bool *failP);
+                                          BlockNumber blockNumber, TransactionId xid, AbsoluteTime xtime,
+                                          bool *failP);
+
 extern void TransGetLastRecordedTransaction(Relation relation,
-	TransactionId xid, bool *failP);
+                                            TransactionId xid, bool *failP);
 
 /* in transam/varsup.c */
 extern void VariableRelationGetNextXid(TransactionId *xidP);
+
 extern void VariableRelationGetLastXid(TransactionId *xidP);
+
 extern void VariableRelationPutNextXid(TransactionId xid);
+
 extern void VariableRelationPutLastXid(TransactionId xid);
+
 extern void VariableRelationGetNextOid(Oid *oid_return);
+
 extern void VariableRelationPutNextOid(Oid *oidP);
+
 extern void GetNewTransactionId(TransactionId *xid);
+
 extern void UpdateLastCommittedXid(TransactionId xid);
+
 extern void GetNewObjectIdBlock(Oid *oid_return, int oid_block_size);
+
 extern void GetNewObjectId(Oid *oid_return);
 
 /* ----------------
@@ -189,14 +221,14 @@ extern void GetNewObjectId(Oid *oid_return);
  */
 
 /* in transam.c */
-extern Relation	LogRelation;
-extern Relation	TimeRelation;
-extern Relation	VariableRelation;
+extern Relation LogRelation;
+extern Relation TimeRelation;
+extern Relation VariableRelation;
 
-extern TransactionId	cachedGetCommitTimeXid;
-extern AbsoluteTime	cachedGetCommitTime;
-extern TransactionId	cachedTestXid;
-extern XidStatus	cachedTestXidStatus;
+extern TransactionId cachedGetCommitTimeXid;
+extern AbsoluteTime cachedGetCommitTime;
+extern TransactionId cachedTestXid;
+extern XidStatus cachedTestXidStatus;
 
 extern TransactionId NullTransactionId;
 extern TransactionId AmiTransactionId;
@@ -205,7 +237,7 @@ extern TransactionId FirstTransactionId;
 extern int RecoveryCheckingEnableState;
 
 /* in transsup.c */
-extern bool AMI_OVERRIDE;	
+extern bool AMI_OVERRIDE;
 
 /* in varsup.c */
 extern int OidGenLockId;

@@ -52,9 +52,9 @@
  */
 #include <stdio.h>
 #include <string.h>
-#include <sys/param.h>	/* for MAX{HOSTNAME,PATH}LEN, NOFILE */
+#include <sys/param.h>    /* for MAX{HOSTNAME,PATH}LEN, NOFILE */
 #include <pwd.h>
-#include <ctype.h>		        /* isspace() declaration */
+#include <ctype.h>                /* isspace() declaration */
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -69,9 +69,9 @@
  */
 
 struct authsvc {
-    char	name[16];	/* service nickname (for command line) */
-    MsgType	msgtype;	/* startup packet header type */
-    int		allowed;	/* initially allowed (before command line
+    char name[16];    /* service nickname (for command line) */
+    MsgType msgtype;    /* startup packet header type */
+    int allowed;    /* initially allowed (before command line
 				 * option parsing)?
 				 */
 };
@@ -88,20 +88,20 @@ struct authsvc {
  */
 static struct authsvc authsvcs[] = {
 #ifdef KRB4
-    { "krb4",     STARTUP_KRB4_MSG, 1 },
-    { "kerberos", STARTUP_KRB4_MSG, 1 },
+        { "krb4",     STARTUP_KRB4_MSG, 1 },
+        { "kerberos", STARTUP_KRB4_MSG, 1 },
 #endif /* KRB4 */
 #ifdef KRB5
-    { "krb5",     STARTUP_KRB5_MSG, 1 },
-    { "kerberos", STARTUP_KRB5_MSG, 1 },
+        { "krb5",     STARTUP_KRB5_MSG, 1 },
+        { "kerberos", STARTUP_KRB5_MSG, 1 },
 #endif /* KRB5 */
-    { UNAUTHNAME, STARTUP_MSG,
+        {UNAUTHNAME, STARTUP_MSG,
 #if defined(KRB4) || defined(KRB5)
-	  0
+                0
 #else /* !(KRB4 || KRB5) */
-	  1
+         1
 #endif /* !(KRB4 || KRB5) */
-    }
+        }
 };
 
 static n_authsvcs = sizeof(authsvcs) / sizeof(struct authsvc);
@@ -129,9 +129,9 @@ static n_authsvcs = sizeof(authsvcs) / sizeof(struct authsvc);
  */
 static int
 pg_krb4_recvauth(int sock,
-		 struct sockaddr_in *laddr,
-		 struct sockaddr_in *raddr,
-		 char *username)
+         struct sockaddr_in *laddr,
+         struct sockaddr_in *raddr,
+         char *username)
 {
     long		krbopts = 0;	/* one-way authentication */
     KTEXT_ST	clttkt;
@@ -143,41 +143,41 @@ pg_krb4_recvauth(int sock,
     
     strcpy(instance, "*");	/* don't care, but arg gets expanded anyway */
     status = krb_recvauth(krbopts,
-			  sock,
-			  &clttkt,
-			  PG_KRB_SRVNAM,
-			  instance,
-			  raddr,
-			  laddr,
-			  &auth_data,
-			  PG_KRB_SRVTAB,
-			  key_sched,
-			  version);
+              sock,
+              &clttkt,
+              PG_KRB_SRVNAM,
+              instance,
+              raddr,
+              laddr,
+              &auth_data,
+              PG_KRB_SRVTAB,
+              key_sched,
+              version);
     if (status != KSUCCESS) {
-	(void) sprintf(PQerrormsg,
-		       "pg_krb4_recvauth: kerberos error: %s\n",
-		       krb_err_txt[status]);
-	fputs(PQerrormsg, stderr);
-	pqdebug("%s", PQerrormsg);
-	return(STATUS_ERROR);
+    (void) sprintf(PQerrormsg,
+               "pg_krb4_recvauth: kerberos error: %s\n",
+               krb_err_txt[status]);
+    fputs(PQerrormsg, stderr);
+    pqdebug("%s", PQerrormsg);
+    return(STATUS_ERROR);
     }
     if (strncmp(version, PG_KRB4_VERSION, KRB_SENDAUTH_VLEN)) {
-	(void) sprintf(PQerrormsg,
-		       "pg_krb4_recvauth: protocol version != \"%s\"\n",
-		       PG_KRB4_VERSION);
-	fputs(PQerrormsg, stderr);
-	pqdebug("%s", PQerrormsg);
-	return(STATUS_ERROR);
+    (void) sprintf(PQerrormsg,
+               "pg_krb4_recvauth: protocol version != \"%s\"\n",
+               PG_KRB4_VERSION);
+    fputs(PQerrormsg, stderr);
+    pqdebug("%s", PQerrormsg);
+    return(STATUS_ERROR);
     }
     if (username && *username &&
-	strncmp(username, auth_data.pname, NAMEDATALEN)) {
-	(void) sprintf(PQerrormsg,
-		       "pg_krb4_recvauth: name \"%s\" != \"%s\"\n",
-		       username,
-		       auth_data.pname);
-	fputs(PQerrormsg, stderr);
-	pqdebug("%s", PQerrormsg);
-	return(STATUS_ERROR);
+    strncmp(username, auth_data.pname, NAMEDATALEN)) {
+    (void) sprintf(PQerrormsg,
+               "pg_krb4_recvauth: name \"%s\" != \"%s\"\n",
+               username,
+               auth_data.pname);
+    fputs(PQerrormsg, stderr);
+    pqdebug("%s", PQerrormsg);
+    return(STATUS_ERROR);
     }
     return(STATUS_OK);
 }
@@ -213,7 +213,7 @@ pg_an_to_ln(char *aname)
     char	*p;
     
     if ((p = strchr(aname, '/')) || (p = strchr(aname, '@')))
-	*p = '\0';
+    *p = '\0';
     return(aname);
 }
 
@@ -245,12 +245,12 @@ pg_an_to_ln(char *aname)
  */
 static int
 pg_krb5_recvauth(int sock,
-		 struct sockaddr_in *laddr,
-		 struct sockaddr_in *raddr,
-		 char *username)
+         struct sockaddr_in *laddr,
+         struct sockaddr_in *raddr,
+         char *username)
 {
     char			servbuf[MAXHOSTNAMELEN + 1 +
-					sizeof(PG_KRB_SRVNAM)];
+                    sizeof(PG_KRB_SRVNAM)];
     char			*hostp, *kusername = (char *) NULL;
     krb5_error_code		code;
     krb5_principal		client, server;
@@ -266,15 +266,15 @@ pg_krb5_recvauth(int sock,
     (void) strcpy(servbuf, PG_KRB_SRVNAM);
     *(hostp = servbuf + (sizeof(PG_KRB_SRVNAM) - 1)) = '/';
     if (gethostname(++hostp, MAXHOSTNAMELEN) < 0)
-	(void) strcpy(hostp, "localhost");
+    (void) strcpy(hostp, "localhost");
     if (hostp = strchr(hostp, '.'))
-	*hostp = '\0';
+    *hostp = '\0';
     if (code = krb5_parse_name(servbuf, &server)) {
-	(void) sprintf(PQerrormsg,
-		       "pg_krb5_recvauth: Kerberos error %d in krb5_parse_name\n",
-		       code);
-	com_err("pg_krb5_recvauth", code, "in krb5_parse_name");
-	return(STATUS_ERROR);
+    (void) sprintf(PQerrormsg,
+               "pg_krb5_recvauth: Kerberos error %d in krb5_parse_name\n",
+               code);
+    com_err("pg_krb5_recvauth", code, "in krb5_parse_name");
+    return(STATUS_ERROR);
     }
     
     /*
@@ -286,28 +286,28 @@ pg_krb5_recvauth(int sock,
     sender_addr.contents = (krb5_octet *) &(raddr->sin_addr);
     
     if (strcmp(PG_KRB_SRVTAB, "")) {
-	keyproc = krb5_kt_read_service_key;
-	keyprocarg = PG_KRB_SRVTAB;
+    keyproc = krb5_kt_read_service_key;
+    keyprocarg = PG_KRB_SRVTAB;
     }
     
     if (code = krb5_recvauth((krb5_pointer) &sock,
-			     PG_KRB5_VERSION,
-			     server,
-			     &sender_addr,
-			     (krb5_pointer) NULL,
-			     keyproc,
-			     keyprocarg,
-			     (char *) NULL,
-			     (krb5_int32 *) NULL,
-			     &client,
-			     (krb5_ticket **) NULL,
-			     (krb5_authenticator **) NULL)) {
-	(void) sprintf(PQerrormsg,
-		       "pg_krb5_recvauth: Kerberos error %d in krb5_recvauth\n",
-		       code);
-	com_err("pg_krb5_recvauth", code, "in krb5_recvauth");
-	krb5_free_principal(server);
-	return(STATUS_ERROR);
+                 PG_KRB5_VERSION,
+                 server,
+                 &sender_addr,
+                 (krb5_pointer) NULL,
+                 keyproc,
+                 keyprocarg,
+                 (char *) NULL,
+                 (krb5_int32 *) NULL,
+                 &client,
+                 (krb5_ticket **) NULL,
+                 (krb5_authenticator **) NULL)) {
+    (void) sprintf(PQerrormsg,
+               "pg_krb5_recvauth: Kerberos error %d in krb5_recvauth\n",
+               code);
+    com_err("pg_krb5_recvauth", code, "in krb5_recvauth");
+    krb5_free_principal(server);
+    return(STATUS_ERROR);
     }
     krb5_free_principal(server);
     
@@ -317,30 +317,30 @@ pg_krb5_recvauth(int sock,
      * postmaster startup packet.
      */
     if ((code = krb5_unparse_name(client, &kusername))) {
-	(void) sprintf(PQerrormsg,
-		       "pg_krb5_recvauth: Kerberos error %d in krb5_unparse_name\n",
-		       code);
-	com_err("pg_krb5_recvauth", code, "in krb5_unparse_name");
-	krb5_free_principal(client);
-	return(STATUS_ERROR);
+    (void) sprintf(PQerrormsg,
+               "pg_krb5_recvauth: Kerberos error %d in krb5_unparse_name\n",
+               code);
+    com_err("pg_krb5_recvauth", code, "in krb5_unparse_name");
+    krb5_free_principal(client);
+    return(STATUS_ERROR);
     }
     krb5_free_principal(client);
     if (!kusername) {
-	(void) sprintf(PQerrormsg,
-		       "pg_krb5_recvauth: could not decode username\n");
-	fputs(PQerrormsg, stderr);
-	pqdebug("%s", PQerrormsg);
-	return(STATUS_ERROR);
+    (void) sprintf(PQerrormsg,
+               "pg_krb5_recvauth: could not decode username\n");
+    fputs(PQerrormsg, stderr);
+    pqdebug("%s", PQerrormsg);
+    return(STATUS_ERROR);
     }
     kusername = pg_an_to_ln(kusername);
     if (username && strncmp(username, kusername, NAMEDATALEN)) {
-	(void) sprintf(PQerrormsg,
-		       "pg_krb5_recvauth: name \"%s\" != \"%s\"\n",
-		       username, kusername);
-	fputs(PQerrormsg, stderr);
-	pqdebug("%s", PQerrormsg);
-	free(kusername);
-	return(STATUS_ERROR);
+    (void) sprintf(PQerrormsg,
+               "pg_krb5_recvauth: name \"%s\" != \"%s\"\n",
+               username, kusername);
+    fputs(PQerrormsg, stderr);
+    pqdebug("%s", PQerrormsg);
+    free(kusername);
+    return(STATUS_ERROR);
     }
     free(kusername);
     return(STATUS_OK);
@@ -373,11 +373,11 @@ pg_krb5_recvauth(int sock,
 
 #define MAX_TOKEN 80                    /* Maximum size of one token in the  *
                                          * configuration file                */
- 
+
 struct conf_line {                      /* Info about config file line */
-  u_long adr, mask;
+    u_long adr, mask;
 };
- 
+
 static int next_token(FILE *, char *, int);
 
 /* hba_recvauth */
@@ -390,8 +390,7 @@ static int next_token(FILE *, char *, int);
  */
 
 static int
-hba_recvauth(struct sockaddr_in *addr, PacketBuf *pbuf, StartupInfo *sp)
-{
+hba_recvauth(struct sockaddr_in *addr, PacketBuf *pbuf, StartupInfo *sp) {
     u_long ip_addr;
     static struct conf_line conf[MAX_LINES];
     static int nconf;
@@ -403,71 +402,65 @@ hba_recvauth(struct sockaddr_in *addr, PacketBuf *pbuf, StartupInfo *sp)
     char *conf_file;
 
     /* put together the full pathname to the config file */
-    conf_file = (char *) malloc((strlen(GetPGData())+strlen(CONF_FILE)+2)*sizeof(char));
+    conf_file = (char *) malloc((strlen(GetPGData()) + strlen(CONF_FILE) + 2) * sizeof(char));
     strcpy(conf_file, GetPGData());
     strcat(conf_file, "/");
     strcat(conf_file, CONF_FILE);
-    
+
 
     /* Open the config file. */
     file = fopen(conf_file, "r");
-    if (file)
-    {
+    if (file) {
         free(conf_file);
-	nconf = 0;
+        nconf = 0;
 
-	/* Grab the "name" */
-	while ((i = next_token(file, buf, sizeof(buf))) != EOF)
-	{
-	    /* If only token on the line, ignore */
-	    if (i == '\n') continue;
-	    
-	    /* Comment -- read until end of line then next line */
-	    if (buf[0] == '#')
-	    {
-	        while (next_token(file, buf, sizeof(buf)) == 0) ;
-	        continue;
-	    }
+        /* Grab the "name" */
+        while ((i = next_token(file, buf, sizeof(buf))) != EOF) {
+            /* If only token on the line, ignore */
+            if (i == '\n') continue;
 
-	    /*
-	     * Check to make sure this says "all" or that it matches
-	     * the database name.
-	     */
-	    
-	    if (strcmp(buf, ALL_NAME) == 0 || (strcmp(buf, sp->database) == 0))
-	    {
-	        /* Get next token, if last on line, ignore */
-	        if (next_token(file, buf, sizeof(buf)) != 0)
-		    continue;
+            /* Comment -- read until end of line then next line */
+            if (buf[0] == '#') {
+                while (next_token(file, buf, sizeof(buf)) == 0);
+                continue;
+            }
 
-		/* Got address */
-		conf[nconf].adr = inet_addr(buf);
-		    
-		/* Get next token (mask) */
-		i = next_token(file, buf, sizeof(buf));
+            /*
+             * Check to make sure this says "all" or that it matches
+             * the database name.
+             */
 
-		/* Only ignore if we got no text at all */
-		if (i != EOF)
-		{
-		    /* Add to list, quit if array is full */
-		    conf[nconf++].mask = inet_addr(buf);
-		    if (nconf == MAX_LINES) break;
-		}
+            if (strcmp(buf, ALL_NAME) == 0 || (strcmp(buf, sp->database) == 0)) {
+                /* Get next token, if last on line, ignore */
+                if (next_token(file, buf, sizeof(buf)) != 0)
+                    continue;
 
-		/* If not at end-of-line, keep reading til we are */
-		while (i == 0)
-		    i = next_token(file, buf, sizeof(buf));
-	    }
-	}
-	fclose(file);
-    }
-    else 
-    {  (void) sprintf(PQerrormsg,
-			   "hba_recvauth: config file does not exist or permissions are not setup correctly!\n");
-	    fputs(PQerrormsg, stderr);
-	    pqdebug("%s", PQerrormsg);
-	free(conf_file);
-        return(STATUS_ERROR); 
+                /* Got address */
+                conf[nconf].adr = inet_addr(buf);
+
+                /* Get next token (mask) */
+                i = next_token(file, buf, sizeof(buf));
+
+                /* Only ignore if we got no text at all */
+                if (i != EOF) {
+                    /* Add to list, quit if array is full */
+                    conf[nconf++].mask = inet_addr(buf);
+                    if (nconf == MAX_LINES) break;
+                }
+
+                /* If not at end-of-line, keep reading til we are */
+                while (i == 0)
+                    i = next_token(file, buf, sizeof(buf));
+            }
+        }
+        fclose(file);
+    } else {
+        (void) sprintf(PQerrormsg,
+                       "hba_recvauth: config file does not exist or permissions are not setup correctly!\n");
+        fputs(PQerrormsg, stderr);
+        pqdebug("%s", PQerrormsg);
+        free(conf_file);
+        return (STATUS_ERROR);
     }
 
 
@@ -481,10 +474,10 @@ hba_recvauth(struct sockaddr_in *addr, PacketBuf *pbuf, StartupInfo *sp)
      * that this address is ok.
      */
     for (i = 0; i < nconf; ++i)
-        if ((ip_addr & ~conf[i].mask) == conf[i].adr) return(STATUS_OK);
-    
+        if ((ip_addr & ~conf[i].mask) == conf[i].adr) return (STATUS_OK);
+
     /* no match, so we can't approve the address */
-    return(STATUS_ERROR);
+    return (STATUS_ERROR);
 }
 
 /*
@@ -494,22 +487,21 @@ hba_recvauth(struct sockaddr_in *addr, PacketBuf *pbuf, StartupInfo *sp)
  * for the value.  If we get EOF before reading a token, return EOF.  In all
  * other cases return 0.
  */
-static int 
-next_token(FILE *fp, char *buf, int bufsz)
-{
+static int
+next_token(FILE *fp, char *buf, int bufsz) {
     int c;
-    char *eb = buf+(bufsz-1);
+    char *eb = buf + (bufsz - 1);
 
     /* Discard inital whitespace */
-    while (isspace(c = getc(fp))) ;
+    while (isspace(c = getc(fp)));
 
     /* EOF seen before any token so return EOF */
     if (c == EOF) return -1;
 
     /* Form a token in buf */
     do {
-	if (buf < eb) *buf++ = c;
-	c = getc(fp);
+        if (buf < eb) *buf++ = c;
+        c = getc(fp);
     } while (!isspace(c) && c != EOF);
     *buf = '\0';
 
@@ -527,89 +519,88 @@ next_token(FILE *fp, char *buf, int bufsz)
  * be_recvauth -- server demux routine for incoming authentication information
  */
 int
-be_recvauth(MsgType msgtype, Port *port, char *username, StartupInfo* sp)
-{
+be_recvauth(MsgType msgtype, Port *port, char *username, StartupInfo *sp) {
     if (!username) {
-	(void) sprintf(PQerrormsg,
-		       "be_recvauth: no user name passed\n");
-	fputs(PQerrormsg, stderr);
-	pqdebug("%s", PQerrormsg);
-	return(STATUS_ERROR);
+        (void) sprintf(PQerrormsg,
+                       "be_recvauth: no user name passed\n");
+        fputs(PQerrormsg, stderr);
+        pqdebug("%s", PQerrormsg);
+        return (STATUS_ERROR);
     }
     if (!port) {
-	(void) sprintf(PQerrormsg,
-		       "be_recvauth: no port structure passed\n");
-	fputs(PQerrormsg, stderr);
-	pqdebug("%s", PQerrormsg);
-	return(STATUS_ERROR);
+        (void) sprintf(PQerrormsg,
+                       "be_recvauth: no port structure passed\n");
+        fputs(PQerrormsg, stderr);
+        pqdebug("%s", PQerrormsg);
+        return (STATUS_ERROR);
     }
-    
+
     switch (msgtype) {
 #ifdef KRB4
-    case STARTUP_KRB4_MSG:
-	if (!be_getauthsvc(msgtype)) {
-	    (void) sprintf(PQerrormsg,
-			   "be_recvauth: krb4 authentication disallowed\n");
-	    fputs(PQerrormsg, stderr);
-	    pqdebug("%s", PQerrormsg);
-	    return(STATUS_ERROR);
-	}
-	if (pg_krb4_recvauth(port->sock, &port->laddr, &port->raddr,
-			     username) != STATUS_OK) {
-	    (void) sprintf(PQerrormsg,
-			   "be_recvauth: krb4 authentication failed\n");
-	    fputs(PQerrormsg, stderr);
-	    pqdebug("%s", PQerrormsg);
-	    return(STATUS_ERROR);
-	}
-	break;
+        case STARTUP_KRB4_MSG:
+        if (!be_getauthsvc(msgtype)) {
+            (void) sprintf(PQerrormsg,
+                   "be_recvauth: krb4 authentication disallowed\n");
+            fputs(PQerrormsg, stderr);
+            pqdebug("%s", PQerrormsg);
+            return(STATUS_ERROR);
+        }
+        if (pg_krb4_recvauth(port->sock, &port->laddr, &port->raddr,
+                     username) != STATUS_OK) {
+            (void) sprintf(PQerrormsg,
+                   "be_recvauth: krb4 authentication failed\n");
+            fputs(PQerrormsg, stderr);
+            pqdebug("%s", PQerrormsg);
+            return(STATUS_ERROR);
+        }
+        break;
 #endif
 #ifdef KRB5
-    case STARTUP_KRB5_MSG:
-	if (!be_getauthsvc(msgtype)) {
-	    (void) sprintf(PQerrormsg,
-			   "be_recvauth: krb5 authentication disallowed\n");
-	    fputs(PQerrormsg, stderr);
-	    pqdebug("%s", PQerrormsg);
-	    return(STATUS_ERROR);
-	}
-	if (pg_krb5_recvauth(port->sock, &port->laddr, &port->raddr,
-			     username) != STATUS_OK) {
-	    (void) sprintf(PQerrormsg,
-			   "be_recvauth: krb5 authentication failed\n");
-	    fputs(PQerrormsg, stderr);
-	    pqdebug("%s", PQerrormsg);
-	    return(STATUS_ERROR);
-	}
-	break;
+        case STARTUP_KRB5_MSG:
+        if (!be_getauthsvc(msgtype)) {
+            (void) sprintf(PQerrormsg,
+                   "be_recvauth: krb5 authentication disallowed\n");
+            fputs(PQerrormsg, stderr);
+            pqdebug("%s", PQerrormsg);
+            return(STATUS_ERROR);
+        }
+        if (pg_krb5_recvauth(port->sock, &port->laddr, &port->raddr,
+                     username) != STATUS_OK) {
+            (void) sprintf(PQerrormsg,
+                   "be_recvauth: krb5 authentication failed\n");
+            fputs(PQerrormsg, stderr);
+            pqdebug("%s", PQerrormsg);
+            return(STATUS_ERROR);
+        }
+        break;
 #endif
-    case STARTUP_MSG:
-	if (!be_getauthsvc(msgtype)) {
-	    (void) sprintf(PQerrormsg,
-			   "be_recvauth: unauthenticated connections disallowed failed\n");
-	    fputs(PQerrormsg, stderr);
-	    pqdebug("%s", PQerrormsg);
-	    return(STATUS_ERROR);
-	}
-	break;
-    case STARTUP_HBA_MSG:
-	if (hba_recvauth(&port->raddr, &port->buf, sp) != STATUS_OK) {
-	    (void) sprintf(PQerrormsg,
-			   "be_recvauth: host-based authentication failed\n");
-	    fputs(PQerrormsg, stderr);
-	    pqdebug("%s", PQerrormsg);
-	    return(STATUS_ERROR);
-	}
-	break;
-    default:
-	(void) sprintf(PQerrormsg,
-		       "be_recvauth: unrecognized message type: %d\n",
-		       msgtype);
-	fputs(PQerrormsg, stderr);
-	pqdebug("%s", PQerrormsg);
-	return(STATUS_ERROR);
+        case STARTUP_MSG:
+            if (!be_getauthsvc(msgtype)) {
+                (void) sprintf(PQerrormsg,
+                               "be_recvauth: unauthenticated connections disallowed failed\n");
+                fputs(PQerrormsg, stderr);
+                pqdebug("%s", PQerrormsg);
+                return (STATUS_ERROR);
+            }
+            break;
+        case STARTUP_HBA_MSG:
+            if (hba_recvauth(&port->raddr, &port->buf, sp) != STATUS_OK) {
+                (void) sprintf(PQerrormsg,
+                               "be_recvauth: host-based authentication failed\n");
+                fputs(PQerrormsg, stderr);
+                pqdebug("%s", PQerrormsg);
+                return (STATUS_ERROR);
+            }
+            break;
+        default:
+            (void) sprintf(PQerrormsg,
+                           "be_recvauth: unrecognized message type: %d\n",
+                           msgtype);
+            fputs(PQerrormsg, stderr);
+            pqdebug("%s", PQerrormsg);
+            return (STATUS_ERROR);
     }
-    return(STATUS_OK);
+    return (STATUS_OK);
 }
 
 /*
@@ -626,43 +617,41 @@ be_recvauth(MsgType msgtype, Port *port, char *username, StartupInfo* sp)
  * disables it.
  */
 void
-be_setauthsvc(char *name)
-{
+be_setauthsvc(char *name) {
     int i, j;
     int turnon = 1;
-    
+
     if (!name)
-	return;
+        return;
     if (!strncmp("no", name, 2)) {
-	turnon = 0;
-	name += 2;
+        turnon = 0;
+        name += 2;
     }
     if (name[0] == '\0')
-	return;
+        return;
     for (i = 0; i < n_authsvcs; ++i)
-	if (!strcmp(name, authsvcs[i].name)) {
-	    for (j = 0; j < n_authsvcs; ++j)
-		if (authsvcs[j].msgtype == authsvcs[i].msgtype)
-		    authsvcs[j].allowed = turnon;
-	    break;
-	}
+        if (!strcmp(name, authsvcs[i].name)) {
+            for (j = 0; j < n_authsvcs; ++j)
+                if (authsvcs[j].msgtype == authsvcs[i].msgtype)
+                    authsvcs[j].allowed = turnon;
+            break;
+        }
     if (i == n_authsvcs) {
-	(void) sprintf(PQerrormsg,
-		       "be_setauthsvc: invalid name %s, ignoring...\n",
-		       name);
-	fputs(PQerrormsg, stderr);
-	pqdebug("%s", PQerrormsg);
+        (void) sprintf(PQerrormsg,
+                       "be_setauthsvc: invalid name %s, ignoring...\n",
+                       name);
+        fputs(PQerrormsg, stderr);
+        pqdebug("%s", PQerrormsg);
     }
     return;
 }
 
 int
-be_getauthsvc(MsgType msgtype)
-{
+be_getauthsvc(MsgType msgtype) {
     int i;
-    
+
     for (i = 0; i < n_authsvcs; ++i)
-	if (msgtype == authsvcs[i].msgtype)
-	    return(authsvcs[i].allowed);
-    return(0);
+        if (msgtype == authsvcs[i].msgtype)
+            return (authsvcs[i].allowed);
+    return (0);
 }

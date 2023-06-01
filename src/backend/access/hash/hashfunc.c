@@ -18,19 +18,16 @@
 #include "postgres.h"
 #include "utils/nabstime.h"
 
-uint32 hashint2(int16 key)
-{
+uint32 hashint2(int16 key) {
     return ((uint32) ~key);
 }
 
-uint32 hashint4(uint32 key)
-{
+uint32 hashint4(uint32 key) {
     return (~key);
 }
 
 /* Hash function from Chris Torek. */
-uint32 hashfloat4(float32 keyp)
-{
+uint32 hashfloat4(float32 keyp) {
     int len;
     int loop;
     uint32 h;
@@ -45,35 +42,34 @@ uint32 hashfloat4(float32 keyp)
 
     h = 0;
     if (len > 0) {
-	loop = (len + 8 - 1) >> 3;
-	
-	switch (len & (8 - 1)) {
-	case 0:
-	    do {	/* All fall throughs */
-		HASH4;
-	    case 7:
-		HASH4;
-	    case 6:
-		HASH4;
-	    case 5:
-		HASH4;
-	    case 4:
-		HASH4;
-	    case 3:
-		HASH4;
-	    case 2:
-		HASH4;
-	    case 1:
-		HASH4;
-	    } while (--loop);
-	}
+        loop = (len + 8 - 1) >> 3;
+
+        switch (len & (8 - 1)) {
+            case 0:
+                do {    /* All fall throughs */
+                    HASH4;
+                    case 7:
+                        HASH4;
+                    case 6:
+                        HASH4;
+                    case 5:
+                        HASH4;
+                    case 4:
+                        HASH4;
+                    case 3:
+                        HASH4;
+                    case 2:
+                        HASH4;
+                    case 1:
+                        HASH4;
+                } while (--loop);
+        }
     }
     return (h);
-}	
+}
 
 
-uint32 hashfloat8(float64 keyp)
-{
+uint32 hashfloat8(float64 keyp) {
     int len;
     int loop;
     uint32 h;
@@ -88,135 +84,128 @@ uint32 hashfloat8(float64 keyp)
 
     h = 0;
     if (len > 0) {
-	loop = (len + 8 - 1) >> 3;
-	
-	switch (len & (8 - 1)) {
-	case 0:
-	    do {	/* All fall throughs */
-		HASH4;
-	    case 7:
-		HASH4;
-	    case 6:
-		HASH4;
-	    case 5:
-		HASH4;
-	    case 4:
-		HASH4;
-	    case 3:
-		HASH4;
-	    case 2:
-		HASH4;
-	    case 1:
-		HASH4;
-	    } while (--loop);
-	}
+        loop = (len + 8 - 1) >> 3;
+
+        switch (len & (8 - 1)) {
+            case 0:
+                do {    /* All fall throughs */
+                    HASH4;
+                    case 7:
+                        HASH4;
+                    case 6:
+                        HASH4;
+                    case 5:
+                        HASH4;
+                    case 4:
+                        HASH4;
+                    case 3:
+                        HASH4;
+                    case 2:
+                        HASH4;
+                    case 1:
+                        HASH4;
+                } while (--loop);
+        }
     }
     return (h);
-}	
+}
 
 
-uint32 hashoid(Oid key)
-{
+uint32 hashoid(Oid key) {
     return ((uint32) ~key);
 }
 
 
-uint32 hashchar(char key)
-{
+uint32 hashchar(char key) {
     int len;
     uint32 h;
 
     len = sizeof(char);
 
-#define PRIME1		37
-#define PRIME2		1048583
+#define PRIME1        37
+#define PRIME2        1048583
 
     h = 0;
     /* Convert char to integer */
     h = h * PRIME1 ^ (key - ' ');
     h %= PRIME2;
-    
+
     return (h);
 }
 
-uint32 hashchar2(uint16 intkey)
-{
+uint32 hashchar2(uint16 intkey) {
     uint32 h;
     int len;
     char *key = (char *) &intkey;
- 
+
     h = 0;
     len = sizeof(uint16);
     /* Convert string to integer */
     while (len--)
-	h = h * PRIME1 ^ (*key++ - ' ');
+        h = h * PRIME1 ^ (*key++ - ' ');
     h %= PRIME2;
-	
+
     return (h);
 }
 
-uint32 hashchar4(uint32 intkey)
-{
+uint32 hashchar4(uint32 intkey) {
     uint32 h;
     int len;
     char *key = (char *) &intkey;
- 
+
     h = 0;
     len = sizeof(uint32);
     /* Convert string to integer */
     while (len--)
-	h = h * PRIME1 ^ (*key++ - ' ');
+        h = h * PRIME1 ^ (*key++ - ' ');
     h %= PRIME2;
-	
+
     return (h);
 }
 
-uint32 hashchar8(char *key)
-{
+uint32 hashchar8(char *key) {
     uint32 h;
     int len;
- 
+
     h = 0;
     len = sizeof(char8);
     /* Convert string to integer */
     while (len--)
-	h = h * PRIME1 ^ (*key++ - ' ');
+        h = h * PRIME1 ^ (*key++ - ' ');
     h %= PRIME2;
-	
+
     return (h);
 }
 
-uint32 hashname(NameData *n)
-{
+uint32 hashname(NameData *n) {
     uint32 h;
     int len;
     char *key;
 
     key = n->data;
- 
+
     h = 0;
     len = NAMEDATALEN;
     /* Convert string to integer */
     while (len--)
-	h = h * PRIME1 ^ (*key++ - ' ');
+        h = h * PRIME1 ^ (*key++ - ' ');
     h %= PRIME2;
-	
+
     return (h);
 }
 
 
-uint32 hashchar16(char *key)
-{
+uint32 hashchar16(char *key) {
     uint32 h;
     int len;
- 
+
     h = 0;
     len = sizeof(char16);
     /* Convert string to integer */
     while (len--)
-	h = h * PRIME1 ^ (*key++ - ' ');
+        h = h * PRIME1 ^ (*key++ - ' ');
     h %= PRIME2;
-	
+
     return (h);
 }
 
@@ -232,8 +221,7 @@ uint32 hashchar16(char *key)
  *
  * "OZ's original sdbm hash"
  */
-uint32 hashtext(struct varlena *key)
-{
+uint32 hashtext(struct varlena *key) {
     int keylen;
     char *keydata;
     uint32 n;
@@ -249,28 +237,28 @@ uint32 hashtext(struct varlena *key)
 
     n = 0;
     if (keylen > 0) {
-	loop = (keylen + 8 - 1) >> 3;
-	
-	switch (keylen & (8 - 1)) {
-	case 0:
-	    do {	/* All fall throughs */
-		HASHC;
-	    case 7:
-		HASHC;
-	    case 6:
-		HASHC;
-	    case 5:
-		HASHC;
-	    case 4:
-		HASHC;
-	    case 3:
-		HASHC;
-	    case 2:
-		HASHC;
-	    case 1:
-		HASHC;
-	    } while (--loop);
-	}
+        loop = (keylen + 8 - 1) >> 3;
+
+        switch (keylen & (8 - 1)) {
+            case 0:
+                do {    /* All fall throughs */
+                    HASHC;
+                    case 7:
+                        HASHC;
+                    case 6:
+                        HASHC;
+                    case 5:
+                        HASHC;
+                    case 4:
+                        HASHC;
+                    case 3:
+                        HASHC;
+                    case 2:
+                        HASHC;
+                    case 1:
+                        HASHC;
+                } while (--loop);
+        }
     }
     return (n);
 }	

@@ -25,12 +25,11 @@
  *    Returns t if node corresponds to a single-noded expression
  */
 bool
-single_node(Node *node)
-{
-    if(IsA(node,Ident) || IsA(node,Const) || IsA(node,Var) || IsA(node,Param)) 
-	return(true);
+single_node(Node *node) {
+    if (IsA(node, Ident) || IsA(node, Const) || IsA(node, Var) || IsA(node, Param))
+        return (true);
     else
-	return(false);
+        return (false);
 }
 
 /*****************************************************************************
@@ -53,22 +52,19 @@ single_node(Node *node)
  *    
  */
 bool
-var_is_outer (Var *var)
-{
-    return((bool)(var->varno == OUTER));
+var_is_outer(Var *var) {
+    return ((bool) (var->varno == OUTER));
 }
 
 bool
-var_is_inner (Var *var)
-{
-    return ( (bool) (var->varno == INNER));
+var_is_inner(Var *var) {
+    return ((bool) (var->varno == INNER));
 }
 
 bool
-var_is_rel (Var *var)
-{
+var_is_rel(Var *var) {
     return (bool)
-	! (var_is_inner (var) ||  var_is_outer (var));
+            !(var_is_inner(var) || var_is_outer(var));
 }
 
 /*****************************************************************************
@@ -85,11 +81,10 @@ var_is_rel (Var *var)
  *    
  */
 Oper *
-replace_opid (Oper *oper)
-{
+replace_opid(Oper *oper) {
     oper->opid = get_opcode(oper->opno);
     oper->op_fcache = NULL;
-    return(oper);
+    return (oper);
 }
 
 /*****************************************************************************
@@ -103,13 +98,12 @@ replace_opid (Oper *oper)
  *    
  */
 bool
-non_null (Expr *c)
-{
-    
-    if ( IsA(c,Const) && ! ((Const*)c)->constisnull )
-	return(true);
+non_null(Expr *c) {
+
+    if (IsA(c, Const) && !((Const *) c)->constisnull)
+        return (true);
     else
-	return(false);
+        return (false);
 }
 
 

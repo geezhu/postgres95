@@ -11,8 +11,8 @@
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>		/* for sprintf() */
-#include <sys/types.h>		/* for u_int in relcache.h */
+#include <stdio.h>        /* for sprintf() */
+#include <sys/types.h>        /* for u_int in relcache.h */
 #include "postgres.h"
 
 #include "utils/rel.h"
@@ -26,8 +26,7 @@
 #include "commands/creatinh.h"
 
 void
-plan_archive(List *rt)
-{
+plan_archive(List *rt) {
     List *rtitem;
     RangeTblEntry *rte;
     TimeRange *trange;
@@ -35,15 +34,15 @@ plan_archive(List *rt)
     Oid reloid;
 
     foreach(rtitem, rt) {
-	rte = lfirst(rtitem);
-	trange = rte->timeRange;
-	if (trange) {
-	    reloid = rte->relid;
-	    r = RelationIdGetRelation(reloid);
-	    if (r->rd_rel->relarch != 'n') {
-		rte->archive = true;
-	    }
-	}
+        rte = lfirst(rtitem);
+        trange = rte->timeRange;
+        if (trange) {
+            reloid = rte->relid;
+            r = RelationIdGetRelation(reloid);
+            if (r->rd_rel->relarch != 'n') {
+                rte->archive = true;
+            }
+        }
     }
 }
 
@@ -53,8 +52,7 @@ plan_archive(List *rt)
  *			 relation's relid.
  */
 List *
-find_archive_rels(Oid relid)
-{
+find_archive_rels(Oid relid) {
     Relation arel;
     char *arelName;
 

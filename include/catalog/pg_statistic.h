@@ -30,13 +30,13 @@
  *	pg_statistic definition.  cpp turns this into
  *	typedef struct FormData_pg_statistic
  * ----------------
- */ 
+ */
 CATALOG(pg_statistic) {
-    Oid 	starelid;
-    int2 	staattnum;
-    Oid 	staop;
-    text 	stalokey;	/* VARIABLE LENGTH FIELD */
-    text 	stahikey;	/* VARIABLE LENGTH FIELD */
+    Oid starelid;
+    int2 staattnum;
+    Oid staop;
+    text stalokey;    /* VARIABLE LENGTH FIELD */
+    text stahikey;    /* VARIABLE LENGTH FIELD */
 } FormData_pg_statistic;
 
 /* ----------------
@@ -44,17 +44,17 @@ CATALOG(pg_statistic) {
  *	the format of pg_statistic relation.
  * ----------------
  */
-typedef FormData_pg_statistic	*Form_pg_statistic;
+typedef FormData_pg_statistic *Form_pg_statistic;
 
 /* ----------------
  *	compiler constants for pg_statistic
  * ----------------
  */
-#define Natts_pg_statistic		5
-#define Anum_pg_statistic_starelid	1
-#define Anum_pg_statistic_staattnum	2
-#define Anum_pg_statistic_staop		3
-#define Anum_pg_statistic_stalokey	4
-#define Anum_pg_statistic_stahikey	5
+#define Natts_pg_statistic        5
+#define Anum_pg_statistic_starelid    1
+#define Anum_pg_statistic_staattnum    2
+#define Anum_pg_statistic_staop        3
+#define Anum_pg_statistic_stalokey    4
+#define Anum_pg_statistic_stahikey    5
 
 #endif /* PG_STATISTIC_H */

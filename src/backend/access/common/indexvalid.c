@@ -15,7 +15,7 @@
 
 #include "executor/execdebug.h"
 #include "access/genam.h"
-#include "access/iqual.h"	/* where the declarations go */
+#include "access/iqual.h"    /* where the declarations go */
 #include "access/itup.h"
 #include "access/skey.h"
 
@@ -28,7 +28,7 @@
  *		  index scan key qualification code
  * ----------------------------------------------------------------
  */
-int	NIndexTupleProcessed;
+int NIndexTupleProcessed;
 
 /* ----------------
  *	index_keytest
@@ -40,45 +40,44 @@ int	NIndexTupleProcessed;
  */
 bool
 index_keytest(IndexTuple tuple,
-	      TupleDesc tupdesc,
-	      int scanKeySize,
-	      ScanKey key)
-{
-    bool	    isNull;
-    Datum	    datum;
-    int		    test;
-    
+              TupleDesc tupdesc,
+              int scanKeySize,
+              ScanKey key) {
+    bool isNull;
+    Datum datum;
+    int test;
+
     IncrIndexProcessed();
-    
+
     while (scanKeySize > 0) {
-	datum = index_getattr(tuple,
-			      1,
-			      tupdesc,
-			      &isNull);
-	
-	if (isNull) {
-	    /* XXX eventually should check if SK_ISNULL */
-	    return (false);
-	}
-	
-	if (key[0].sk_flags & SK_COMMUTE) {
-	    test = (int) (*(key[0].sk_func))
-		(DatumGetPointer(key[0].sk_argument),
-		 datum);
-	} else {
-	    test = (int) (*(key[0].sk_func))
-		(datum,
-		 DatumGetPointer(key[0].sk_argument));
-	}
-	
-	if (!test == !(key[0].sk_flags & SK_NEGATE)) {
-	    return (false);
-	}
-	
-	scanKeySize -= 1;
-	key++;
+        datum = index_getattr(tuple,
+                              1,
+                              tupdesc,
+                              &isNull);
+
+        if (isNull) {
+            /* XXX eventually should check if SK_ISNULL */
+            return (false);
+        }
+
+        if (key[0].sk_flags & SK_COMMUTE) {
+            test = (int) (*(key[0].sk_func))
+                    (DatumGetPointer(key[0].sk_argument),
+                     datum);
+        } else {
+            test = (int) (*(key[0].sk_func))
+                    (datum,
+                     DatumGetPointer(key[0].sk_argument));
+        }
+
+        if (!test == !(key[0].sk_flags & SK_NEGATE)) {
+            return (false);
+        }
+
+        scanKeySize -= 1;
+        key++;
     }
-    
+
     return (true);
 }
 

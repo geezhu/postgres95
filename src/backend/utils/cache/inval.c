@@ -14,11 +14,11 @@
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
-#include "access/heapam.h"	/* XXX to support hacks below */
+#include "access/heapam.h"    /* XXX to support hacks below */
 #include "access/htup.h"
 #include "catalog/catalog.h"
 #include "storage/bufpage.h"
-#include "storage/buf.h"	/* XXX for InvalidBuffer */
+#include "storage/buf.h"    /* XXX for InvalidBuffer */
 #include "storage/ipc.h"
 #include "storage/sinval.h"
 #include "utils/catcache.h"
@@ -26,47 +26,47 @@
 #include "utils/elog.h"
 #include "utils/rel.h"
 #include "utils/relcache.h"
-#include "catalog/catname.h"	/* XXX to support hacks below */
-#include "utils/syscache.h"	/* XXX to support the hacks below */
+#include "catalog/catname.h"    /* XXX to support hacks below */
+#include "utils/syscache.h"    /* XXX to support the hacks below */
 
 /* ----------------
  *	private invalidation structures
  * ----------------
  */
 typedef struct CatalogInvalidationData {
-    Index		cacheId;
-    Index		hashIndex;
-    ItemPointerData	pointerData;
+    Index cacheId;
+    Index hashIndex;
+    ItemPointerData pointerData;
 } CatalogInvalidationData;
 
 typedef struct RelationInvalidationData {
-    Oid	relationId;
-    Oid	objectId;
+    Oid relationId;
+    Oid objectId;
 } RelationInvalidationData;
 
 typedef union AnyInvalidation {
-    CatalogInvalidationData	catalog;
-    RelationInvalidationData	relation;
+    CatalogInvalidationData catalog;
+    RelationInvalidationData relation;
 } AnyInvalidation;
 
 typedef struct InvalidationMessageData {
-    char		kind;
-    AnyInvalidation	any;
+    char kind;
+    AnyInvalidation any;
 } InvalidationMessageData;
 
-typedef InvalidationMessageData	*InvalidationMessage;
+typedef InvalidationMessageData *InvalidationMessage;
 
 /* ----------------
  *	variables and macros
  * ----------------
  */
-static LocalInvalid Invalid = EmptyLocalInvalid;	/* XXX global */
+static LocalInvalid Invalid = EmptyLocalInvalid;    /* XXX global */
 static bool RefreshWhenInvalidate = false;
 
 Oid MyRelationRelationId = InvalidOid;
 Oid MyAttributeRelationId = InvalidOid;
-Oid MyAMRelationId = 	InvalidOid;
-Oid MyAMOPRelationId = 	InvalidOid;
+Oid MyAMRelationId = InvalidOid;
+Oid MyAMOPRelationId = InvalidOid;
 
 #define ValidateHacks() \
     if (!OidIsValid(MyRelationRelationId)) getmyrelids()
@@ -82,11 +82,10 @@ Oid MyAMOPRelationId = 	InvalidOid;
  * --------------------------------
  */
 InvalidationEntry
-InvalidationEntryAllocate(uint16 size)
-{
-    InvalidationEntryData	*entryDataP;
+InvalidationEntryAllocate(uint16 size) {
+    InvalidationEntryData *entryDataP;
     entryDataP = (InvalidationEntryData *)
-	malloc(sizeof (char *) + size);	/* XXX alignment */
+            malloc(sizeof(char *) + size);    /* XXX alignment */
     entryDataP->nextP = NULL;
     return ((Pointer) &entryDataP->userData);
 }
@@ -98,13 +97,12 @@ InvalidationEntryAllocate(uint16 size)
  */
 LocalInvalid
 LocalInvalidRegister(LocalInvalid invalid,
-		     InvalidationEntry entry)
-{
+                     InvalidationEntry entry) {
     Assert(PointerIsValid(entry));
-    
-    ((InvalidationUserData *)entry)->dataP[-1] =
-	(InvalidationUserData *)invalid;
-    
+
+    ((InvalidationUserData *) entry)->dataP[-1] =
+            (InvalidationUserData *) invalid;
+
     return (entry);
 }
 
@@ -115,24 +113,23 @@ LocalInvalidRegister(LocalInvalid invalid,
  * --------------------------------
  */
 void
-LocalInvalidInvalidate(LocalInvalid invalid, void (*function)())
-{
-    InvalidationEntryData	*entryDataP;
-    
+LocalInvalidInvalidate(LocalInvalid invalid, void (*function)()) {
+    InvalidationEntryData *entryDataP;
+
     while (PointerIsValid(invalid)) {
-	entryDataP = (InvalidationEntryData *)
-	    &((InvalidationUserData *)invalid)->dataP[-1];
-	
-	if (PointerIsValid(function)) {
-	    (*function)((Pointer) &entryDataP->userData);
-	}
-	
-	invalid = (Pointer) entryDataP->nextP;
-	
-	/* help catch errors */
-	entryDataP->nextP = (InvalidationUserData *) NULL;
-	
-	free((Pointer)entryDataP);
+        entryDataP = (InvalidationEntryData *)
+                &((InvalidationUserData *) invalid)->dataP[-1];
+
+        if (PointerIsValid(function)) {
+            (*function)((Pointer) &entryDataP->userData);
+        }
+
+        invalid = (Pointer) entryDataP->nextP;
+
+        /* help catch errors */
+        entryDataP->nextP = (InvalidationUserData *) NULL;
+
+        free((Pointer) entryDataP);
     }
 }
 
@@ -144,47 +141,46 @@ LocalInvalidInvalidate(LocalInvalid invalid, void (*function)())
  *	CacheIdRegisterLocalInvalid
  * --------------------------------
  */
-#ifdef	INVALIDDEBUG
+#ifdef    INVALIDDEBUG
 #define CacheIdRegisterLocalInvalid_DEBUG1 \
 elog(DEBUG, "CacheIdRegisterLocalInvalid(%d, %d, [%d, %d])", \
      cacheId, hashIndex, ItemPointerGetBlockNumber(pointer), \
      ItemPointerGetOffsetNumber(pointer))
 #else
 #define CacheIdRegisterLocalInvalid_DEBUG1
-#endif	/* INVALIDDEBUG */
-    
+#endif    /* INVALIDDEBUG */
+
 static void
 CacheIdRegisterLocalInvalid(Index cacheId,
-			    Index hashIndex,
-			    ItemPointer pointer)
-{
-    InvalidationMessage	message;
-    
+                            Index hashIndex,
+                            ItemPointer pointer) {
+    InvalidationMessage message;
+
     /* ----------------
      *	debugging stuff
      * ----------------
      */
     CacheIdRegisterLocalInvalid_DEBUG1;
-    
+
     /* ----------------
      *	create a message describing the system catalog tuple
      *  we wish to invalidate.
      * ----------------
      */
     message = (InvalidationMessage)
-	InvalidationEntryAllocate(sizeof (InvalidationMessageData));
-    
+            InvalidationEntryAllocate(sizeof(InvalidationMessageData));
+
     message->kind = 'c';
     message->any.catalog.cacheId = cacheId;
     message->any.catalog.hashIndex = hashIndex;
-    
+
     ItemPointerCopy(pointer, &message->any.catalog.pointerData);
-    
+
     /* ----------------
      *	Note: Invalid is a global variable
      * ----------------
      */
-    Invalid = LocalInvalidRegister(Invalid, (InvalidationEntry)message);
+    Invalid = LocalInvalidRegister(Invalid, (InvalidationEntry) message);
 }
 
 /* --------------------------------
@@ -192,36 +188,35 @@ CacheIdRegisterLocalInvalid(Index cacheId,
  * --------------------------------
  */
 static void
-RelationIdRegisterLocalInvalid(Oid relationId, Oid objectId)
-{
-    InvalidationMessage	message;
-    
+RelationIdRegisterLocalInvalid(Oid relationId, Oid objectId) {
+    InvalidationMessage message;
+
     /* ----------------
      *	debugging stuff
      * ----------------
      */
-#ifdef	INVALIDDEBUG
+#ifdef    INVALIDDEBUG
     elog(DEBUG, "RelationRegisterLocalInvalid(%d, %d)", relationId,
-	 objectId);
-#endif	/* defined(INVALIDDEBUG) */
-    
+     objectId);
+#endif    /* defined(INVALIDDEBUG) */
+
     /* ----------------
      *	create a message describing the relation descriptor
      *  we wish to invalidate.
      * ----------------
      */
     message = (InvalidationMessage)
-	InvalidationEntryAllocate(sizeof (InvalidationMessageData));
-    
+            InvalidationEntryAllocate(sizeof(InvalidationMessageData));
+
     message->kind = 'r';
     message->any.relation.relationId = relationId;
     message->any.relation.objectId = objectId;
-    
+
     /* ----------------
      *	Note: Invalid is a global variable
      * ----------------
      */
-    Invalid = LocalInvalidRegister(Invalid, (InvalidationEntry)message);
+    Invalid = LocalInvalidRegister(Invalid, (InvalidationEntry) message);
 }
 
 /* --------------------------------
@@ -229,31 +224,30 @@ RelationIdRegisterLocalInvalid(Oid relationId, Oid objectId)
  * --------------------------------
  */
 void
-getmyrelids()
-{
-    HeapTuple	tuple;
-    
+getmyrelids() {
+    HeapTuple tuple;
+
     tuple = SearchSysCacheTuple(RELNAME,
-				PointerGetDatum(RelationRelationName),
-				0,0,0);
+                                PointerGetDatum(RelationRelationName),
+                                0, 0, 0);
     Assert(HeapTupleIsValid(tuple));
     MyRelationRelationId = tuple->t_oid;
-    
+
     tuple = SearchSysCacheTuple(RELNAME,
-				PointerGetDatum(AttributeRelationName),
-				0,0,0);
+                                PointerGetDatum(AttributeRelationName),
+                                0, 0, 0);
     Assert(HeapTupleIsValid(tuple));
     MyAttributeRelationId = tuple->t_oid;
-    
+
     tuple = SearchSysCacheTuple(RELNAME,
-				PointerGetDatum(AccessMethodRelationName),
-				0,0,0);
+                                PointerGetDatum(AccessMethodRelationName),
+                                0, 0, 0);
     Assert(HeapTupleIsValid(tuple));
     MyAMRelationId = tuple->t_oid;
-    
+
     tuple = SearchSysCacheTuple(RELNAME,
-				PointerGetDatum(AccessMethodOperatorRelationName),
-				0,0,0);
+                                PointerGetDatum(AccessMethodOperatorRelationName),
+                                0, 0, 0);
     Assert(HeapTupleIsValid(tuple));
     MyAMOPRelationId = tuple->t_oid;
 }
@@ -266,33 +260,32 @@ getmyrelids()
  *	take your chances...
  * --------------------------------
  */
-#ifdef	INVALIDDEBUG
+#ifdef    INVALIDDEBUG
 #define CacheIdInvalidate_DEBUG1 \
 elog(DEBUG, "CacheIdInvalidate(%d, %d, 0x%x[%d])", cacheId, hashIndex,\
      pointer, ItemPointerIsValid(pointer))
 #else
 #define CacheIdInvalidate_DEBUG1
-#endif	/* defined(INVALIDDEBUG) */
-     
+#endif    /* defined(INVALIDDEBUG) */
+
 static void
 CacheIdInvalidate(Index cacheId,
-		  Index hashIndex,
-		  ItemPointer pointer)
-{
+                  Index hashIndex,
+                  ItemPointer pointer) {
     /* ----------------
      *	assume that if the item pointer is valid, then we are
      *  invalidating an item in the specified system catalog cache.
      * ----------------
      */
     if (ItemPointerIsValid(pointer)) {
-	CatalogCacheIdInvalidate(cacheId, hashIndex, pointer);
-	return;
+        CatalogCacheIdInvalidate(cacheId, hashIndex, pointer);
+        return;
     }
-    
+
     CacheIdInvalidate_DEBUG1;
-    
-    ValidateHacks();	/* XXX */
-    
+
+    ValidateHacks();    /* XXX */
+
     /* ----------------
      *	if the cacheId is the oid of any of the tuples in the
      *  following system relations, then assume we are invalidating
@@ -300,25 +293,25 @@ CacheIdInvalidate(Index cacheId,
      * ----------------
      */
     if (cacheId == MyRelationRelationId) {
-	RelationIdInvalidateRelationCacheByRelationId(hashIndex);
-	return;
+        RelationIdInvalidateRelationCacheByRelationId(hashIndex);
+        return;
     }
-    
+
     if (cacheId == MyAttributeRelationId) {
-	RelationIdInvalidateRelationCacheByRelationId(hashIndex);
-	return;
+        RelationIdInvalidateRelationCacheByRelationId(hashIndex);
+        return;
     }
-    
+
     if (cacheId == MyAMRelationId) {
-	RelationIdInvalidateRelationCacheByAccessMethodId(hashIndex);
-	return;
+        RelationIdInvalidateRelationCacheByAccessMethodId(hashIndex);
+        return;
     }
-    
+
     if (cacheId == MyAMOPRelationId) {
-	RelationIdInvalidateRelationCacheByAccessMethodId(InvalidOid);
-	return;
+        RelationIdInvalidateRelationCacheByAccessMethodId(InvalidOid);
+        return;
     }
-    
+
     /* ----------------
      *	Yow! the caller asked us to invalidate something else.
      * ----------------
@@ -334,17 +327,16 @@ CacheIdInvalidate(Index cacheId,
  * --------------------------------
  */
 static void
-ResetSystemCaches()
-{
+ResetSystemCaches() {
     ResetSystemCache();
-    RelationCacheInvalidate(false); 
+    RelationCacheInvalidate(false);
 }
 
 /* --------------------------------
  *	InvalidationMessageRegisterSharedInvalid
  * --------------------------------
  */
-#ifdef	INVALIDDEBUG
+#ifdef    INVALIDDEBUG
 #define InvalidationMessageRegisterSharedInvalid_DEBUG1 \
 elog(DEBUG,\
      "InvalidationMessageRegisterSharedInvalid(c, %d, %d, [%d, %d])",\
@@ -354,40 +346,39 @@ elog(DEBUG,\
      ItemPointerGetOffsetNumber(&message->any.catalog.pointerData))
 #define InvalidationMessageRegisterSharedInvalid_DEBUG2 \
      elog(DEBUG, \
-	  "InvalidationMessageRegisterSharedInvalid(r, %d, %d)", \
-	  message->any.relation.relationId, \
-	  message->any.relation.objectId)
-#else    
+      "InvalidationMessageRegisterSharedInvalid(r, %d, %d)", \
+      message->any.relation.relationId, \
+      message->any.relation.objectId)
+#else
 #define InvalidationMessageRegisterSharedInvalid_DEBUG1
 #define InvalidationMessageRegisterSharedInvalid_DEBUG2
 #endif /* INVALIDDEBUG */
-     
+
 static void
-InvalidationMessageRegisterSharedInvalid(InvalidationMessage message)
-{
+InvalidationMessageRegisterSharedInvalid(InvalidationMessage message) {
     Assert(PointerIsValid(message));
-    
+
     switch (message->kind) {
-    case 'c':	/* cached system catalog tuple */
-	InvalidationMessageRegisterSharedInvalid_DEBUG1;
-	
-	RegisterSharedInvalid(message->any.catalog.cacheId,
-			      message->any.catalog.hashIndex,
-			      &message->any.catalog.pointerData);
-	break;
-	
-    case 'r':   /* cached relation descriptor */
-	InvalidationMessageRegisterSharedInvalid_DEBUG2;
-	
-	RegisterSharedInvalid(message->any.relation.relationId,
-			      message->any.relation.objectId,
-			      (ItemPointer) NULL);
-	break;
-	
-    default:
-	elog(FATAL,
-	     "InvalidationMessageRegisterSharedInvalid: `%c' kind",
-	     message->kind);
+        case 'c':    /* cached system catalog tuple */
+            InvalidationMessageRegisterSharedInvalid_DEBUG1;
+
+            RegisterSharedInvalid(message->any.catalog.cacheId,
+                                  message->any.catalog.hashIndex,
+                                  &message->any.catalog.pointerData);
+            break;
+
+        case 'r':   /* cached relation descriptor */
+            InvalidationMessageRegisterSharedInvalid_DEBUG2;
+
+            RegisterSharedInvalid(message->any.relation.relationId,
+                                  message->any.relation.objectId,
+                                  (ItemPointer) NULL);
+            break;
+
+        default:
+            elog(FATAL,
+                 "InvalidationMessageRegisterSharedInvalid: `%c' kind",
+                 message->kind);
     }
 }
 
@@ -395,7 +386,7 @@ InvalidationMessageRegisterSharedInvalid(InvalidationMessage message)
  *	InvalidationMessageCacheInvalidate
  * --------------------------------
  */
-#ifdef	INVALIDDEBUG
+#ifdef    INVALIDDEBUG
 #define InvalidationMessageCacheInvalidate_DEBUG1 \
 elog(DEBUG, "InvalidationMessageCacheInvalidate(c, %d, %d, [%d, %d])",\
      message->any.catalog.cacheId,\
@@ -404,36 +395,35 @@ elog(DEBUG, "InvalidationMessageCacheInvalidate(c, %d, %d, [%d, %d])",\
      ItemPointerGetOffsetNumber(&message->any.catalog.pointerData))
 #define InvalidationMessageCacheInvalidate_DEBUG2 \
      elog(DEBUG, "InvalidationMessageCacheInvalidate(r, %d, %d)", \
-	  message->any.relation.relationId, \
-	  message->any.relation.objectId)
+      message->any.relation.relationId, \
+      message->any.relation.objectId)
 #else
 #define InvalidationMessageCacheInvalidate_DEBUG1
 #define InvalidationMessageCacheInvalidate_DEBUG2
-#endif	/* defined(INVALIDDEBUG) */
-     
+#endif    /* defined(INVALIDDEBUG) */
+
 static void
-InvalidationMessageCacheInvalidate(InvalidationMessage message)
-{
+InvalidationMessageCacheInvalidate(InvalidationMessage message) {
     Assert(PointerIsValid(message));
-    
+
     switch (message->kind) {
-    case 'c':  /* cached system catalog tuple */
-	InvalidationMessageCacheInvalidate_DEBUG1;
-	
-	CatalogCacheIdInvalidate(message->any.catalog.cacheId,
-				 message->any.catalog.hashIndex,
-				 &message->any.catalog.pointerData);
-	break;
-	
-    case 'r':  /* cached relation descriptor */
-	InvalidationMessageCacheInvalidate_DEBUG2;
-	
-	/* XXX ignore this--is this correct ??? */
-	break;
-	
-    default:
-	elog(FATAL, "InvalidationMessageCacheInvalidate: `%c' kind",
-	     message->kind);
+        case 'c':  /* cached system catalog tuple */
+            InvalidationMessageCacheInvalidate_DEBUG1;
+
+            CatalogCacheIdInvalidate(message->any.catalog.cacheId,
+                                     message->any.catalog.hashIndex,
+                                     &message->any.catalog.pointerData);
+            break;
+
+        case 'r':  /* cached relation descriptor */
+            InvalidationMessageCacheInvalidate_DEBUG2;
+
+            /* XXX ignore this--is this correct ??? */
+            break;
+
+        default:
+            elog(FATAL, "InvalidationMessageCacheInvalidate: `%c' kind",
+                 message->kind);
     }
 }
 
@@ -443,40 +433,38 @@ InvalidationMessageCacheInvalidate(InvalidationMessage message)
  */
 static void
 RelationInvalidateRelationCache(Relation relation,
-				HeapTuple tuple,
-				void (*function)())
-{
-    Oid	relationId;
-    Oid	objectId;
-    
+                                HeapTuple tuple,
+                                void (*function)()) {
+    Oid relationId;
+    Oid objectId;
+
     /* ----------------
      *	get the relation object id
      * ----------------
      */
-    ValidateHacks();	/* XXX */
+    ValidateHacks();    /* XXX */
     relationId = RelationGetRelationId(relation);
-    
+
     /* ----------------
      *	
      * ----------------
      */
     if (relationId == MyRelationRelationId) {
-	objectId = tuple->t_oid;
+        objectId = tuple->t_oid;
     } else if (relationId == MyAttributeRelationId) {
-	objectId = ((AttributeTupleForm)GETSTRUCT(tuple))->attrelid;
+        objectId = ((AttributeTupleForm) GETSTRUCT(tuple))->attrelid;
     } else if (relationId == MyAMRelationId) {
-	objectId = tuple->t_oid;
-    } else if (relationId == MyAMOPRelationId) {
-	; /* objectId is unused */
-    } else 
-	return;
-    
+        objectId = tuple->t_oid;
+    } else if (relationId == MyAMOPRelationId) { ; /* objectId is unused */
+    } else
+        return;
+
     /* ----------------
      *	  can't handle immediate relation descriptor invalidation
      * ----------------
      */
     Assert(PointerIsValid(function));
-    
+
     (*function)(relationId, objectId);
 }
 
@@ -490,16 +478,15 @@ RelationInvalidateRelationCache(Relation relation,
  *	when other backends are active.
  */
 void
-DiscardInvalid()
-{
+DiscardInvalid() {
     /* ----------------
      *	debugging stuff
      * ----------------
      */
-#ifdef	INVALIDDEBUG
+#ifdef    INVALIDDEBUG
     elog(DEBUG, "DiscardInvalid called");
-#endif	/* defined(INVALIDDEBUG) */
-    
+#endif    /* defined(INVALIDDEBUG) */
+
     InvalidateSharedInvalid(CacheIdInvalidate, ResetSystemCaches);
 }
 
@@ -511,27 +498,26 @@ DiscardInvalid()
  *	This should be called as the last step in processing a transaction.
  */
 void
-RegisterInvalid(bool send)
-{
+RegisterInvalid(bool send) {
     /* ----------------
      *	debugging stuff
      * ----------------
      */
-#ifdef	INVALIDDEBUG
+#ifdef    INVALIDDEBUG
     elog(DEBUG, "RegisterInvalid(%d) called", send);
-#endif	/* defined(INVALIDDEBUG) */
-    
+#endif    /* defined(INVALIDDEBUG) */
+
     /* ----------------
      *	Note: Invalid is a global variable
      * ----------------
      */
     if (send)
-	LocalInvalidInvalidate(Invalid,
-			       InvalidationMessageRegisterSharedInvalid);
+        LocalInvalidInvalidate(Invalid,
+                               InvalidationMessageRegisterSharedInvalid);
     else
-	LocalInvalidInvalidate(Invalid,
-			       InvalidationMessageCacheInvalidate);
-    
+        LocalInvalidInvalidate(Invalid,
+                               InvalidationMessageCacheInvalidate);
+
     Invalid = EmptyLocalInvalid;
 }
 
@@ -540,12 +526,11 @@ RegisterInvalid(bool send)
  *	Causes the local caches to be immediately refreshed iff true.
  */
 void
-SetRefreshWhenInvalidate(bool on)
-{
-#ifdef	INVALIDDEBUG
+SetRefreshWhenInvalidate(bool on) {
+#ifdef    INVALIDDEBUG
     elog(DEBUG, "RefreshWhenInvalidate(%d) called", on);
-#endif	/* defined(INVALIDDEBUG) */
-    
+#endif    /* defined(INVALIDDEBUG) */
+
     RefreshWhenInvalidate = on;
 }
 
@@ -557,7 +542,7 @@ SetRefreshWhenInvalidate(bool on)
  *	Assumes object id is valid.
  *	Assumes tuple is valid.
  */
-#ifdef	INVALIDDEBUG
+#ifdef    INVALIDDEBUG
 #define RelationInvalidateHeapTuple_DEBUG1 \
 elog(DEBUG, "RelationInvalidateHeapTuple(%.16s, [%d,%d])", \
      RelationGetRelationName(relation), \
@@ -565,48 +550,47 @@ elog(DEBUG, "RelationInvalidateHeapTuple(%.16s, [%d,%d])", \
      ItemPointerGetOffsetNumber(&tuple->t_ctid))
 #else
 #define RelationInvalidateHeapTuple_DEBUG1
-#endif	/* defined(INVALIDDEBUG) */
-     
+#endif    /* defined(INVALIDDEBUG) */
+
 void
-RelationInvalidateHeapTuple(Relation relation, HeapTuple tuple)
-{
+RelationInvalidateHeapTuple(Relation relation, HeapTuple tuple) {
     /* ----------------
      *	sanity checks
      * ----------------
      */
     Assert(RelationIsValid(relation));
     Assert(HeapTupleIsValid(tuple));
-    
+
     if (IsBootstrapProcessingMode())
-	return;
+        return;
     /* ----------------
      *	this only works for system relations now
      * ----------------
      */
-    if (! IsSystemRelationName(RelationGetRelationTupleForm(relation)->relname.data))
-	return;
-    
+    if (!IsSystemRelationName(RelationGetRelationTupleForm(relation)->relname.data))
+        return;
+
     /* ----------------
      *	debugging stuff
      * ----------------
      */
     RelationInvalidateHeapTuple_DEBUG1;
-    
+
     /* ----------------
      *	
      * ----------------
      */
     RelationInvalidateCatalogCacheTuple(relation,
-					tuple,
-					CacheIdRegisterLocalInvalid);
-    
+                                        tuple,
+                                        CacheIdRegisterLocalInvalid);
+
     RelationInvalidateRelationCache(relation,
-				    tuple,
-				    RelationIdRegisterLocalInvalid);
-    
+                                    tuple,
+                                    RelationIdRegisterLocalInvalid);
+
     if (RefreshWhenInvalidate)
-	RelationInvalidateCatalogCacheTuple(relation,
-					    tuple,
-					    (void (*)()) NULL);
+        RelationInvalidateCatalogCacheTuple(relation,
+                                            tuple,
+                                            (void (*)()) NULL);
 }
 

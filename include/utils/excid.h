@@ -10,11 +10,11 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	EXCID_H
+#ifndef    EXCID_H
 #define EXCID_H
 
 #include "c.h"
-#include "utils/exc.h"	/* for Exception */
+#include "utils/exc.h"    /* for Exception */
 
 extern Exception FailedAssertion;
 extern Exception BadState;
@@ -23,9 +23,9 @@ extern Exception BadAllocSize;
 extern Exception ExhaustedMemory;
 extern Exception Unimplemented;
 
-extern Exception CatalogFailure;	/* XXX inconsistent naming style */
-extern Exception InternalError;		/* XXX inconsistent naming style */
-extern Exception SemanticError;		/* XXX inconsistent naming style */
-extern Exception SystemError;		/* XXX inconsistent naming style */
+extern Exception CatalogFailure;    /* XXX inconsistent naming style */
+extern Exception InternalError;        /* XXX inconsistent naming style */
+extern Exception SemanticError;        /* XXX inconsistent naming style */
+extern Exception SystemError;        /* XXX inconsistent naming style */
 
-#endif	/* EXCID_H */
+#endif    /* EXCID_H */

@@ -10,17 +10,17 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	PAGENUM_H
+#ifndef    PAGENUM_H
 #define PAGENUM_H
 
 #include "c.h"
 #include "storage/page.h"
 
-typedef uint16	PageNumber;
+typedef uint16 PageNumber;
 
-typedef uint32	LogicalPageNumber;
+typedef uint32 LogicalPageNumber;
 
-#define InvalidLogicalPageNumber	0
+#define InvalidLogicalPageNumber    0
 
 /*
  * LogicalPageNumberIsValid --
@@ -30,4 +30,4 @@ typedef uint32	LogicalPageNumber;
     ((bool)((pageNumber) != InvalidLogicalPageNumber))
 
 
-#endif	/* PAGENUM_H */
+#endif    /* PAGENUM_H */

@@ -34,18 +34,22 @@
  *	the postgres backend.
  *
  */
-#include "libpq/pqsignal.h"	/* substitute for <signal.h> */
+#include "libpq/pqsignal.h"    /* substitute for <signal.h> */
 #include <stdio.h>
 #include <string.h>
+
 #ifndef WIN32
-#include <unistd.h>		/* for ttyname() */
+
+#include <unistd.h>        /* for ttyname() */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <netinet/in.h>
+
 #else
 #include <winsock.h>
 #endif /* WIN32 */
+
 #include <errno.h>
 #include <fcntl.h>
 
@@ -57,7 +61,7 @@
 
 #include "c.h"
 #include "libpq/auth.h"
-#include "libpq/libpq.h"	/* where the declarations go */
+#include "libpq/libpq.h"    /* where the declarations go */
 #include "libpq/pqcomm.h"
 #include "utils/elog.h"
 
@@ -66,16 +70,15 @@
  * ----------------
  */
 FILE *Pfout, *Pfin;
-FILE *Pfdebug;	  /* debugging libpq */
-int PQAsyncNotifyWaiting;	/* for async. notification */
+FILE *Pfdebug;      /* debugging libpq */
+int PQAsyncNotifyWaiting;    /* for async. notification */
 
 /* --------------------------------
  *	pq_init - open portal file descriptors
  * --------------------------------
  */
 void
-pq_init(int fd)
-{
+pq_init(int fd) {
 #ifdef WIN32
     int in, out;
 
@@ -88,12 +91,12 @@ pq_init(int fd)
     Pfout = fdopen(dup(fd), "w");
 #endif /* WIN32 */
     if (!Pfin || !Pfout)
-	elog(FATAL, "pq_init: Couldn't initialize socket connection");
+        elog(FATAL, "pq_init: Couldn't initialize socket connection");
     PQnotifies_init();
     if (getenv("LIBPQ_DEBUG")) {
-	Pfdebug = stderr;
-    }else {
-	Pfdebug = NULL;
+        Pfdebug = stderr;
+    } else {
+        Pfdebug = NULL;
     }
 }
 
@@ -107,14 +110,13 @@ pq_init(int fd)
  *   used for debugging libpq
  */
 static int
-pq_getc(FILE* fin)
-{
-  int c;
+pq_getc(FILE *fin) {
+    int c;
 
-  c = getc(fin);
-  if (Pfdebug && c != EOF)
-    putc(c,Pfdebug);
-  return c;
+    c = getc(fin);
+    if (Pfdebug && c != EOF)
+        putc(c, Pfdebug);
+    return c;
 }
 
 /* --------------------------------
@@ -122,8 +124,7 @@ pq_getc(FILE* fin)
  * --------------------------------
  */
 void
-pq_gettty(char *tp)
-{	
+pq_gettty(char *tp) {
     (void) strncpy(tp, ttyname(0), 19);
 }
 
@@ -132,13 +133,12 @@ pq_gettty(char *tp)
  * --------------------------------
  */
 int
-pq_getport()
-{
+pq_getport() {
     char *envport = getenv("PGPORT");
-    
+
     if (envport)
-	    return(atoi(envport));
-    return(atoi(POSTPORT));
+        return (atoi(envport));
+    return (atoi(POSTPORT));
 }
 
 /* --------------------------------
@@ -146,15 +146,14 @@ pq_getport()
  * --------------------------------
  */
 void
-pq_close()
-{
+pq_close() {
     if (Pfin) {
-	fclose(Pfin);
-	Pfin = NULL;
+        fclose(Pfin);
+        Pfin = NULL;
     }
     if (Pfout) {
-	fclose(Pfout);
-	Pfout = NULL;
+        fclose(Pfout);
+        Pfout = NULL;
     }
     PQAsyncNotifyWaiting = 0;
     PQnotifies_init();
@@ -166,10 +165,9 @@ pq_close()
  * --------------------------------
  */
 void
-pq_flush()
-{
+pq_flush() {
     if (Pfout)
-	fflush(Pfout);
+        fflush(Pfout);
 }
 
 /* --------------------------------
@@ -177,19 +175,18 @@ pq_flush()
  * --------------------------------
  */
 int
-pq_getstr(char *s, int maxlen)
-{
-    int	c;
-    
+pq_getstr(char *s, int maxlen) {
+    int c;
+
     if (Pfin == (FILE *) NULL) {
 /*	elog(DEBUG, "Input descriptor is null"); */
-	return(EOF);
+        return (EOF);
     }
-    
+
     while (maxlen-- && (c = pq_getc(Pfin)) != EOF && c)
-	*s++ = c;
+        *s++ = c;
     *s = '\0';
-    
+
     /* -----------------
      *     If EOF reached let caller know.
      *     (This will only happen if we hit EOF before the string
@@ -197,8 +194,8 @@ pq_getstr(char *s, int maxlen)
      * -----------------
      */
     if (c == EOF)
-	return(EOF);
-    return(!EOF);
+        return (EOF);
+    return (!EOF);
 }
 
 /*
@@ -219,24 +216,23 @@ pq_getstr(char *s, int maxlen)
  *	1 in other cases
  */
 int
-PQgetline(char *s, int maxlen)
-{
+PQgetline(char *s, int maxlen) {
     int c = '\0';
-    
+
     if (!Pfin || !s || maxlen <= 1)
-	return(EOF);
-    
+        return (EOF);
+
     for (; maxlen > 1 && (c = pq_getc(Pfin)) != '\n' && c != EOF; --maxlen) {
-	*s++ = c;
+        *s++ = c;
     }
     *s = '\0';
-    
+
     if (c == EOF) {
-	return(EOF);		/* error -- reached EOF before \n */
+        return (EOF);        /* error -- reached EOF before \n */
     } else if (c == '\n') {
-	return(0);		/* done with this line */
+        return (0);        /* done with this line */
     }
-    return(1);			/* returning a full buffer */
+    return (1);            /* returning a full buffer */
 }
 
 /*
@@ -248,13 +244,12 @@ PQgetline(char *s, int maxlen)
  *	0 in all cases.
  */
 int
-PQputline(char *s)
-{
+PQputline(char *s) {
     if (Pfout) {
-	(void) fputs(s, Pfout);
-	fflush(Pfout);
+        (void) fputs(s, Pfout);
+        fflush(Pfout);
     }
-    return(0);
+    return (0);
 }
 
 /* --------------------------------
@@ -262,26 +257,25 @@ PQputline(char *s)
  * --------------------------------
  */
 int
-pq_getnchar(char *s, int off, int maxlen)
-{
-    int	c;
-    
+pq_getnchar(char *s, int off, int maxlen) {
+    int c;
+
     if (Pfin == (FILE *) NULL) {
 /*	elog(DEBUG, "Input descriptor is null"); */
-	return(EOF);
+        return (EOF);
     }
-    
+
     s += off;
     while (maxlen-- && (c = pq_getc(Pfin)) != EOF)
-	*s++ = c;
-    
+        *s++ = c;
+
     /* -----------------
      *     If EOF reached let caller know
      * -----------------
      */
     if (c == EOF)
-	return(EOF);
-    return(!EOF);
+        return (EOF);
+    return (!EOF);
 }
 
 /* --------------------------------
@@ -292,22 +286,21 @@ pq_getnchar(char *s, int off, int maxlen)
  * --------------------------------
  */
 int
-pq_getint(int b)
-{
-    int	n, c, p;
-    
+pq_getint(int b) {
+    int n, c, p;
+
     if (Pfin == (FILE *) NULL) {
 /*	elog(DEBUG, "pq_getint: Input descriptor is null"); */
-	return(EOF);
+        return (EOF);
     }
-    
+
     n = p = 0;
     while (b-- && (c = pq_getc(Pfin)) != EOF && p < 32) {
-	n |= (c & 0xff) << p;
-	p += 8;
+        n |= (c & 0xff) << p;
+        p += 8;
     }
-    
-    return(n);
+
+    return (n);
 }
 
 /* --------------------------------
@@ -315,27 +308,26 @@ pq_getint(int b)
  * --------------------------------
  */
 void
-pq_putstr(char *s)
-{
+pq_putstr(char *s) {
     int status;
-    
+
     if (Pfout) {
-	status = fputs(s, Pfout);
-	if (status == EOF) {
-	    (void) sprintf(PQerrormsg,
-			   "FATAL: pq_putstr: fputs() failed: errno=%d\n",
-			   errno);
-	    fputs(PQerrormsg, stderr);
-	    pqdebug("%s", PQerrormsg);
-	}
-	status = fputc('\0', Pfout);
-	if (status == EOF) {
-	    (void) sprintf(PQerrormsg,
-			   "FATAL: pq_putstr: fputc() failed: errno=%d\n",
-			   errno);
-	    fputs(PQerrormsg, stderr);
-	    pqdebug("%s", PQerrormsg);
-	}
+        status = fputs(s, Pfout);
+        if (status == EOF) {
+            (void) sprintf(PQerrormsg,
+                           "FATAL: pq_putstr: fputs() failed: errno=%d\n",
+                           errno);
+            fputs(PQerrormsg, stderr);
+            pqdebug("%s", PQerrormsg);
+        }
+        status = fputc('\0', Pfout);
+        if (status == EOF) {
+            (void) sprintf(PQerrormsg,
+                           "FATAL: pq_putstr: fputc() failed: errno=%d\n",
+                           errno);
+            fputs(PQerrormsg, stderr);
+            pqdebug("%s", PQerrormsg);
+        }
     }
 }
 
@@ -344,21 +336,20 @@ pq_putstr(char *s)
  * --------------------------------
  */
 void
-pq_putnchar(char *s, int n)
-{
+pq_putnchar(char *s, int n) {
     int status;
-    
+
     if (Pfout) {
-	while (n--) {
-	    status = fputc(*s++, Pfout);
-	    if (status == EOF) {
-		(void) sprintf(PQerrormsg,
-			       "FATAL: pq_putnchar: fputc() failed: errno=%d\n",
-			       errno);
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
-	    }
-	}
+        while (n--) {
+            status = fputc(*s++, Pfout);
+            if (status == EOF) {
+                (void) sprintf(PQerrormsg,
+                               "FATAL: pq_putnchar: fputc() failed: errno=%d\n",
+                               errno);
+                fputs(PQerrormsg, stderr);
+                pqdebug("%s", PQerrormsg);
+            }
+        }
     }
 }
 
@@ -370,25 +361,24 @@ pq_putnchar(char *s, int n)
  * --------------------------------
  */
 void
-pq_putint(int i, int b)
-{
+pq_putint(int i, int b) {
     int status;
-    
+
     if (b > 4)
-	b = 4;
-    
+        b = 4;
+
     if (Pfout) {
-	while (b--) {
-	    status = fputc(i & 0xff, Pfout);
-	    i >>= 8;
-	    if (status == EOF) {
-		(void) sprintf(PQerrormsg,
-			       "FATAL: pq_putint: fputc() failed: errno=%d\n",
-			       errno);
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
-	    }
-	}
+        while (b--) {
+            status = fputc(i & 0xff, Pfout);
+            i >>= 8;
+            if (status == EOF) {
+                (void) sprintf(PQerrormsg,
+                               "FATAL: pq_putint: fputc() failed: errno=%d\n",
+                               errno);
+                fputs(PQerrormsg, stderr);
+                pqdebug("%s", PQerrormsg);
+            }
+        }
     }
 }
 
@@ -400,22 +390,20 @@ pq_putint(int i, int b)
  * ---
  */
 int
-pq_sendoob(char *msg, int len)
-{
+pq_sendoob(char *msg, int len) {
     int fd = fileno(Pfout);
-    
-    return(send(fd,msg,len,MSG_OOB));
+
+    return (send(fd, msg, len, MSG_OOB));
 }
 
 int
-pq_recvoob(char *msgPtr, int *lenPtr)
-{
+pq_recvoob(char *msgPtr, int *lenPtr) {
     int fd = fileno(Pfout);
     int len = 0;
-    
-    len = recv(fd,msgPtr+len,*lenPtr,MSG_OOB);
+
+    len = recv(fd, msgPtr + len, *lenPtr, MSG_OOB);
     *lenPtr = len;
-    return(len);
+    return (len);
 }
 
 /* --------------------------------
@@ -424,37 +412,36 @@ pq_recvoob(char *msgPtr, int *lenPtr)
  */
 int
 pq_getinaddr(struct sockaddr_in *sin,
-	     char *host,
-	     int port)
-{
-    struct hostent	*hs;
-    
+             char *host,
+             int port) {
+    struct hostent *hs;
+
     memset((char *) sin, 0, sizeof(*sin));
-    
+
     if (host) {
-	if (*host >= '0' && *host <= '9')
-	    sin->sin_addr.s_addr = inet_addr(host);
-	else {
-	    if (!(hs = gethostbyname(host))) {
-		perror(host);
-		return(1);
-	    }
-	    if (hs->h_addrtype != AF_INET) {
-		(void) sprintf(PQerrormsg,
-			       "FATAL: pq_getinaddr: %s not on Internet\n",
-			       host);
-		fputs(PQerrormsg, stderr);
-		pqdebug("%s", PQerrormsg);
-		return(1);
-	    }
-	    memmove((char *) &sin->sin_addr,
-		    hs->h_addr,
-		    hs->h_length);
-	}
+        if (*host >= '0' && *host <= '9')
+            sin->sin_addr.s_addr = inet_addr(host);
+        else {
+            if (!(hs = gethostbyname(host))) {
+                perror(host);
+                return (1);
+            }
+            if (hs->h_addrtype != AF_INET) {
+                (void) sprintf(PQerrormsg,
+                               "FATAL: pq_getinaddr: %s not on Internet\n",
+                               host);
+                fputs(PQerrormsg, stderr);
+                pqdebug("%s", PQerrormsg);
+                return (1);
+            }
+            memmove((char *) &sin->sin_addr,
+                    hs->h_addr,
+                    hs->h_length);
+        }
     }
     sin->sin_family = AF_INET;
     sin->sin_port = htons(port);
-    return(0);
+    return (0);
 }
 
 /* --------------------------------
@@ -462,21 +449,20 @@ pq_getinaddr(struct sockaddr_in *sin,
  * --------------------------------
  */
 int
-pq_getinserv(struct sockaddr_in *sin, char *host, char *serv)
-{
+pq_getinserv(struct sockaddr_in *sin, char *host, char *serv) {
     struct servent *ss;
-    
+
     if (*serv >= '0' && *serv <= '9')
-	return(pq_getinaddr(sin, host, atoi(serv)));
+        return (pq_getinaddr(sin, host, atoi(serv)));
     if (!(ss = getservbyname(serv, NULL))) {
-	(void) sprintf(PQerrormsg,
-		       "FATAL: pq_getinserv: unknown service: %s\n",
-		       serv);
-	fputs(PQerrormsg, stderr);
-	pqdebug("%s", PQerrormsg);
-	return(1);
+        (void) sprintf(PQerrormsg,
+                       "FATAL: pq_getinserv: unknown service: %s\n",
+                       serv);
+        fputs(PQerrormsg, stderr);
+        pqdebug("%s", PQerrormsg);
+        return (1);
     }
-    return(pq_getinaddr(sin, host, ntohs(ss->s_port)));
+    return (pq_getinaddr(sin, host, ntohs(ss->s_port)));
 }
 
 /*
@@ -484,8 +470,7 @@ pq_getinserv(struct sockaddr_in *sin, char *host, char *serv)
  * This is used for receiving async. notification from the backend.
  */
 void
-pq_regoob(void (*fptr)())
-{
+pq_regoob(void (*fptr)()) {
 #ifdef WIN32
     /* Who knows what to do here? */
     return;
@@ -496,34 +481,32 @@ pq_regoob(void (*fptr)())
 #else /* PORTNAME_hpux */
     fcntl(fd, F_SETOWN, getpid());
 #endif /* PORTNAME_hpux */
-    (void) signal(SIGURG,fptr);
-#endif /* WIN32 */    
+    (void) signal(SIGURG, fptr);
+#endif /* WIN32 */
 }
 
 void
-pq_unregoob()
-{
+pq_unregoob() {
 #ifndef WIN32
-    signal(SIGURG,SIG_DFL);
-#endif /* WIN32 */    
+    signal(SIGURG, SIG_DFL);
+#endif /* WIN32 */
 }
 
 
 void
-pq_async_notify()
-{
+pq_async_notify() {
     char msg[20];
     /*    int len = sizeof(msg);*/
     int len = 20;
-    
-    if (pq_recvoob(msg,&len) >= 0) {
-	/* debugging */
-	printf("received notification: %s\n",msg);
-	PQAsyncNotifyWaiting = 1;
-	/*	PQappendNotify(msg+1);*/
+
+    if (pq_recvoob(msg, &len) >= 0) {
+        /* debugging */
+        printf("received notification: %s\n", msg);
+        PQAsyncNotifyWaiting = 1;
+        /*	PQappendNotify(msg+1);*/
     } else {
-	extern int errno;
-	printf("SIGURG but no data: len = %d, err=%d\n",len,errno);
+        extern int errno;
+        printf("SIGURG but no data: len = %d, err=%d\n", len, errno);
     }
 }
 
@@ -547,11 +530,10 @@ pq_async_notify()
  * RETURNS: STATUS_OK or STATUS_ERROR
  */
 int
-StreamServerPort(char *hostName, short portName, int *fdP)
-{
-    struct sockaddr_in	sin;
-    int			fd;
-    
+StreamServerPort(char *hostName, short portName, int *fdP) {
+    struct sockaddr_in sin;
+    int fd;
+
 #ifdef WIN32
     /* This is necessary to make it possible for a backend to use
     ** stdio to read from the socket.
@@ -559,39 +541,39 @@ StreamServerPort(char *hostName, short portName, int *fdP)
     int optionvalue = SO_SYNCHRONOUS_NONALERT;
 
     setsockopt(INVALID_SOCKET, SOL_SOCKET, SO_OPENTYPE, (char *)&optionvalue,
-	       sizeof(optionvalue));
+           sizeof(optionvalue));
 #endif /* WIN32 */
 
-    if (! hostName)
-	hostName = "localhost";
-    
-    memset((char *)&sin, 0, sizeof sin);
-    
+    if (!hostName)
+        hostName = "localhost";
+
+    memset((char *) &sin, 0, sizeof sin);
+
     if ((fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-	(void) sprintf(PQerrormsg,
-		       "FATAL: StreamServerPort: socket() failed: errno=%d\n",
-		       errno);
-	fputs(PQerrormsg, stderr);
-	pqdebug("%s", PQerrormsg);
-	return(STATUS_ERROR);
+        (void) sprintf(PQerrormsg,
+                       "FATAL: StreamServerPort: socket() failed: errno=%d\n",
+                       errno);
+        fputs(PQerrormsg, stderr);
+        pqdebug("%s", PQerrormsg);
+        return (STATUS_ERROR);
     }
-    
+
     sin.sin_family = AF_INET;
     sin.sin_port = htons(portName);
-    
-    if (bind(fd, (struct sockaddr *)&sin, sizeof sin) < 0) {
-	(void) sprintf(PQerrormsg,
-		       "FATAL: StreamServerPort: bind() failed: errno=%d\n",
-		       errno);
-	pqdebug("%s", PQerrormsg);
-	(void) strcat(PQerrormsg, "\tIs another postmaster already running on that port?\n");
-	(void) strcat(PQerrormsg, "\tIf not, wait a few seconds and retry.\n");
-	fputs(PQerrormsg, stderr);
-	return(STATUS_ERROR);
+
+    if (bind(fd, (struct sockaddr *) &sin, sizeof sin) < 0) {
+        (void) sprintf(PQerrormsg,
+                       "FATAL: StreamServerPort: bind() failed: errno=%d\n",
+                       errno);
+        pqdebug("%s", PQerrormsg);
+        (void) strcat(PQerrormsg, "\tIs another postmaster already running on that port?\n");
+        (void) strcat(PQerrormsg, "\tIf not, wait a few seconds and retry.\n");
+        fputs(PQerrormsg, stderr);
+        return (STATUS_ERROR);
     }
-    
+
     listen(fd, SOMAXCONN);
-    
+
     /* MS: I took this code from Dillon's version.  It makes the 
      * listening port non-blocking.  That is not necessary (and
      * may tickle kernel bugs).
@@ -599,9 +581,9 @@ StreamServerPort(char *hostName, short portName, int *fdP)
      (void) fcntl(fd, F_SETFD, 1);
      (void) fcntl(fd, F_SETFL, FNDELAY);
      */
-    
+
     *fdP = fd;
-    return(STATUS_OK);
+    return (STATUS_OK);
 }
 
 /*
@@ -613,44 +595,42 @@ StreamServerPort(char *hostName, short portName, int *fdP)
  * RETURNS: STATUS_OK or STATUS_ERROR
  */
 int
-StreamConnection(int server_fd, Port *port)
-{
-    int	addrlen;
-    
+StreamConnection(int server_fd, Port *port) {
+    int addrlen;
+
     /* accept connection (and fill in the client (remote) address) */
     addrlen = sizeof(struct sockaddr_in);
     if ((port->sock = accept(server_fd,
-			     (struct sockaddr *) &port->raddr,
-			     &addrlen)) < 0) {
-	elog(WARN, "postmaster: StreamConnection: accept: %m");
-	return(STATUS_ERROR);
+                             (struct sockaddr *) &port->raddr,
+                             &addrlen)) < 0) {
+        elog(WARN, "postmaster: StreamConnection: accept: %m");
+        return (STATUS_ERROR);
     }
-    
+
     /* fill in the server (local) address */
     addrlen = sizeof(struct sockaddr_in);
     if (getsockname(port->sock, (struct sockaddr *) &port->laddr,
-		    &addrlen) < 0) {
-	elog(WARN, "postmaster: StreamConnection: getsockname: %m");
-	return(STATUS_ERROR);
+                    &addrlen) < 0) {
+        elog(WARN, "postmaster: StreamConnection: getsockname: %m");
+        return (STATUS_ERROR);
     }
-    
+
     port->mask = 1 << port->sock;
 
-#ifndef WIN32    
+#ifndef WIN32
     /* reset to non-blocking */
     fcntl(port->sock, F_SETFL, 1);
-#endif /* WIN32 */    
-    
-    return(STATUS_OK);
+#endif /* WIN32 */
+
+    return (STATUS_OK);
 }
 
 /* 
  * StreamClose -- close a client/backend connection
  */
 void
-StreamClose(int sock)
-{
-    (void) close(sock); 
+StreamClose(int sock) {
+    (void) close(sock);
 }
 
 /* ---------------------------
@@ -665,60 +645,59 @@ StreamClose(int sock)
  * ---------------------------
  */
 int
-StreamOpen(char *hostName, short portName, Port *port)
-{
-    struct hostent	*hp;
-    int			laddrlen = sizeof(struct sockaddr_in);
-    extern int		errno;
-    
+StreamOpen(char *hostName, short portName, Port *port) {
+    struct hostent *hp;
+    int laddrlen = sizeof(struct sockaddr_in);
+    extern int        errno;
+
     if (!hostName)
-	hostName = "localhost";
-    
+        hostName = "localhost";
+
     /* set up the server (remote) address */
     if (!(hp = gethostbyname(hostName)) || hp->h_addrtype != AF_INET) {
-	(void) sprintf(PQerrormsg,
-		       "FATAL: StreamOpen: unknown hostname: %s\n",
-		       hostName);
-	fputs(PQerrormsg, stderr);
-	pqdebug("%s", PQerrormsg);
-	return(STATUS_ERROR);
+        (void) sprintf(PQerrormsg,
+                       "FATAL: StreamOpen: unknown hostname: %s\n",
+                       hostName);
+        fputs(PQerrormsg, stderr);
+        pqdebug("%s", PQerrormsg);
+        return (STATUS_ERROR);
     }
     memset((char *) &port->raddr, 0, sizeof(port->raddr));
     memmove((char *) &(port->raddr.sin_addr),
-	    (char *) hp->h_addr, 
-	    hp->h_length);
+            (char *) hp->h_addr,
+            hp->h_length);
     port->raddr.sin_family = AF_INET;
     port->raddr.sin_port = htons(portName);
-    
+
     /* connect to the server */
     if ((port->sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-	(void) sprintf(PQerrormsg,
-		       "FATAL: StreamOpen: socket() failed: errno=%d\n",
-		       errno);
-	fputs(PQerrormsg, stderr);
-	pqdebug("%s", PQerrormsg);
-	return(STATUS_ERROR);
+        (void) sprintf(PQerrormsg,
+                       "FATAL: StreamOpen: socket() failed: errno=%d\n",
+                       errno);
+        fputs(PQerrormsg, stderr);
+        pqdebug("%s", PQerrormsg);
+        return (STATUS_ERROR);
     }
-    if (connect(port->sock, (struct sockaddr *)&port->raddr,
-		sizeof(port->raddr)) < 0) {
-	(void) sprintf(PQerrormsg,
-		       "FATAL: StreamOpen: connect() failed: errno=%d\n",
-		       errno);
-	fputs(PQerrormsg, stderr);
-	pqdebug("%s", PQerrormsg);
-	return(STATUS_ERROR);
+    if (connect(port->sock, (struct sockaddr *) &port->raddr,
+                sizeof(port->raddr)) < 0) {
+        (void) sprintf(PQerrormsg,
+                       "FATAL: StreamOpen: connect() failed: errno=%d\n",
+                       errno);
+        fputs(PQerrormsg, stderr);
+        pqdebug("%s", PQerrormsg);
+        return (STATUS_ERROR);
     }
-    
+
     /* fill in the client address */
     if (getsockname(port->sock, (struct sockaddr *) &port->laddr,
-		    &laddrlen) < 0) {
-	(void) sprintf(PQerrormsg,
-		       "FATAL: StreamOpen: getsockname() failed: errno=%d\n",
-		       errno);
-	fputs(PQerrormsg, stderr);
-	pqdebug("%s", PQerrormsg);
-	return(STATUS_ERROR);
+                    &laddrlen) < 0) {
+        (void) sprintf(PQerrormsg,
+                       "FATAL: StreamOpen: getsockname() failed: errno=%d\n",
+                       errno);
+        fputs(PQerrormsg, stderr);
+        pqdebug("%s", PQerrormsg);
+        return (STATUS_ERROR);
     }
-    
-    return(STATUS_OK);
+
+    return (STATUS_OK);
 }

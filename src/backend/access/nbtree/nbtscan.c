@@ -42,22 +42,21 @@
 #include "access/nbtree.h"
 
 typedef struct BTScanListData {
-    IndexScanDesc		btsl_scan;
-    struct BTScanListData	*btsl_next;
+    IndexScanDesc btsl_scan;
+    struct BTScanListData *btsl_next;
 } BTScanListData;
 
-typedef BTScanListData	*BTScanList;
+typedef BTScanListData *BTScanList;
 
-static BTScanList	BTScans = (BTScanList) NULL;
-     
+static BTScanList BTScans = (BTScanList) NULL;
+
 /*
  *  _bt_regscan() -- register a new scan.
  */
 void
-_bt_regscan(IndexScanDesc scan)
-{
+_bt_regscan(IndexScanDesc scan) {
     BTScanList new_el;
-    
+
     new_el = (BTScanList) palloc(sizeof(BTScanListData));
     new_el->btsl_scan = scan;
     new_el->btsl_next = BTScans;
@@ -68,97 +67,93 @@ _bt_regscan(IndexScanDesc scan)
  *  _bt_dropscan() -- drop a scan from the scan list
  */
 void
-_bt_dropscan(IndexScanDesc scan)
-{
+_bt_dropscan(IndexScanDesc scan) {
     BTScanList chk, last;
-    
+
     last = (BTScanList) NULL;
     for (chk = BTScans;
-	 chk != (BTScanList) NULL && chk->btsl_scan != scan;
-	 chk = chk->btsl_next) {
-	last = chk;
+         chk != (BTScanList) NULL && chk->btsl_scan != scan;
+         chk = chk->btsl_next) {
+        last = chk;
     }
-    
+
     if (chk == (BTScanList) NULL)
-	elog(WARN, "btree scan list trashed; can't find 0x%lx", scan);
-    
+        elog(WARN, "btree scan list trashed; can't find 0x%lx", scan);
+
     if (last == (BTScanList) NULL)
-	BTScans = chk->btsl_next;
+        BTScans = chk->btsl_next;
     else
-	last->btsl_next = chk->btsl_next;
-    
+        last->btsl_next = chk->btsl_next;
+
 #ifdef PERFECT_MEM
     pfree (chk);
 #endif /* PERFECT_MEM */
 }
 
 void
-_bt_adjscans(Relation rel, ItemPointer tid)
-{
+_bt_adjscans(Relation rel, ItemPointer tid) {
     BTScanList l;
     Oid relid;
-    
+
     relid = rel->rd_id;
     for (l = BTScans; l != (BTScanList) NULL; l = l->btsl_next) {
-	if (relid == l->btsl_scan->relation->rd_id)
-	    _bt_scandel(l->btsl_scan, ItemPointerGetBlockNumber(tid),
-			ItemPointerGetOffsetNumber(tid));
+        if (relid == l->btsl_scan->relation->rd_id)
+            _bt_scandel(l->btsl_scan, ItemPointerGetBlockNumber(tid),
+                        ItemPointerGetOffsetNumber(tid));
     }
 }
 
 void
-_bt_scandel(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno)
-{
+_bt_scandel(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno) {
     ItemPointer current;
     Buffer buf;
     BTScanOpaque so;
-    
+
     if (!_bt_scantouched(scan, blkno, offno))
-	return;
-    
+        return;
+
     so = (BTScanOpaque) scan->opaque;
     buf = so->btso_curbuf;
-    
+
     current = &(scan->currentItemData);
     if (ItemPointerIsValid(current)
-	&& ItemPointerGetBlockNumber(current) == blkno
-	&& ItemPointerGetOffsetNumber(current) >= offno) {
-	_bt_step(scan, &buf, BackwardScanDirection);
-	so->btso_curbuf = buf;
+        && ItemPointerGetBlockNumber(current) == blkno
+        && ItemPointerGetOffsetNumber(current) >= offno) {
+        _bt_step(scan, &buf, BackwardScanDirection);
+        so->btso_curbuf = buf;
     }
-    
+
     current = &(scan->currentMarkData);
     if (ItemPointerIsValid(current)
-	&& ItemPointerGetBlockNumber(current) == blkno
-	&& ItemPointerGetOffsetNumber(current) >= offno) {
-	ItemPointerData tmp;
-	tmp = *current;
-	*current = scan->currentItemData;
-	scan->currentItemData = tmp;
-	_bt_step(scan, &buf, BackwardScanDirection);
-	so->btso_mrkbuf = buf;
-	tmp = *current;
-	*current = scan->currentItemData;
-	scan->currentItemData = tmp;
+        && ItemPointerGetBlockNumber(current) == blkno
+        && ItemPointerGetOffsetNumber(current) >= offno) {
+        ItemPointerData tmp;
+        tmp = *current;
+        *current = scan->currentItemData;
+        scan->currentItemData = tmp;
+        _bt_step(scan, &buf, BackwardScanDirection);
+        so->btso_mrkbuf = buf;
+        tmp = *current;
+        *current = scan->currentItemData;
+        scan->currentItemData = tmp;
     }
 }
 
 bool
-_bt_scantouched(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno)
-{
+_bt_scantouched(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno) {
     ItemPointer current;
-    
+
     current = &(scan->currentItemData);
     if (ItemPointerIsValid(current)
-	&& ItemPointerGetBlockNumber(current) == blkno
-	&& ItemPointerGetOffsetNumber(current) >= offno)
-	return (true);
-    
+        && ItemPointerGetBlockNumber(current) == blkno
+        && ItemPointerGetOffsetNumber(current) >= offno)
+        return (true);
+
     current = &(scan->currentMarkData);
     if (ItemPointerIsValid(current)
-	&& ItemPointerGetBlockNumber(current) == blkno
-	&& ItemPointerGetOffsetNumber(current) >= offno)
-	return (true);
-    
+        && ItemPointerGetBlockNumber(current) == blkno
+        && ItemPointerGetOffsetNumber(current) >= offno)
+        return (true);
+
     return (false);
 }

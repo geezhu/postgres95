@@ -40,32 +40,40 @@ struct Dllist;
 struct Dlelem;
 
 typedef struct Dlelem {
-  struct Dlelem *dle_next;  /* next element */
-  struct Dlelem *dle_prev;  /* previous element */
-  void   *dle_val; /* value of the element */
-  struct Dllist *dle_list;  /* what list this element is in */
+    struct Dlelem *dle_next;  /* next element */
+    struct Dlelem *dle_prev;  /* previous element */
+    void *dle_val; /* value of the element */
+    struct Dllist *dle_list;  /* what list this element is in */
 } Dlelem;
 
 typedef struct Dllist {
-  Dlelem *dll_head;
-  Dlelem *dll_tail;
+    Dlelem *dll_head;
+    Dlelem *dll_tail;
 } Dllist;
-  
-extern Dllist* DLNewList(); /* initialize a new list */
-extern void    DLFreeList(Dllist*); /* free up a list and all the nodes in it*/
-extern Dlelem* DLNewElem(void* val); 
-extern void    DLFreeElem(Dlelem*); 
-extern Dlelem* DLGetHead(Dllist*);
-extern Dlelem* DLGetTail(Dllist*);
-extern void*   DLGetHeadVal(Dllist*);
-extern void*   DLGetTailVal(Dllist*);
-extern Dlelem* DLGetPred(Dlelem*); /* get predecessor */
-extern Dlelem* DLGetSucc(Dlelem*); /* get successor */
-extern void    DLRemove(Dlelem*); /* removes node from list*/
-extern void    DLAddHead(Dllist* list, Dlelem* node);
-extern void    DLAddTail(Dllist* list, Dlelem* node);
-extern Dlelem* DLRemHead(Dllist* list); /* remove and return the head */
-extern Dlelem* DLRemTail(Dllist* list); /* remove and return the tail */
+
+extern Dllist *DLNewList(); /* initialize a new list */
+extern void DLFreeList(Dllist *); /* free up a list and all the nodes in it*/
+extern Dlelem *DLNewElem(void *val);
+
+extern void DLFreeElem(Dlelem *);
+
+extern Dlelem *DLGetHead(Dllist *);
+
+extern Dlelem *DLGetTail(Dllist *);
+
+extern void *DLGetHeadVal(Dllist *);
+
+extern void *DLGetTailVal(Dllist *);
+
+extern Dlelem *DLGetPred(Dlelem *); /* get predecessor */
+extern Dlelem *DLGetSucc(Dlelem *); /* get successor */
+extern void DLRemove(Dlelem *); /* removes node from list*/
+extern void DLAddHead(Dllist *list, Dlelem *node);
+
+extern void DLAddTail(Dllist *list, Dlelem *node);
+
+extern Dlelem *DLRemHead(Dllist *list); /* remove and return the head */
+extern Dlelem *DLRemTail(Dllist *list); /* remove and return the tail */
 
 #define DLE_VAL(x)  (x->dle_val)
 

@@ -111,8 +111,9 @@ static Dllist *pendingNotifies = NULL;
 
 
 static int AsyncExistsPendingNotify(char *);
+
 static void ClearPendingNotify(void);
-     
+
 /*
  *--------------------------------------------------------------
  * Async_NotifyHandler --
@@ -140,18 +141,18 @@ Async_NotifyHandler()
 #endif
 {
     extern TransactionState CurrentTransactionState;
-    
+
     if ((CurrentTransactionState->state == TRANS_DEFAULT) &&
-	(CurrentTransactionState->blockState == TRANS_DEFAULT)) {
+        (CurrentTransactionState->blockState == TRANS_DEFAULT)) {
 
-	elog(DEBUG, "Waking up sleeping backend process");
-	Async_NotifyFrontEnd();
+        elog(DEBUG, "Waking up sleeping backend process");
+        Async_NotifyFrontEnd();
 
-    }else {
-	elog(DEBUG, "Process is in the middle of another transaction, state = %d, block state = %d",
-	     CurrentTransactionState->state,
-	     CurrentTransactionState->blockState);
-	notifyFrontEndPending = 1;
+    } else {
+        elog(DEBUG, "Process is in the middle of another transaction, state = %d, block state = %d",
+             CurrentTransactionState->state,
+             CurrentTransactionState->blockState);
+        notifyFrontEndPending = 1;
     }
 }
 
@@ -179,9 +180,8 @@ Async_NotifyHandler()
  *--------------------------------------------------------------
  */
 void
-Async_Notify(char *relname)
-{
-    
+Async_Notify(char *relname) {
+
     HeapTuple lTuple, rTuple;
     Relation lRel;
     HeapScanDesc sRel;
@@ -191,40 +191,40 @@ Async_Notify(char *relname)
     Datum d, value[3];
     bool isnull;
     char repl[3], nulls[3];
-    
+
     char *notifyName;
-    
-    elog(DEBUG,"Async_Notify: %s",relname);
-    
-    if (!pendingNotifies) 
-      pendingNotifies = DLNewList();
+
+    elog(DEBUG, "Async_Notify: %s", relname);
+
+    if (!pendingNotifies)
+        pendingNotifies = DLNewList();
 
     notifyName = pstrdup(relname);
     DLAddHead(pendingNotifies, DLNewElem(notifyName));
-    
+
     ScanKeyEntryInitialize(&key, 0,
-			   Anum_pg_listener_relname,
-			   NameEqualRegProcedure,
-			   PointerGetDatum(notifyName));
-    
+                           Anum_pg_listener_relname,
+                           NameEqualRegProcedure,
+                           PointerGetDatum(notifyName));
+
     lRel = heap_openr(ListenerRelationName);
     tdesc = RelationGetTupleDescriptor(lRel);
     sRel = heap_beginscan(lRel, 0, NowTimeQual, 1, &key);
-    
+
     nulls[0] = nulls[1] = nulls[2] = ' ';
     repl[0] = repl[1] = repl[2] = ' ';
     repl[Anum_pg_listener_notify - 1] = 'r';
     value[0] = value[1] = value[2] = (Datum) 0;
     value[Anum_pg_listener_notify - 1] = Int32GetDatum(1);
-    
+
     while (HeapTupleIsValid(lTuple = heap_getnext(sRel, 0, &b))) {
-	d = (Datum) heap_getattr(lTuple, b, Anum_pg_listener_notify,
-				 tdesc, &isnull);
-	if (!DatumGetInt32(d)) {
-	    rTuple = heap_modifytuple(lTuple, b, lRel, value, nulls, repl);
-	    (void) heap_replace(lRel, &lTuple->t_ctid, rTuple);
-	}
-	ReleaseBuffer(b);
+        d = (Datum) heap_getattr(lTuple, b, Anum_pg_listener_notify,
+                                 tdesc, &isnull);
+        if (!DatumGetInt32(d)) {
+            rTuple = heap_modifytuple(lTuple, b, lRel, value, nulls, repl);
+            (void) heap_replace(lRel, &lTuple->t_ctid, rTuple);
+        }
+        ReleaseBuffer(b);
     }
     heap_endscan(sRel);
     heap_close(lRel);
@@ -254,8 +254,7 @@ Async_Notify(char *relname)
  *--------------------------------------------------------------
  */
 void
-Async_NotifyAtCommit()
-{
+Async_NotifyAtCommit() {
     HeapTuple lTuple;
     Relation lRel;
     HeapScanDesc sRel;
@@ -266,59 +265,59 @@ Async_NotifyAtCommit()
     bool isnull;
     Buffer b;
     extern TransactionState CurrentTransactionState;
-    
+
     if (!pendingNotifies)
-      pendingNotifies = DLNewList();
-    
+        pendingNotifies = DLNewList();
+
     if ((CurrentTransactionState->state == TRANS_DEFAULT) &&
-	(CurrentTransactionState->blockState == TRANS_DEFAULT)) {
-	
-	if (notifyIssued) {		/* 'notify <relname>' issued by us */
-	    notifyIssued = 0;
-	    StartTransactionCommand();
-	    elog(DEBUG, "Async_NotifyAtCommit.");
-	    ScanKeyEntryInitialize(&key, 0,
-				   Anum_pg_listener_notify,
-				   Integer32EqualRegProcedure,
-				   Int32GetDatum(1));
-	    lRel = heap_openr(ListenerRelationName);
-	    sRel = heap_beginscan(lRel, 0, NowTimeQual, 1, &key);
-	    tdesc = RelationGetTupleDescriptor(lRel);
-	    ourpid = getpid();
-	    
-	    while (HeapTupleIsValid(lTuple = heap_getnext(sRel,0, &b))) {
-		d = (Datum) heap_getattr(lTuple, b, Anum_pg_listener_relname,
-					 tdesc, &isnull);
-		
-		if (AsyncExistsPendingNotify((char *) DatumGetPointer(d))) {
-		    d = (Datum) heap_getattr(lTuple, b, Anum_pg_listener_pid,
-					     tdesc, &isnull);
-		    
-		    if (ourpid == DatumGetInt32(d)) {
-			elog(DEBUG, "Notifying self, setting notifyFronEndPending to 1");
-			notifyFrontEndPending = 1;
-		    } else {
-			elog(DEBUG, "Notifying others");
+        (CurrentTransactionState->blockState == TRANS_DEFAULT)) {
+
+        if (notifyIssued) {        /* 'notify <relname>' issued by us */
+            notifyIssued = 0;
+            StartTransactionCommand();
+            elog(DEBUG, "Async_NotifyAtCommit.");
+            ScanKeyEntryInitialize(&key, 0,
+                                   Anum_pg_listener_notify,
+                                   Integer32EqualRegProcedure,
+                                   Int32GetDatum(1));
+            lRel = heap_openr(ListenerRelationName);
+            sRel = heap_beginscan(lRel, 0, NowTimeQual, 1, &key);
+            tdesc = RelationGetTupleDescriptor(lRel);
+            ourpid = getpid();
+
+            while (HeapTupleIsValid(lTuple = heap_getnext(sRel, 0, &b))) {
+                d = (Datum) heap_getattr(lTuple, b, Anum_pg_listener_relname,
+                                         tdesc, &isnull);
+
+                if (AsyncExistsPendingNotify((char *) DatumGetPointer(d))) {
+                    d = (Datum) heap_getattr(lTuple, b, Anum_pg_listener_pid,
+                                             tdesc, &isnull);
+
+                    if (ourpid == DatumGetInt32(d)) {
+                        elog(DEBUG, "Notifying self, setting notifyFronEndPending to 1");
+                        notifyFrontEndPending = 1;
+                    } else {
+                        elog(DEBUG, "Notifying others");
 #ifndef WIN32
-			if (kill(DatumGetInt32(d), SIGUSR2) < 0) {
-			    if (errno == ESRCH) {
-				heap_delete(lRel, &lTuple->t_ctid);
-			    }
-			}
+                        if (kill(DatumGetInt32(d), SIGUSR2) < 0) {
+                            if (errno == ESRCH) {
+                                heap_delete(lRel, &lTuple->t_ctid);
+                            }
+                        }
 #endif /* WIN32 */
-		    }
-		}
-		ReleaseBuffer(b);
-	    }
-	    CommitTransactionCommand();
-	    ClearPendingNotify();
-	}
-	
-	if (notifyFrontEndPending) {	/* we need to notify the frontend of
+                    }
+                }
+                ReleaseBuffer(b);
+            }
+            CommitTransactionCommand();
+            ClearPendingNotify();
+        }
+
+        if (notifyFrontEndPending) {    /* we need to notify the frontend of
 					   all pending notifies. */
-	    notifyFrontEndPending = 1;
-	    Async_NotifyFrontEnd();
-	}
+            notifyFrontEndPending = 1;
+            Async_NotifyFrontEnd();
+        }
     }
 }
 
@@ -339,23 +338,22 @@ Async_NotifyAtCommit()
  *--------------------------------------------------------------
  */
 void
-Async_NotifyAtAbort()
-{
+Async_NotifyAtAbort() {
     extern TransactionState CurrentTransactionState;
-    
+
     if (notifyIssued) {
-	ClearPendingNotify();
+        ClearPendingNotify();
     }
     notifyIssued = 0;
     if (pendingNotifies)
-	DLFreeList(pendingNotifies);
+        DLFreeList(pendingNotifies);
     pendingNotifies = DLNewList();
 
     if ((CurrentTransactionState->state == TRANS_DEFAULT) &&
-	(CurrentTransactionState->blockState == TRANS_DEFAULT)) {
-	if (notifyFrontEndPending) { /* don't forget to notify front end */
-	    Async_NotifyFrontEnd();
-	}
+        (CurrentTransactionState->blockState == TRANS_DEFAULT)) {
+        if (notifyFrontEndPending) { /* don't forget to notify front end */
+            Async_NotifyFrontEnd();
+        }
     }
 }
 
@@ -380,13 +378,12 @@ Async_NotifyAtAbort()
  *--------------------------------------------------------------
  */
 void
-Async_Listen(char *relname, int pid)
-{
+Async_Listen(char *relname, int pid) {
     Datum values[Natts_pg_listener];
     char nulls[Natts_pg_listener];
     TupleDesc tdesc;
     HeapScanDesc s;
-    HeapTuple htup,tup;
+    HeapTuple htup, tup;
     Relation lDesc;
     Buffer b;
     Datum d;
@@ -396,62 +393,62 @@ Async_Listen(char *relname, int pid)
     int ourPid = getpid();
     char *relnamei;
     TupleDesc tupDesc;
-    
-    elog(DEBUG,"Async_Listen: %s",relname);
-    for (i = 0 ; i < Natts_pg_listener; i++) {
+
+    elog(DEBUG, "Async_Listen: %s", relname);
+    for (i = 0; i < Natts_pg_listener; i++) {
         nulls[i] = ' ';
         values[i] = PointerGetDatum(NULL);
     }
-    
+
     i = 0;
     values[i++] = (Datum) relname;
     values[i++] = (Datum) pid;
-    values[i++] = (Datum) 0;	/* no notifies pending */
-    
+    values[i++] = (Datum) 0;    /* no notifies pending */
+
     lDesc = heap_openr(ListenerRelationName);
-    
+
     /* is someone already listening.  One listener per relation */
     tdesc = RelationGetTupleDescriptor(lDesc);
-    s = heap_beginscan(lDesc,0,NowTimeQual,0,(ScanKey)NULL);
-    while (HeapTupleIsValid(htup = heap_getnext(s,0,&b))) {
-	d = (Datum) heap_getattr(htup,b,Anum_pg_listener_relname,tdesc,
-				 &isnull);
-	relnamei = DatumGetPointer(d);
-	if (!strncmp(relnamei,relname, NAMEDATALEN)) {
-	    d = (Datum) heap_getattr(htup,b,Anum_pg_listener_pid,tdesc,&isnull);
-	    pid = DatumGetInt32(d);
-	    if (pid == ourPid) {
-		alreadyListener = 1;
-	    }
-	}
-	ReleaseBuffer(b);
+    s = heap_beginscan(lDesc, 0, NowTimeQual, 0, (ScanKey) NULL);
+    while (HeapTupleIsValid(htup = heap_getnext(s, 0, &b))) {
+        d = (Datum) heap_getattr(htup, b, Anum_pg_listener_relname, tdesc,
+                                 &isnull);
+        relnamei = DatumGetPointer(d);
+        if (!strncmp(relnamei, relname, NAMEDATALEN)) {
+            d = (Datum) heap_getattr(htup, b, Anum_pg_listener_pid, tdesc, &isnull);
+            pid = DatumGetInt32(d);
+            if (pid == ourPid) {
+                alreadyListener = 1;
+            }
+        }
+        ReleaseBuffer(b);
     }
     heap_endscan(s);
-    
+
     if (alreadyListener) {
-	elog(NOTICE, "Async_Listen: We are already listening on %s",
-	     relname);
-	return;
+        elog(NOTICE, "Async_Listen: We are already listening on %s",
+             relname);
+        return;
     }
-    
+
     tupDesc = lDesc->rd_att;
     tup = heap_formtuple(tupDesc,
-			 values,
-			 nulls);
+                         values,
+                         nulls);
     heap_insert(lDesc, tup);
-    
+
     pfree(tup);
     /*    if (alreadyListener) {
 	  elog(NOTICE,"Async_Listen: already one listener on %s (possibly dead)",relname);
 	  }*/
     heap_close(lDesc);
-    
+
     /*
      * now that we are listening, we should make a note to ourselves 
      * to unlisten prior to dying.
      */
     relnamei = malloc(NAMEDATALEN); /* persists to process exit */
-    memset (relnamei, 0, NAMEDATALEN);
+    memset(relnamei, 0, NAMEDATALEN);
     strncpy(relnamei, relname, NAMEDATALEN);
     on_exitpg(Async_UnlistenOnExit, (caddr_t) relnamei);
 }
@@ -475,25 +472,23 @@ Async_Listen(char *relname, int pid)
  *--------------------------------------------------------------
  */
 void
-Async_Unlisten(char *relname, int pid)
-{
+Async_Unlisten(char *relname, int pid) {
     Relation lDesc;
     HeapTuple lTuple;
-    
+
     lTuple = SearchSysCacheTuple(LISTENREL, PointerGetDatum(relname),
-				 Int32GetDatum(pid),
-				 0,0);
+                                 Int32GetDatum(pid),
+                                 0, 0);
     lDesc = heap_openr(ListenerRelationName);
     if (lTuple != NULL) {
-	heap_delete(lDesc,&lTuple->t_ctid);
+        heap_delete(lDesc, &lTuple->t_ctid);
     }
     heap_close(lDesc);
 }
 
 void
-Async_UnlistenOnExit(int code,	/* from exitpg */
-		     char *relname)
-{
+Async_UnlistenOnExit(int code,    /* from exitpg */
+                     char *relname) {
     Async_Unlisten((char *) relname, getpid());
 }
 
@@ -522,8 +517,7 @@ Async_UnlistenOnExit(int code,	/* from exitpg */
 GlobalMemory notifyContext = NULL;
 
 void
-Async_NotifyFrontEnd()
-{
+Async_NotifyFrontEnd() {
     extern CommandDest whereToSendOutput;
     HeapTuple lTuple, rTuple;
     Relation lRel;
@@ -535,71 +529,69 @@ Async_NotifyFrontEnd()
     Buffer b;
     int ourpid;
     bool isnull;
-    
+
     notifyFrontEndPending = 0;
-    
+
     elog(DEBUG, "Async_NotifyFrontEnd: notifying front end.");
-    
+
     StartTransactionCommand();
     ourpid = getpid();
     ScanKeyEntryInitialize(&key[0], 0,
-			   Anum_pg_listener_notify,
-			   Integer32EqualRegProcedure,
-			   Int32GetDatum(1));
+                           Anum_pg_listener_notify,
+                           Integer32EqualRegProcedure,
+                           Int32GetDatum(1));
     ScanKeyEntryInitialize(&key[1], 0,
-			   Anum_pg_listener_pid,
-			   Integer32EqualRegProcedure,
-			   Int32GetDatum(ourpid));
+                           Anum_pg_listener_pid,
+                           Integer32EqualRegProcedure,
+                           Int32GetDatum(ourpid));
     lRel = heap_openr(ListenerRelationName);
     tdesc = RelationGetTupleDescriptor(lRel);
     sRel = heap_beginscan(lRel, 0, NowTimeQual, 2, key);
-    
+
     nulls[0] = nulls[1] = nulls[2] = ' ';
     repl[0] = repl[1] = repl[2] = ' ';
     repl[Anum_pg_listener_notify - 1] = 'r';
     value[0] = value[1] = value[2] = (Datum) 0;
     value[Anum_pg_listener_notify - 1] = Int32GetDatum(0);
-    
-    while (HeapTupleIsValid(lTuple = heap_getnext(sRel, 0,&b))) {
-	d = (Datum) heap_getattr(lTuple, b, Anum_pg_listener_relname,
-				 tdesc, &isnull);
-	rTuple = heap_modifytuple(lTuple, b, lRel, value, nulls, repl);
-	(void) heap_replace(lRel, &lTuple->t_ctid, rTuple);
-	
-	/* notifying the front end */
-	
-	if (whereToSendOutput == Remote) {
-	    pq_putnchar("A", 1);
-	    pq_putint(ourpid, 4);
-	    pq_putstr(DatumGetName(d)->data);
-	    pq_flush();
-	} else {
-	    elog(NOTICE, "Async_NotifyFrontEnd: no asynchronous notification to frontend on interactive sessions");
-	}
-	ReleaseBuffer(b);
+
+    while (HeapTupleIsValid(lTuple = heap_getnext(sRel, 0, &b))) {
+        d = (Datum) heap_getattr(lTuple, b, Anum_pg_listener_relname,
+                                 tdesc, &isnull);
+        rTuple = heap_modifytuple(lTuple, b, lRel, value, nulls, repl);
+        (void) heap_replace(lRel, &lTuple->t_ctid, rTuple);
+
+        /* notifying the front end */
+
+        if (whereToSendOutput == Remote) {
+            pq_putnchar("A", 1);
+            pq_putint(ourpid, 4);
+            pq_putstr(DatumGetName(d)->data);
+            pq_flush();
+        } else {
+            elog(NOTICE, "Async_NotifyFrontEnd: no asynchronous notification to frontend on interactive sessions");
+        }
+        ReleaseBuffer(b);
     }
     CommitTransactionCommand();
 }
 
 static int
-AsyncExistsPendingNotify(char *relname)
-{
-    Dlelem* p;
-    for (p = DLGetHead(pendingNotifies); 
-	 p != NULL;
-	 p = DLGetSucc(p)) {
-      if (!strcmp(DLE_VAL(p), relname))
-	return 1;
+AsyncExistsPendingNotify(char *relname) {
+    Dlelem *p;
+    for (p = DLGetHead(pendingNotifies);
+         p != NULL;
+         p = DLGetSucc(p)) {
+        if (!strcmp(DLE_VAL(p), relname))
+            return 1;
     }
 
     return 0;
 }
 
 static void
-ClearPendingNotify()
-{
-    Dlelem* p;
-    while ( (p = DLRemHead(pendingNotifies)) != NULL)
-	free(DLE_VAL(p));
+ClearPendingNotify() {
+    Dlelem *p;
+    while ((p = DLRemHead(pendingNotifies)) != NULL)
+        free(DLE_VAL(p));
 }
 

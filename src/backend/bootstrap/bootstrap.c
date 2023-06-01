@@ -13,15 +13,17 @@
  */
 #include <string.h>
 #include <unistd.h>
-#include "libpq/pqsignal.h"	/* substitute for <signal.h> */
+#include "libpq/pqsignal.h"    /* substitute for <signal.h> */
+
 #if defined(PORTNAME_linux)
 #ifndef __USE_POSIX
 #define __USE_POSIX
 #endif
 #endif /* defined(PORTNAME_linux) */
+
 #include <setjmp.h>
 
-#define BOOTSTRAP_INCLUDE	/* mask out stuff in tcop/tcopprot.h */
+#define BOOTSTRAP_INCLUDE    /* mask out stuff in tcop/tcopprot.h */
 
 #include "bootstrap/bootstrap.h"
 #include "postgres.h"
@@ -36,7 +38,7 @@
 #include "utils/tqual.h"
 #include "utils/lsyscache.h"
 #include "access/xact.h"
-#include "utils/exc.h"	/* for ExcAbort and <setjmp.h> */
+#include "utils/exc.h"    /* for ExcAbort and <setjmp.h> */
 #include "fmgr.h"
 #include "utils/palloc.h"
 #include "utils/mcxt.h"
@@ -48,8 +50,8 @@
 #include "catalog/indexing.h"
 #include "catalog/index.h"
 
-#define ALLOC(t, c)	(t *)calloc((unsigned)(c), sizeof(t))
-#define FIRST_TYPE_OID 16	/* OID of the first type */
+#define ALLOC(t, c)    (t *)calloc((unsigned)(c), sizeof(t))
+#define FIRST_TYPE_OID 16    /* OID of the first type */
 
 /* ----------------
  *	global variables
@@ -65,18 +67,18 @@
  * position of its string pointer in the array of string pointers.
  */
 
-#define STRTABLESIZE	10000
-#define HASHTABLESIZE	503
+#define STRTABLESIZE    10000
+#define HASHTABLESIZE    503
 
 /* Hash function numbers */
-#define NUM	23
-#define	NUMSQR	529
-#define	NUMCUBE	12167
+#define NUM    23
+#define    NUMSQR    529
+#define    NUMCUBE    12167
 
-char            *strtable [STRTABLESIZE]; 
-hashnode	*hashtable [HASHTABLESIZE];
+char *strtable[STRTABLESIZE];
+hashnode *hashtable[HASHTABLESIZE];
 
-static int	strtable_end = -1;    /* Tells us last occupied string space */
+static int strtable_end = -1;    /* Tells us last occupied string space */
 
 /*-
  * Basic information associated with each type.  This is used before
@@ -87,55 +89,55 @@ static int	strtable_end = -1;    /* Tells us last occupied string space */
  *	    order dependencies in the catalog creation process.
  */
 struct typinfo {
-    char	name[NAMEDATALEN];
-    Oid		oid;
-    Oid		elem;
-    int16	len;
-    Oid		inproc;
-    Oid		outproc;
+    char name[NAMEDATALEN];
+    Oid oid;
+    Oid elem;
+    int16 len;
+    Oid inproc;
+    Oid outproc;
 };
 
 static struct typinfo Procid[] = {
-    { "bool",       16,    0,  1, F_BOOLIN,     F_BOOLOUT },
-    { "bytea",      17,    0, -1, F_BYTEAIN,    F_BYTEAOUT },
-    { "char",       18,    0,  1, F_CHARIN,     F_CHAROUT },
-    { "name",       19,    0, NAMEDATALEN, F_NAMEIN,   F_NAMEOUT },
-    { "char16",     20,    0,  16, F_CHAR16IN, F_CHAR16OUT}, 
+        {"bool",     16,   0,    1,        F_BOOLIN,    F_BOOLOUT},
+        {"bytea",    17,   0,    -1,       F_BYTEAIN,   F_BYTEAOUT},
+        {"char",     18,   0,    1,        F_CHARIN,    F_CHAROUT},
+        {"name",     19,   0, NAMEDATALEN, F_NAMEIN,    F_NAMEOUT},
+        {"char16",   20,   0,    16,       F_CHAR16IN,  F_CHAR16OUT},
 /*    { "dt",         20,    0,  4, F_DTIN,	    F_DTOUT}, */
-    { "int2",       21,    0,  2, F_INT2IN,     F_INT2OUT },
-    { "int28",      22,    0, 16, F_INT28IN,    F_INT28OUT },
-    { "int4",       23,    0,  4, F_INT4IN,     F_INT4OUT },
-    { "regproc",    24,    0,  4, F_REGPROCIN,  F_REGPROCOUT },
-    { "text",       25,    0, -1, F_TEXTIN,     F_TEXTOUT },
-    { "oid",        26,    0,  4, F_INT4IN,     F_INT4OUT },
-    { "tid",        27,    0,  6, F_TIDIN,      F_TIDOUT },
-    { "xid",        28,    0,  5, F_XIDIN,      F_XIDOUT },
-    { "iid",        29,    0,  1, F_CIDIN,      F_CIDOUT },
-    { "oid8",       30,    0, 32, F_OID8IN,     F_OID8OUT },
-    { "smgr",      210,    0,  2, F_SMGRIN,     F_SMGROUT },
-    { "_int4",    1007,   23, -1, F_ARRAY_IN,   F_ARRAY_OUT },
-    { "_aclitem", 1034, 1033, -1, F_ARRAY_IN,   F_ARRAY_OUT }
+        {"int2",     21,   0,    2,        F_INT2IN,    F_INT2OUT},
+        {"int28",    22,   0,    16,       F_INT28IN,   F_INT28OUT},
+        {"int4",     23,   0,    4,        F_INT4IN,    F_INT4OUT},
+        {"regproc",  24,   0,    4,        F_REGPROCIN, F_REGPROCOUT},
+        {"text",     25,   0,    -1,       F_TEXTIN,    F_TEXTOUT},
+        {"oid",      26,   0,    4,        F_INT4IN,    F_INT4OUT},
+        {"tid",      27,   0,    6,        F_TIDIN,     F_TIDOUT},
+        {"xid",      28,   0,    5,        F_XIDIN,     F_XIDOUT},
+        {"iid",      29,   0,    1,        F_CIDIN,     F_CIDOUT},
+        {"oid8",     30,   0,    32,       F_OID8IN,    F_OID8OUT},
+        {"smgr",     210,  0,    2,        F_SMGRIN,    F_SMGROUT},
+        {"_int4",    1007, 23,   -1,       F_ARRAY_IN,  F_ARRAY_OUT},
+        {"_aclitem", 1034, 1033, -1,       F_ARRAY_IN,  F_ARRAY_OUT}
 };
 
 static int n_types = sizeof(Procid) / sizeof(struct typinfo);
 
-struct	typmap {			/* a hack */
-    Oid	am_oid;
-    TypeTupleFormData	am_typ;
+struct typmap {            /* a hack */
+    Oid am_oid;
+    TypeTupleFormData am_typ;
 };
 
-static	struct	typmap	**Typ = (struct typmap **)NULL;
-static	struct	typmap	*Ap = (struct typmap *)NULL;
-     
-static	int		Warnings = 0;
-static	char		Blanks[MAXATTR];
-     
-Relation	reldesc;		/* current relation descriptor */
+static struct typmap **Typ = (struct typmap **) NULL;
+static struct typmap *Ap = (struct typmap *) NULL;
+
+static int Warnings = 0;
+static char Blanks[MAXATTR];
+
+Relation reldesc;        /* current relation descriptor */
 static char *relname;                   /* current relation name */
 
 AttributeTupleForm attrtypes[MAXATTR];  /* points to attribute info */
-static char	*values[MAXATTR];	/* cooresponding attribute values */
-int		numattr;		/* number of attributes for cur. rel */
+static char *values[MAXATTR];    /* cooresponding attribute values */
+int numattr;        /* number of attributes for cur. rel */
 
 #if defined(WIN32) || defined(PORTNAME_next)
 static jmp_buf    Warn_restart;
@@ -145,12 +147,12 @@ static jmp_buf    Warn_restart;
 static sigjmp_buf Warn_restart;
 #endif
 
-int		DebugMode;
-static GlobalMemory nogc = (GlobalMemory) NULL;	/* special no-gc mem context */
+int DebugMode;
+static GlobalMemory nogc = (GlobalMemory) NULL;    /* special no-gc mem context */
 
-extern	int	optind;
-extern	char	*optarg;
-     
+extern int optind;
+extern char *optarg;
+
 /*
  *  At bootstrap time, we first declare all the indices to be built, and
  *  then build them.  The IndexList structure stores enough information
@@ -158,23 +160,23 @@ extern	char	*optarg;
  */
 
 typedef struct _IndexList {
-    char*		il_heap;
-    char*		il_ind;
-    int			il_natts;
-    AttrNumber		*il_attnos;
-    uint16 		il_nparams;
-    Datum *		il_params;
-    FuncIndexInfo 	*il_finfo;
-    PredInfo 		*il_predInfo;
-    struct _IndexList 	*il_next;
+    char *il_heap;
+    char *il_ind;
+    int il_natts;
+    AttrNumber *il_attnos;
+    uint16 il_nparams;
+    Datum *il_params;
+    FuncIndexInfo *il_finfo;
+    PredInfo *il_predInfo;
+    struct _IndexList *il_next;
 } IndexList;
 
 static IndexList *ILHead = (IndexList *) NULL;
-     
+
 typedef void (*sig_func)();
 
 
-
+
 /* ----------------------------------------------------------------
  *			misc functions
  * ----------------------------------------------------------------
@@ -185,24 +187,24 @@ typedef void (*sig_func)();
  * ----------------
  */
 #if !defined(PORTNAME_bsdi)
-void err()
-{
+
+void err() {
     Warnings++;
     cleanup();
 }
+
 #endif
 
 /* usage:
    usage help for the bootstrap backen
 */
 static void
-usage()
-{
-    fprintf(stderr,"Usage: postgres -boot [-d] [-C] [-O] [-Q] [-P portno] [dbName]\n");
-    fprintf(stderr,"     d: debug mode\n");
-    fprintf(stderr,"     C: disable version checking\n");
-    fprintf(stderr,"     O: set BootstrapProcessing mode\n");
-    fprintf(stderr,"     P portno: specify port number\n");
+usage() {
+    fprintf(stderr, "Usage: postgres -boot [-d] [-C] [-O] [-Q] [-P portno] [dbName]\n");
+    fprintf(stderr, "     d: debug mode\n");
+    fprintf(stderr, "     C: disable version checking\n");
+    fprintf(stderr, "     O: set BootstrapProcessing mode\n");
+    fprintf(stderr, "     P portno: specify port number\n");
 
     exitpg(1);
 }
@@ -221,16 +223,15 @@ usage()
  * ----------------------------------------------------------------
  */
 int
-BootstrapMain(int argc, char *argv[])
-{
-    int	  i;
-    int	  portFd = -1;
-    char  *dbName;
-    int   flag;
-    int   override = 1;  /* use BootstrapProcessing or InitProcessing mode */
-    
-    extern int	  optind;
-    extern char	  *optarg;
+BootstrapMain(int argc, char *argv[]) {
+    int i;
+    int portFd = -1;
+    char *dbName;
+    int flag;
+    int override = 1;  /* use BootstrapProcessing or InitProcessing mode */
+
+    extern int optind;
+    extern char *optarg;
 
     /* ----------------
      *	initialize signal handlers
@@ -238,15 +239,15 @@ BootstrapMain(int argc, char *argv[])
      */
     signal(SIGINT, (sig_func) die);
 #ifndef WIN32
-    signal(SIGHUP, (sig_func) die); 
+    signal(SIGHUP, (sig_func) die);
     signal(SIGTERM, (sig_func) die);
-#endif /* WIN32 */    
+#endif /* WIN32 */
 
     /* --------------------
      *	initialize globals 
      * -------------------
      */
-    
+
     InitGlobals();
 
     /* ----------------
@@ -256,44 +257,43 @@ BootstrapMain(int argc, char *argv[])
     Quiet = 0;
     Noversion = 0;
     dbName = NULL;
-    
+
     while ((flag = getopt(argc, argv, "dCOQP")) != EOF) {
-	switch (flag) {
-	case 'd':
-	    DebugMode = 1; /* print out debuggin info while parsing */
-	    break;
-	case 'C':
-	    Noversion = 1; 
-	    break;
-	case 'O':
-	    override = true;
-	    break;
-	case 'Q':
-	    Quiet = 1;
-	    break;
-	case 'P':/* specify port */
-	    portFd = atoi(optarg);
-	    break; 
-	default:
-	    usage();
-	    break;
-	}
+        switch (flag) {
+            case 'd':
+                DebugMode = 1; /* print out debuggin info while parsing */
+                break;
+            case 'C':
+                Noversion = 1;
+                break;
+            case 'O':
+                override = true;
+                break;
+            case 'Q':
+                Quiet = 1;
+                break;
+            case 'P':/* specify port */
+                portFd = atoi(optarg);
+                break;
+            default:
+                usage();
+                break;
+        }
     } /* while */
 
     if (argc - optind > 1) {
-	usage();
-    } else
-    if (argc - optind == 1) {
-	dbName = argv[optind];
-    } 
+        usage();
+    } else if (argc - optind == 1) {
+        dbName = argv[optind];
+    }
 
     if (dbName == NULL) {
-	dbName = getenv("USER");
-	if (dbName == NULL) {
-	    fputs("bootstrap backend: failed, no db name specified\n", stderr);
-	    fputs("          and no USER enviroment variable\n", stderr);
-	    exitpg(1);
-	}
+        dbName = getenv("USER");
+        if (dbName == NULL) {
+            fputs("bootstrap backend: failed, no db name specified\n", stderr);
+            fputs("          and no USER enviroment variable\n", stderr);
+            exitpg(1);
+        }
     }
 
     /* ----------------
@@ -301,10 +301,10 @@ BootstrapMain(int argc, char *argv[])
      * ----------------
      */
     if (IsUnderPostmaster == true && portFd < 0) {
-	fputs("backend: failed, no -P option with -postmaster opt.\n", stderr);
-	exitpg(1);
+        fputs("backend: failed, no -P option with -postmaster opt.\n", stderr);
+        exitpg(1);
     }
-    
+
 #ifdef WIN32
     _nt_init();
     _nt_attach();
@@ -318,31 +318,31 @@ BootstrapMain(int argc, char *argv[])
     SetProcessingMode((override) ? BootstrapProcessing : InitProcessing);
     InitPostgres(dbName);
     LockDisable(true);
-    
-    for (i = 0 ; i < MAXATTR; i++) {
-	attrtypes[i]=(AttributeTupleForm )NULL;
-	Blanks[i] = ' ';
+
+    for (i = 0; i < MAXATTR; i++) {
+        attrtypes[i] = (AttributeTupleForm) NULL;
+        Blanks[i] = ' ';
     }
-    for(i = 0; i < STRTABLESIZE; ++i)
-	strtable[i] = NULL;                    
-    for(i = 0; i < HASHTABLESIZE; ++i)
-	hashtable[i] = NULL;                   
-    
+    for (i = 0; i < STRTABLESIZE; ++i)
+        strtable[i] = NULL;
+    for (i = 0; i < HASHTABLESIZE; ++i)
+        hashtable[i] = NULL;
+
     /* ----------------
      *	abort processing resumes here  - What to do in WIN32?
      * ----------------
      */
-#ifndef WIN32    
+#ifndef WIN32
     signal(SIGHUP, handle_warn);
 
     if (sigsetjmp(Warn_restart, 1) != 0) {
 #else
-    if (setjmp(Warn_restart) != 0) {
+        if (setjmp(Warn_restart) != 0) {
 #endif /* WIN32 */
-	Warnings++;
-	AbortCurrentTransaction();
+        Warnings++;
+        AbortCurrentTransaction();
     }
-    
+
     /* ----------------
      *	process input.
      * ----------------
@@ -356,7 +356,7 @@ BootstrapMain(int argc, char *argv[])
     /* clean up processing */
     StartTransactionCommand();
     cleanup();
- 
+
     /* not reached, here to make compiler happy */
     return 0;
 
@@ -372,77 +372,76 @@ BootstrapMain(int argc, char *argv[])
  * ----------------
  */
 void
-boot_openrel(char *relname)
-{
-    int		i;
-    struct	typmap	**app;
-    Relation	rdesc;
-    HeapScanDesc	sdesc;
-    HeapTuple	tup;
-    
-    if (strlen(relname) > 15) 
-	relname[15] ='\000';
-    
-    if (Typ == (struct typmap **)NULL) {
-	StartPortalAllocMode(DefaultAllocMode, 0);
-	rdesc = heap_openr(TypeRelationName);
-	sdesc = heap_beginscan(rdesc, 0, NowTimeQual, 0, (ScanKey)NULL);
-	for (i=0; PointerIsValid(tup=heap_getnext(sdesc,0,(Buffer *)NULL)); ++i);
-	heap_endscan(sdesc);
-	app = Typ = ALLOC(struct typmap *, i + 1);
-	while (i-- > 0)
-	    *app++ = ALLOC(struct typmap, 1);
-	*app = (struct typmap *)NULL;
-	sdesc = heap_beginscan(rdesc, 0, NowTimeQual, 0, (ScanKey)NULL);
-	app = Typ;
-	while (PointerIsValid(tup = heap_getnext(sdesc, 0, (Buffer *)NULL))) {
-	    (*app)->am_oid = tup->t_oid;
-	    memmove((char *)&(*app++)->am_typ, 
-		    (char *)GETSTRUCT(tup), 
-		    sizeof ((*app)->am_typ));
-	}
-	heap_endscan(sdesc);
-	heap_close(rdesc);
-	EndPortalAllocMode();
+boot_openrel(char *relname) {
+    int i;
+    struct typmap **app;
+    Relation rdesc;
+    HeapScanDesc sdesc;
+    HeapTuple tup;
+
+    if (strlen(relname) > 15)
+        relname[15] = '\000';
+
+    if (Typ == (struct typmap **) NULL) {
+        StartPortalAllocMode(DefaultAllocMode, 0);
+        rdesc = heap_openr(TypeRelationName);
+        sdesc = heap_beginscan(rdesc, 0, NowTimeQual, 0, (ScanKey) NULL);
+        for (i = 0; PointerIsValid(tup = heap_getnext(sdesc, 0, (Buffer *) NULL)); ++i);
+        heap_endscan(sdesc);
+        app = Typ = ALLOC(struct typmap *, i + 1);
+        while (i-- > 0)
+            *app++ = ALLOC(struct typmap, 1);
+        *app = (struct typmap *) NULL;
+        sdesc = heap_beginscan(rdesc, 0, NowTimeQual, 0, (ScanKey) NULL);
+        app = Typ;
+        while (PointerIsValid(tup = heap_getnext(sdesc, 0, (Buffer *) NULL))) {
+            (*app)->am_oid = tup->t_oid;
+            memmove((char *) &(*app++)->am_typ,
+                    (char *) GETSTRUCT(tup),
+                    sizeof((*app)->am_typ));
+        }
+        heap_endscan(sdesc);
+        heap_close(rdesc);
+        EndPortalAllocMode();
     }
-    
+
     if (reldesc != NULL) {
-	closerel(NULL);
+        closerel(NULL);
     }
-    
+
     if (!Quiet)
-    	printf("Amopen: relation %s. attrsize %d\n", relname,
-	       ATTRIBUTE_TUPLE_SIZE);
-    
+        printf("Amopen: relation %s. attrsize %d\n", relname,
+               ATTRIBUTE_TUPLE_SIZE);
+
     reldesc = heap_openr(relname);
     Assert(reldesc);
     numattr = reldesc->rd_rel->relnatts;
     for (i = 0; i < numattr; i++) {
-	if (attrtypes[i] == NULL) {
-	    attrtypes[i] = AllocateAttribute();
-	}
-	memmove((char *)attrtypes[i],
-		(char *)reldesc->rd_att->attrs[i], 
-		ATTRIBUTE_TUPLE_SIZE);
-	
-	/* Some old pg_attribute tuples might not have attisset. */
-	/* If the attname is attisset, don't look for it - it may
-	   not be defined yet.
-	   */
-	if (namestrcmp(&attrtypes[i]->attname, "attisset") == 0)
-	    attrtypes[i]->attisset = get_attisset(reldesc->rd_id,
-						  attrtypes[i]->attname.data);
-	else
-	    attrtypes[i]->attisset = false;
-	
-	if (DebugMode) {
-	    AttributeTupleForm at = attrtypes[i];
-	    printf("create attribute %d name %.*s len %d num %d type %d\n",
-		   i, NAMEDATALEN, at->attname.data, at->attlen, at->attnum, 
-		   at->atttypid
-		   );
-	    fflush(stdout);
-	}
+        if (attrtypes[i] == NULL) {
+            attrtypes[i] = AllocateAttribute();
+        }
+        memmove((char *) attrtypes[i],
+                (char *) reldesc->rd_att->attrs[i],
+                ATTRIBUTE_TUPLE_SIZE);
+
+        /* Some old pg_attribute tuples might not have attisset. */
+        /* If the attname is attisset, don't look for it - it may
+           not be defined yet.
+           */
+        if (namestrcmp(&attrtypes[i]->attname, "attisset") == 0)
+            attrtypes[i]->attisset = get_attisset(reldesc->rd_id,
+                                                  attrtypes[i]->attname.data);
+        else
+            attrtypes[i]->attisset = false;
+
+        if (DebugMode) {
+            AttributeTupleForm at = attrtypes[i];
+            printf("create attribute %d name %.*s len %d num %d type %d\n",
+                   i, NAMEDATALEN, at->attname.data, at->attlen, at->attnum,
+                   at->atttypid
+            );
+            fflush(stdout);
+        }
     }
 }
 
@@ -451,29 +450,28 @@ boot_openrel(char *relname)
  * ----------------
  */
 void
-closerel(char *name)
-{
+closerel(char *name) {
     if (name) {
-	if (reldesc) {
-	    if (namestrcmp(RelationGetRelationName(reldesc), name) != 0)
-		elog(WARN,"closerel: close of '%s' when '%s' was expected",
-		     name, relname);
-	} else
-	    elog(WARN,"closerel: close of '%s' before any relation was opened",
-		 name);
-	
+        if (reldesc) {
+            if (namestrcmp(RelationGetRelationName(reldesc), name) != 0)
+                elog(WARN, "closerel: close of '%s' when '%s' was expected",
+                     name, relname);
+        } else
+            elog(WARN, "closerel: close of '%s' before any relation was opened",
+                 name);
+
     }
-    
+
     if (reldesc == NULL) {
-	elog(WARN,"Warning: no opened relation to close.\n");
+        elog(WARN, "Warning: no opened relation to close.\n");
     } else {
-	if (!Quiet) printf("Amclose: relation %s.\n", relname);
-	heap_close(reldesc);
-	reldesc = (Relation)NULL;
+        if (!Quiet) printf("Amclose: relation %s.\n", relname);
+        heap_close(reldesc);
+        reldesc = (Relation) NULL;
     }
 }
 
-
+
 /* ----------------
  * DEFINEATTR()
  *
@@ -483,35 +481,36 @@ closerel(char *name)
  * ----------------
  */
 void
-DefineAttr(char *name, char *type, int attnum)
-{
-    int     attlen;
-    int     t;
-    
+DefineAttr(char *name, char *type, int attnum) {
+    int attlen;
+    int t;
+
     if (reldesc != NULL) {
-	fputs("Warning: no open relations allowed with 't' command.\n",stderr);
-	closerel(relname);
+        fputs("Warning: no open relations allowed with 't' command.\n", stderr);
+        closerel(relname);
     }
-    
+
     t = gettype(type);
-    if (attrtypes[attnum] == (AttributeTupleForm )NULL) 
-	attrtypes[attnum] = AllocateAttribute();
-    if (Typ != (struct typmap **)NULL) {
-	attrtypes[attnum]->atttypid = Ap->am_oid;
-	namestrcpy(&attrtypes[attnum]->attname, name);
-	if (!Quiet) printf("<%.*s %s> ", NAMEDATALEN, 
-			   attrtypes[attnum]->attname.data, type);
-	attrtypes[attnum]->attnum = 1 + attnum; /* fillatt */
-	attlen = attrtypes[attnum]->attlen = Ap->am_typ.typlen;
-	attrtypes[attnum]->attbyval = Ap->am_typ.typbyval;
+    if (attrtypes[attnum] == (AttributeTupleForm) NULL)
+        attrtypes[attnum] = AllocateAttribute();
+    if (Typ != (struct typmap **) NULL) {
+        attrtypes[attnum]->atttypid = Ap->am_oid;
+        namestrcpy(&attrtypes[attnum]->attname, name);
+        if (!Quiet)
+            printf("<%.*s %s> ", NAMEDATALEN,
+                   attrtypes[attnum]->attname.data, type);
+        attrtypes[attnum]->attnum = 1 + attnum; /* fillatt */
+        attlen = attrtypes[attnum]->attlen = Ap->am_typ.typlen;
+        attrtypes[attnum]->attbyval = Ap->am_typ.typbyval;
     } else {
-	attrtypes[attnum]->atttypid = Procid[t].oid;
-	namestrcpy(&attrtypes[attnum]->attname,name);
-	if (!Quiet) printf("<%.*s %s> ", NAMEDATALEN,
-			   attrtypes[attnum]->attname.data, type);
-	attrtypes[attnum]->attnum = 1 + attnum; /* fillatt */
-	attlen = attrtypes[attnum]->attlen = Procid[t].len;
-	attrtypes[attnum]->attbyval = (attlen==1) || (attlen==2)||(attlen==4);
+        attrtypes[attnum]->atttypid = Procid[t].oid;
+        namestrcpy(&attrtypes[attnum]->attname, name);
+        if (!Quiet)
+            printf("<%.*s %s> ", NAMEDATALEN,
+                   attrtypes[attnum]->attname.data, type);
+        attrtypes[attnum]->attnum = 1 + attnum; /* fillatt */
+        attlen = attrtypes[attnum]->attlen = Procid[t].len;
+        attrtypes[attnum]->attbyval = (attlen == 1) || (attlen == 2) || (attlen == 4);
     }
 }
 
@@ -522,36 +521,35 @@ DefineAttr(char *name, char *type, int attnum)
  * ----------------
  */
 void
-InsertOneTuple(Oid objectid)
-{
+InsertOneTuple(Oid objectid) {
     HeapTuple tuple;
     TupleDesc tupDesc;
 
     int i;
-    
+
     if (DebugMode) {
-	printf("InsertOneTuple oid %d, %d attrs\n", objectid, numattr);
-	fflush(stdout);
+        printf("InsertOneTuple oid %d, %d attrs\n", objectid, numattr);
+        fflush(stdout);
     }
-    
-    tupDesc = CreateTupleDesc(numattr,attrtypes); 
-    tuple = heap_formtuple(tupDesc,(Datum*)values,Blanks);     
+
+    tupDesc = CreateTupleDesc(numattr, attrtypes);
+    tuple = heap_formtuple(tupDesc, (Datum *) values, Blanks);
     pfree(tupDesc); /* just free's tupDesc, not the attrtypes */
 
-    if(objectid !=(Oid)0) {
-	tuple->t_oid=objectid;
+    if (objectid != (Oid) 0) {
+        tuple->t_oid = objectid;
     }
     heap_insert(reldesc, tuple);
     pfree(tuple);
     if (DebugMode) {
-	printf("End InsertOneTuple, objectid=%d\n", objectid);
-	fflush(stdout);
+        printf("End InsertOneTuple, objectid=%d\n", objectid);
+        fflush(stdout);
     }
     /*
      * Reset blanks for next tuple
      */
-    for (i = 0; i<numattr; i++)
-	Blanks[i] = ' ';
+    for (i = 0; i < numattr; i++)
+        Blanks[i] = ' ';
 }
 
 /* ----------------
@@ -559,56 +557,55 @@ InsertOneTuple(Oid objectid)
  * ----------------
  */
 void
-InsertOneValue(Oid objectid, char *value, int i)
-{
-    int		typeindex;
-    char	*prt;
+InsertOneValue(Oid objectid, char *value, int i) {
+    int typeindex;
+    char *prt;
     struct typmap **app;
-    
+
     if (DebugMode)
-	printf("Inserting value: '%s'\n", value);
+        printf("Inserting value: '%s'\n", value);
     if (i < 0 || i >= MAXATTR) {
-	printf("i out of range: %d\n", i);
-	Assert(0);
+        printf("i out of range: %d\n", i);
+        Assert(0);
     }
-    
-    if (Typ != (struct typmap **)NULL) {
-	struct typmap *ap;
-	if (DebugMode)
-	    puts("Typ != NULL");
-	app = Typ;
-	while (*app && (*app)->am_oid != reldesc->rd_att->attrs[i]->atttypid)
-	    ++app;
-	ap = *app;
-	if (ap == NULL) {
-	    printf("Unable to find atttypid in Typ list! %d\n",
-		   reldesc->rd_att->attrs[i]->atttypid
-		   );
-	    Assert(0);
-	}
-	values[i] = fmgr(ap->am_typ.typinput,
-			 value,
-			 ap->am_typ.typelem,
-			 -1); /* shouldn't have char() or varchar() types
+
+    if (Typ != (struct typmap **) NULL) {
+        struct typmap *ap;
+        if (DebugMode)
+            puts("Typ != NULL");
+        app = Typ;
+        while (*app && (*app)->am_oid != reldesc->rd_att->attrs[i]->atttypid)
+            ++app;
+        ap = *app;
+        if (ap == NULL) {
+            printf("Unable to find atttypid in Typ list! %d\n",
+                   reldesc->rd_att->attrs[i]->atttypid
+            );
+            Assert(0);
+        }
+        values[i] = fmgr(ap->am_typ.typinput,
+                         value,
+                         ap->am_typ.typelem,
+                         -1); /* shouldn't have char() or varchar() types
 				 during boostrapping but just to be safe */
-	prt = fmgr(ap->am_typ.typoutput, values[i],
-		   ap->am_typ.typelem);
-	if (!Quiet) printf("%s ", prt);
-	pfree(prt);
+        prt = fmgr(ap->am_typ.typoutput, values[i],
+                   ap->am_typ.typelem);
+        if (!Quiet) printf("%s ", prt);
+        pfree(prt);
     } else {
-	typeindex = attrtypes[i]->atttypid - FIRST_TYPE_OID;
-	if (DebugMode)
-	    printf("Typ == NULL, typeindex = %d idx = %d\n", typeindex, i);
-	values[i] = fmgr(Procid[typeindex].inproc, value,
-			 Procid[typeindex].elem, -1);
-	prt = fmgr(Procid[typeindex].outproc, values[i],
-		   Procid[typeindex].elem);
-	if (!Quiet) printf("%s ", prt);
-	pfree(prt);
+        typeindex = attrtypes[i]->atttypid - FIRST_TYPE_OID;
+        if (DebugMode)
+            printf("Typ == NULL, typeindex = %d idx = %d\n", typeindex, i);
+        values[i] = fmgr(Procid[typeindex].inproc, value,
+                         Procid[typeindex].elem, -1);
+        prt = fmgr(Procid[typeindex].outproc, values[i],
+                   Procid[typeindex].elem);
+        if (!Quiet) printf("%s ", prt);
+        pfree(prt);
     }
     if (DebugMode) {
-	puts("End InsertValue");
-	fflush(stdout);
+        puts("End InsertValue");
+        fflush(stdout);
     }
 }
 
@@ -617,38 +614,36 @@ InsertOneValue(Oid objectid, char *value, int i)
  * ----------------
  */
 void
-InsertOneNull(int i)
-{
+InsertOneNull(int i) {
     if (DebugMode)
-	printf("Inserting null\n");
+        printf("Inserting null\n");
     if (i < 0 || i >= MAXATTR) {
-	elog(FATAL, "i out of range (too many attrs): %d\n", i);
+        elog(FATAL, "i out of range (too many attrs): %d\n", i);
     }
-    values[i] = (char *)NULL;
+    values[i] = (char *) NULL;
     Blanks[i] = 'n';
 }
 
 #define MORE_THAN_THE_NUMBER_OF_CATALOGS 256
 
 bool
-BootstrapAlreadySeen(Oid id)
-{
+BootstrapAlreadySeen(Oid id) {
     static Oid seenArray[MORE_THAN_THE_NUMBER_OF_CATALOGS];
     static int nseen = 0;
     bool seenthis;
     int i;
-    
+
     seenthis = false;
-     
-    for (i=0; i < nseen; i++) {
-	if (seenArray[i] == id) {
-	    seenthis = true;
-	    break;
-	}
+
+    for (i = 0; i < nseen; i++) {
+        if (seenArray[i] == id) {
+            seenthis = true;
+            break;
+        }
     }
     if (!seenthis) {
-	seenArray[nseen] = id;
-	nseen++;
+        seenArray[nseen] = id;
+        nseen++;
     }
     return (seenthis);
 }
@@ -658,18 +653,17 @@ BootstrapAlreadySeen(Oid id)
  * ----------------
  */
 void
-cleanup()
-{
-    static	int	beenhere = 0;
-    
+cleanup() {
+    static int beenhere = 0;
+
     if (!beenhere)
-	beenhere = 1;
+        beenhere = 1;
     else {
-	elog(FATAL,"Memory manager fault: cleanup called twice.\n", stderr);
-	exitpg(1);
+        elog(FATAL, "Memory manager fault: cleanup called twice.\n", stderr);
+        exitpg(1);
     }
-    if (reldesc != (Relation)NULL) {
-	heap_close(reldesc);
+    if (reldesc != (Relation) NULL) {
+        heap_close(reldesc);
     }
     CommitTransactionCommand();
     exitpg(Warnings);
@@ -680,50 +674,49 @@ cleanup()
  * ----------------
  */
 int
-gettype(char *type)
-{
-    int		i;
-    Relation	rdesc;
-    HeapScanDesc	sdesc;
-    HeapTuple	tup;
-    struct	typmap	**app;
-    
-    if (Typ != (struct typmap **)NULL) {
-	for (app = Typ; *app != (struct typmap *)NULL; app++) {
-	    if (strncmp((*app)->am_typ.typname.data, type, NAMEDATALEN) == 0) {
-		Ap = *app;
-		return((*app)->am_oid);
-	    }
-	}
+gettype(char *type) {
+    int i;
+    Relation rdesc;
+    HeapScanDesc sdesc;
+    HeapTuple tup;
+    struct typmap **app;
+
+    if (Typ != (struct typmap **) NULL) {
+        for (app = Typ; *app != (struct typmap *) NULL; app++) {
+            if (strncmp((*app)->am_typ.typname.data, type, NAMEDATALEN) == 0) {
+                Ap = *app;
+                return ((*app)->am_oid);
+            }
+        }
     } else {
-	for (i = 0; i <= n_types; i++) {
-	    if (strncmp(type, Procid[i].name, NAMEDATALEN) == 0) {
-		return(i);
-	    }
-	}
-	if (DebugMode)
-	    printf("bootstrap.c: External Type: %.*s\n", NAMEDATALEN, type);
+        for (i = 0; i <= n_types; i++) {
+            if (strncmp(type, Procid[i].name, NAMEDATALEN) == 0) {
+                return (i);
+            }
+        }
+        if (DebugMode)
+            printf("bootstrap.c: External Type: %.*s\n", NAMEDATALEN, type);
         rdesc = heap_openr(TypeRelationName);
-        sdesc = heap_beginscan(rdesc, 0, NowTimeQual, 0, (ScanKey)NULL);
-	i = 0;
-	while (PointerIsValid(tup = heap_getnext(sdesc, 0, (Buffer *)NULL)))
-	    ++i;
-	heap_endscan(sdesc);
-	app = Typ = ALLOC(struct typmap *, i + 1);
-	while (i-- > 0)
-	    *app++ = ALLOC(struct typmap, 1);
-	*app = (struct typmap *)NULL;
-	sdesc = heap_beginscan(rdesc, 0, NowTimeQual, 0, (ScanKey)NULL);
-	app = Typ;
-	while (PointerIsValid(tup = heap_getnext(sdesc, 0, (Buffer *)NULL))) {
-	    (*app)->am_oid = tup->t_oid;
-	    memmove((char *)&(*app++)->am_typ,
-		    (char *)GETSTRUCT(tup), 
-		    sizeof ((*app)->am_typ));
+        sdesc = heap_beginscan(rdesc, 0, NowTimeQual, 0, (ScanKey) NULL);
+        i = 0;
+        while (PointerIsValid(tup = heap_getnext(sdesc, 0, (Buffer *) NULL)))
+            ++i;
+        heap_endscan(sdesc);
+        app = Typ = ALLOC(struct typmap *, i + 1);
+        while (i-- > 0)
+            *app++ = ALLOC(struct typmap, 1);
+        *app = (struct typmap *) NULL;
+        sdesc = heap_beginscan(rdesc, 0, NowTimeQual, 0, (ScanKey) NULL);
+        app = Typ;
+        while (PointerIsValid(tup = heap_getnext(sdesc, 0, (Buffer *) NULL))) {
+            (*app)->am_oid = tup->t_oid;
+            memmove((char *) &(*app++)->am_typ,
+                    (char *) GETSTRUCT(tup),
+                    sizeof((*app)->am_typ));
         }
         heap_endscan(sdesc);
         heap_close(rdesc);
-        return(gettype(type));
+        return (gettype(type));
     }
     elog(WARN, "Error: unknown type '%s'.\n", type);
     err();
@@ -736,16 +729,15 @@ gettype(char *type)
  * ----------------
  */
 AttributeTupleForm  /* XXX */
-AllocateAttribute()
-{
+AllocateAttribute() {
     AttributeTupleForm attribute =
-	(AttributeTupleForm)malloc(ATTRIBUTE_TUPLE_SIZE);
-    
+            (AttributeTupleForm) malloc(ATTRIBUTE_TUPLE_SIZE);
+
     if (!PointerIsValid(attribute)) {
-	elog(FATAL, "AllocateAttribute: malloc failed");
+        elog(FATAL, "AllocateAttribute: malloc failed");
     }
     memset(attribute, 0, ATTRIBUTE_TUPLE_SIZE);
-    
+
     return (attribute);
 }
 
@@ -763,20 +755,19 @@ AllocateAttribute()
  * be freed by the CALLER.
  * ----------------
  */
-char* 
-MapArrayTypeName(char *s)
-{
+char *
+MapArrayTypeName(char *s) {
     int i, j;
     static char newStr[NAMEDATALEN]; /* array type names < NAMEDATALEN long */
 
     if (s == NULL || s[0] == '\0')
-	return s;
+        return s;
 
     j = 1;
     newStr[0] = '_';
-    for (i=0; i<NAMEDATALEN-1 && s[i] != '['; i++, j++)
-	newStr[j] = s[i];
-    
+    for (i = 0; i < NAMEDATALEN - 1 && s[i] != '['; i++, j++)
+        newStr[j] = s[i];
+
     newStr[j] = '\0';
 
     return newStr;
@@ -789,19 +780,18 @@ MapArrayTypeName(char *s)
  * ----------------
  */
 int
-EnterString (char *str)
-{
-    hashnode	*node;
-    int        len;
-    
-    len= strlen(str);
+EnterString(char *str) {
+    hashnode *node;
+    int len;
+
+    len = strlen(str);
 
     node = FindStr(str, len, 0);
     if (node) {
-	return (node->strnum);
+        return (node->strnum);
     } else {
-	node = AddStr(str, len, 0);
-	return (node->strnum);
+        node = AddStr(str, len, 0);
+        return (node->strnum);
     }
 }
 
@@ -812,10 +802,9 @@ EnterString (char *str)
  * ----------------
  */
 char *
-LexIDStr(int ident_num) 
-{
-    return(strtable[ident_num]);
-}    
+LexIDStr(int ident_num) {
+    return (strtable[ident_num]);
+}
 
 
 /* ----------------
@@ -828,14 +817,13 @@ LexIDStr(int ident_num)
  * ----------------
  */
 int
-CompHash(char *str, int len)
-{
+CompHash(char *str, int len) {
     register int result;
-    
-    result =(NUM * str[0] + NUMSQR * str[len-1] + NUMCUBE * str[(len-1)/2]);
-    
+
+    result = (NUM * str[0] + NUMSQR * str[len - 1] + NUMCUBE * str[(len - 1) / 2]);
+
     return (result % HASHTABLESIZE);
-    
+
 }
 
 /* ----------------
@@ -847,21 +835,20 @@ CompHash(char *str, int len)
  * ----------------
  */
 hashnode *
-FindStr(char *str, int length, hashnode *mderef)
-{
-    hashnode	*node;
-    node = hashtable [CompHash (str, length)];
+FindStr(char *str, int length, hashnode *mderef) {
+    hashnode *node;
+    node = hashtable[CompHash(str, length)];
     while (node != NULL) {
-	/*
-	 * We must differentiate between string constants that
-	 * might have the same value as a identifier
-	 * and the identifier itself.
-	 */
-	if (!strcmp(str, strtable[node->strnum])) {
-	    return(node);  /* no need to check */
-	} else {
-	    node = node->next;
-	}
+        /*
+         * We must differentiate between string constants that
+         * might have the same value as a identifier
+         * and the identifier itself.
+         */
+        if (!strcmp(str, strtable[node->strnum])) {
+            return (node);  /* no need to check */
+        } else {
+            node = node->next;
+        }
     }
     /* Couldn't find it in the list */
     return (NULL);
@@ -877,20 +864,19 @@ FindStr(char *str, int length, hashnode *mderef)
  * ----------------
  */
 hashnode *
-AddStr(char *str, int strlength, int mderef)
-{
-    hashnode	*temp, *trail, *newnode;
-    int		hashresult;
-    int		len;
-    
+AddStr(char *str, int strlength, int mderef) {
+    hashnode *temp, *trail, *newnode;
+    int hashresult;
+    int len;
+
     if (++strtable_end == STRTABLESIZE) {
-	/* Error, string table overflow, so we Punt */
-	elog(FATAL, 
-	     "There are too many string constants and identifiers for the compiler to handle.");
+        /* Error, string table overflow, so we Punt */
+        elog(FATAL,
+             "There are too many string constants and identifiers for the compiler to handle.");
 
 
     }
-    
+
     /*
      *  Some of the utilites (eg, define type, create relation) assume
      *  that the string they're passed is a NAMEDATALEN.  We get array bound
@@ -898,36 +884,35 @@ AddStr(char *str, int strlength, int mderef)
      *  bytes for strings of this sort.  Because we're lazy, we allocate
      *  at least NAMEDATALEN bytes all the time.
      */
-    
+
     if ((len = strlength + 1) < NAMEDATALEN)
-	len = NAMEDATALEN;
-    
-    strtable [strtable_end] = malloc((unsigned) len);
-    strcpy (strtable[strtable_end], str);
-    
+        len = NAMEDATALEN;
+
+    strtable[strtable_end] = malloc((unsigned) len);
+    strcpy(strtable[strtable_end], str);
+
     /* Now put a node in the hash table */
-    
-    newnode = (hashnode*)malloc(sizeof(hashnode)*1);
+
+    newnode = (hashnode *) malloc(sizeof(hashnode) * 1);
     newnode->strnum = strtable_end;
     newnode->next = NULL;
-    
+
     /* Find out where it goes */
-    
-    hashresult = CompHash (str, strlength);
-    if (hashtable [hashresult] == NULL) {
-	hashtable [hashresult] = newnode;
-    } else {			/* There is something in the list */
-	trail = hashtable [hashresult];
-	temp = trail->next;
-	while (temp != NULL) {
-	    trail = temp;
-	    temp = temp->next;
-	}
-	trail->next = newnode;
+
+    hashresult = CompHash(str, strlength);
+    if (hashtable[hashresult] == NULL) {
+        hashtable[hashresult] = newnode;
+    } else {            /* There is something in the list */
+        trail = hashtable[hashresult];
+        temp = trail->next;
+        while (temp != NULL) {
+            trail = temp;
+            temp = temp->next;
+        }
+        trail->next = newnode;
     }
     return (newnode);
 }
-
 
 
 /*
@@ -942,108 +927,106 @@ AddStr(char *str, int strlength, int mderef)
  */
 void
 index_register(char *heap,
-	       char *ind,
-	       int natts,
-	       AttrNumber *attnos,
-	       uint16 nparams,
-	       Datum *params,
-	       FuncIndexInfo *finfo,
-	       PredInfo *predInfo)
-{
+               char *ind,
+               int natts,
+               AttrNumber *attnos,
+               uint16 nparams,
+               Datum *params,
+               FuncIndexInfo *finfo,
+               PredInfo *predInfo) {
     Datum *v;
     IndexList *newind;
     int len;
     MemoryContext oldcxt;
-    
+
     /*
      *  XXX mao 10/31/92 -- don't gc index reldescs, associated info
      *  at bootstrap time.  we'll declare the indices now, but want to
      *  create them later.
      */
-    
+
     if (nogc == (GlobalMemory) NULL)
-	nogc = CreateGlobalMemory("BootstrapNoGC");
-    
+        nogc = CreateGlobalMemory("BootstrapNoGC");
+
     oldcxt = MemoryContextSwitchTo((MemoryContext) nogc);
-    
+
     newind = (IndexList *) palloc(sizeof(IndexList));
     newind->il_heap = pstrdup(heap);
     newind->il_ind = pstrdup(ind);
     newind->il_natts = natts;
-    
+
     if (PointerIsValid(finfo))
-	len = FIgetnArgs(finfo) * sizeof(AttrNumber);
+        len = FIgetnArgs(finfo) * sizeof(AttrNumber);
     else
-	len = natts * sizeof(AttrNumber);
-    
+        len = natts * sizeof(AttrNumber);
+
     newind->il_attnos = (AttrNumber *) palloc(len);
-    memmove(newind->il_attnos, attnos, len); 
-    
+    memmove(newind->il_attnos, attnos, len);
+
     if ((newind->il_nparams = nparams) > 0) {
-	v = newind->il_params = (Datum *) palloc(2 * nparams * sizeof(Datum));
-	nparams *= 2;
-	while (nparams-- > 0) {
-	    *v = (Datum) palloc(strlen((char *)(*params)) + 1);
-	    strcpy((char *) *v++, (char *) *params++);
-	}
+        v = newind->il_params = (Datum *) palloc(2 * nparams * sizeof(Datum));
+        nparams *= 2;
+        while (nparams-- > 0) {
+            *v = (Datum) palloc(strlen((char *) (*params)) + 1);
+            strcpy((char *) *v++, (char *) *params++);
+        }
     } else {
-	newind->il_params = (Datum *) NULL;
+        newind->il_params = (Datum *) NULL;
     }
-    
+
     if (finfo != (FuncIndexInfo *) NULL) {
-	newind->il_finfo = (FuncIndexInfo *) palloc(sizeof(FuncIndexInfo));
- 	memmove(newind->il_finfo, finfo, sizeof(FuncIndexInfo)); 
+        newind->il_finfo = (FuncIndexInfo *) palloc(sizeof(FuncIndexInfo));
+        memmove(newind->il_finfo, finfo, sizeof(FuncIndexInfo));
     } else {
-	newind->il_finfo = (FuncIndexInfo *) NULL;
+        newind->il_finfo = (FuncIndexInfo *) NULL;
     }
-    
+
     if (predInfo != NULL) {
-	newind->il_predInfo = (PredInfo*)palloc(sizeof(PredInfo));
-	newind->il_predInfo->pred = predInfo->pred;
-	newind->il_predInfo->oldPred = predInfo->oldPred;
+        newind->il_predInfo = (PredInfo *) palloc(sizeof(PredInfo));
+        newind->il_predInfo->pred = predInfo->pred;
+        newind->il_predInfo->oldPred = predInfo->oldPred;
     } else {
-	newind->il_predInfo = NULL;
+        newind->il_predInfo = NULL;
     }
-    
+
     newind->il_next = ILHead;
-    
+
     ILHead = newind;
-    
+
     (void) MemoryContextSwitchTo(oldcxt);
 }
 
 void
-build_indices()
-{
+build_indices() {
     Relation heap;
     Relation ind;
-    
-    for ( ; ILHead != (IndexList *) NULL; ILHead = ILHead->il_next) {
-	heap = heap_openr(ILHead->il_heap);
-	ind = index_openr(ILHead->il_ind);
-	index_build(heap, ind, ILHead->il_natts, ILHead->il_attnos,
-		    ILHead->il_nparams, ILHead->il_params, ILHead->il_finfo,
-		    ILHead->il_predInfo);
-	
-	/*
-	 * All of the rest of this routine is needed only because in bootstrap
-	 * processing we don't increment xact id's.  The normal DefineIndex
-	 * code replaces a pg_class tuple with updated info including the
-	 * relhasindex flag (which we need to have updated).  Unfortunately, 
-	 * there are always two indices defined on each catalog causing us to 
-	 * update the same pg_class tuple twice for each catalog getting an 
-	 * index during bootstrap resulting in the ghost tuple problem (see 
-	 * heap_replace).  To get around this we change the relhasindex 
-	 * field ourselves in this routine keeping track of what catalogs we 
-	 * already changed so that we don't modify those tuples twice.  The 
-	 * normal mechanism for updating pg_class is disabled during bootstrap.
-	 *
-	 *		-mer 
-	 */
-	heap = heap_openr(ILHead->il_heap);
-	
-	if (!BootstrapAlreadySeen(heap->rd_id))
-	    UpdateStats(heap->rd_id, 0, true);
+
+    for (; ILHead != (IndexList *) NULL; ILHead = ILHead->il_next) {
+        heap = heap_openr(ILHead->il_heap);
+        ind = index_openr(ILHead->il_ind);
+        index_build(heap, ind, ILHead->il_natts, ILHead->il_attnos,
+                    ILHead->il_nparams, ILHead->il_params, ILHead->il_finfo,
+                    ILHead->il_predInfo);
+
+        /*
+         * All of the rest of this routine is needed only because in bootstrap
+         * processing we don't increment xact id's.  The normal DefineIndex
+         * code replaces a pg_class tuple with updated info including the
+         * relhasindex flag (which we need to have updated).  Unfortunately, 
+         * there are always two indices defined on each catalog causing us to 
+         * update the same pg_class tuple twice for each catalog getting an 
+         * index during bootstrap resulting in the ghost tuple problem (see 
+         * heap_replace).  To get around this we change the relhasindex 
+         * field ourselves in this routine keeping track of what catalogs we 
+         * already changed so that we don't modify those tuples twice.  The 
+         * normal mechanism for updating pg_class is disabled during bootstrap.
+         *
+         *		-mer 
+         */
+        heap = heap_openr(ILHead->il_heap);
+
+        if (!BootstrapAlreadySeen(heap->rd_id))
+            UpdateStats(heap->rd_id, 0, true);
     }
 }
 

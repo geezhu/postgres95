@@ -25,14 +25,14 @@
  * ---------------------
  */
 typedef struct QueryDesc {
-    CmdType		operation; /* CMD_SELECT, CMD_UPDATE, etc. */
-    Query		*parsetree; 
-    Plan		*plantree;
-    CommandDest		dest;  /* the destination output of the execution */
+    CmdType operation; /* CMD_SELECT, CMD_UPDATE, etc. */
+    Query *parsetree;
+    Plan *plantree;
+    CommandDest dest;  /* the destination output of the execution */
 } QueryDesc;
 
 /* in pquery.c */
 extern QueryDesc *CreateQueryDesc(Query *parsetree, Plan *plantree,
-				  CommandDest dest);
+                                  CommandDest dest);
 
 #endif /*  EXECDESC_H  */

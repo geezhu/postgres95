@@ -27,15 +27,14 @@
  *    
  */
 bool
-valid_or_clause(CInfo *clauseinfo)
-{
-     if (clauseinfo != NULL && 
-	 !single_node((Node*)clauseinfo->clause) && 
-	 !clauseinfo->notclause &&
-	 or_clause((Node*)clauseinfo->clause)) 
-       return(true);
-     else
-       return(false);
+valid_or_clause(CInfo *clauseinfo) {
+    if (clauseinfo != NULL &&
+        !single_node((Node *) clauseinfo->clause) &&
+        !clauseinfo->notclause &&
+        or_clause((Node *) clauseinfo->clause))
+        return (true);
+    else
+        return (false);
 }
 
 /*    
@@ -45,17 +44,16 @@ valid_or_clause(CInfo *clauseinfo)
  *    
  */
 List *
-get_actual_clauses(List *clauseinfo_list)
-{
+get_actual_clauses(List *clauseinfo_list) {
     List *temp = NIL;
     List *result = NIL;
-    CInfo *clause = (CInfo *)NULL;
+    CInfo *clause = (CInfo *) NULL;
 
-    foreach(temp,clauseinfo_list) {
-	clause = (CInfo *)lfirst(temp);
-	result = lappend(result,clause->clause);
+    foreach(temp, clauseinfo_list) {
+        clause = (CInfo *) lfirst(temp);
+        result = lappend(result, clause->clause);
     }
-    return(result);
+    return (result);
 }
 
 /*    
@@ -85,27 +83,26 @@ get_actual_clauses(List *clauseinfo_list)
  */
 void
 get_relattvals(List *clauseinfo_list,
-	       List **attnos,
-	       List **values,
-	       List **flags)
-{
+               List **attnos,
+               List **values,
+               List **flags) {
     List *result1 = NIL;
     List *result2 = NIL;
     List *result3 = NIL;
-    CInfo *temp = (CInfo *)NULL;
+    CInfo *temp = (CInfo *) NULL;
     List *i = NIL;
 
-    foreach (i,clauseinfo_list) {
-	int dummy;
-	AttrNumber attno;
-	Datum constval;
-	int flag;
+    foreach (i, clauseinfo_list) {
+        int dummy;
+        AttrNumber attno;
+        Datum constval;
+        int flag;
 
-	temp = (CInfo *)lfirst(i);
-	get_relattval((Node*)temp->clause, &dummy, &attno, &constval, &flag);
-	result1 = lappendi(result1, attno);
-	result2 = lappendi(result2, constval);
-	result3 = lappendi(result3, flag);
+        temp = (CInfo *) lfirst(i);
+        get_relattval((Node *) temp->clause, &dummy, &attno, &constval, &flag);
+        result1 = lappendi(result1, attno);
+        result2 = lappendi(result2, constval);
+        result3 = lappendi(result3, flag);
     }
 
     *attnos = result1;
@@ -130,31 +127,30 @@ get_relattvals(List *clauseinfo_list,
  */
 void
 get_joinvars(Oid relid,
-	     List *clauseinfo_list,
-	     List **attnos,
-	     List **values,
-	     List **flags)
-{
+             List *clauseinfo_list,
+             List **attnos,
+             List **values,
+             List **flags) {
     List *result1 = NIL;
     List *result2 = NIL;
     List *result3 = NIL;
     List *temp;
-     
+
     foreach(temp, clauseinfo_list) {
-	CInfo *clauseinfo = lfirst(temp);
-	Expr *clause = clauseinfo->clause;
+        CInfo *clauseinfo = lfirst(temp);
+        Expr *clause = clauseinfo->clause;
 
-	if( IsA (get_leftop(clause),Var) &&
-	   (relid == (get_leftop(clause))->varno)) {
+        if (IsA (get_leftop(clause), Var) &&
+            (relid == (get_leftop(clause))->varno)) {
 
-	    result1 = lappendi(result1, (get_leftop(clause))->varattno);
-	    result2 = lappend(result2, "");
-	    result3 = lappendi(result3, _SELEC_CONSTANT_RIGHT_);
-	} else {
-	    result1 = lappendi(result1, (get_rightop(clause))->varattno);
-	    result2 = lappend(result2, "");
-	    result3 = lappendi(result3, _SELEC_CONSTANT_LEFT_);
-	}
+            result1 = lappendi(result1, (get_leftop(clause))->varattno);
+            result2 = lappend(result2, "");
+            result3 = lappendi(result3, _SELEC_CONSTANT_RIGHT_);
+        } else {
+            result1 = lappendi(result1, (get_rightop(clause))->varattno);
+            result2 = lappend(result2, "");
+            result3 = lappendi(result3, _SELEC_CONSTANT_LEFT_);
+        }
     }
     *attnos = result1;
     *values = result2;
@@ -169,19 +165,18 @@ get_joinvars(Oid relid,
  *    
  */
 List *
-get_opnos(List *clauseinfo_list)
-{
-    CInfo *temp = (CInfo *)NULL;
+get_opnos(List *clauseinfo_list) {
+    CInfo *temp = (CInfo *) NULL;
     List *result = NIL;
     List *i = NIL;
 
-    foreach(i,clauseinfo_list) {
-	temp = (CInfo *)lfirst(i);
-	result =
-	    lappendi(result,
-		     (((Oper*)temp->clause->oper)->opno));
+    foreach(i, clauseinfo_list) {
+        temp = (CInfo *) lfirst(i);
+        result =
+                lappendi(result,
+                         (((Oper *) temp->clause->oper)->opno));
     }
-    return(result);
+    return (result);
 }
 
 

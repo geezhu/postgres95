@@ -40,7 +40,7 @@
  *
  * ----------------------------------------------------------------
  */
-#ifndef	C_H
+#ifndef    C_H
 #define C_H
 
 /* ----------------------------------------------------------------
@@ -52,17 +52,17 @@
  *	Boolean value, either true or false.
  *
  */
-#define false	((char) 0)
-#define true	((char) 1)
-typedef char	bool;
-typedef bool	*BoolPtr;
+#define false    ((char) 0)
+#define true    ((char) 1)
+typedef char bool;
+typedef bool *BoolPtr;
 
 #ifndef TRUE
-#define TRUE	1
+#define TRUE    1
 #endif /* TRUE */
 
 #ifndef FALSE
-#define FALSE	0
+#define FALSE    0
 #endif /* FALSE */
 
 /* ----------------------------------------------------------------
@@ -74,7 +74,7 @@ typedef bool	*BoolPtr;
  * ----------------------------------------------------------------
  */
 
-#ifdef	__STDC__ /* ANSI C */
+#ifdef    __STDC__ /* ANSI C */
 
 /*
  * Pointer --
@@ -87,15 +87,15 @@ typedef bool	*BoolPtr;
  */
 typedef char *Pointer;
 
-#ifndef	NULL
+#ifndef    NULL
 /*
  * NULL --
  *	Null pointer.
  */
 #define NULL	((void *) 0)
-#endif	/* !defined(NULL) */
+#endif    /* !defined(NULL) */
 
-#define	HAVE_ANSI_CPP	/* all ANSI C compilers must have this! */
+#define    HAVE_ANSI_CPP    /* all ANSI C compilers must have this! */
 #if defined(NEED_STD_HDRS)
 #undef NEED_STD_HDRS	/* all ANSI systems must have stddef/stdlib */
 #endif /* NEED_STD_HDRS */
@@ -141,7 +141,7 @@ typedef char	*Pointer;
  */
 #define volatile	/* volatile */
 
-#endif	/* !defined(__STDC__) */ /* NOT ANSI C */
+#endif    /* !defined(__STDC__) */ /* NOT ANSI C */
 
 /*
  * CppAsString --
@@ -151,13 +151,13 @@ typedef char	*Pointer;
  */
 #if defined(HAVE_ANSI_CPP)
 
-#define CppAsString(identifier)	#identifier
-#define CppConcat(x, y)		x##y
-#define CppConcat0(x, y)	x##y
-#define CppConcat1(x, y)	x##y
-#define CppConcat2(x, y)	x##y
-#define CppConcat3(x, y)	x##y
-#define CppConcat4(x, y)	x##y
+#define CppAsString(identifier)    #identifier
+#define CppConcat(x, y)        x##y
+#define CppConcat0(x, y)    x##y
+#define CppConcat1(x, y)    x##y
+#define CppConcat2(x, y)    x##y
+#define CppConcat3(x, y)    x##y
+#define CppConcat4(x, y)    x##y
 
 #else /* !HAVE_ANSI_CPP */
 
@@ -181,7 +181,7 @@ typedef char	*Pointer;
 
 #endif /* !HAVE_ANSI_CPP */
 
-#ifndef __GNUC__	/* GNU cc */
+#ifndef __GNUC__    /* GNU cc */
 # define inline
 #endif
 
@@ -193,8 +193,10 @@ typedef char	*Pointer;
  */
 #include "stdlib.h"
 #else /* NEED_STD_HDRS */
+
 #include <stddef.h>
 #include <stdlib.h>
+
 #endif /* NEED_STD_HDRS */
 
 /* ----------------------------------------------------------------
@@ -207,18 +209,18 @@ typedef char	*Pointer;
  *	Signed integer, AT LEAST N BITS IN SIZE,
  *	used for numerical computations.
  */
-typedef signed char	int8;		/* >= 8 bits */
-typedef signed short	int16;		/* >= 16 bits */
-typedef signed int	int32;		/* >= 32 bits */
+typedef signed char int8;        /* >= 8 bits */
+typedef signed short int16;        /* >= 16 bits */
+typedef signed int int32;        /* >= 32 bits */
 
 /*
  * uintN --
  *	Unsigned integer, AT LEAST N BITS IN SIZE,
  *	used for numerical computations.
  */
-typedef unsigned char	uint8;		/* >= 8 bits */
-typedef unsigned short	uint16;		/* >= 16 bits */
-typedef unsigned int	uint32;		/* >= 32 bits */
+typedef unsigned char uint8;        /* >= 8 bits */
+typedef unsigned short uint16;        /* >= 16 bits */
+typedef unsigned int uint32;        /* >= 32 bits */
 
 /*
  * floatN --
@@ -228,41 +230,41 @@ typedef unsigned int	uint32;		/* >= 32 bits */
  *	Since sizeof(floatN) may be > sizeof(char *), always pass
  *	floatN by reference.
  */
-typedef float		float32data;
-typedef double		float64data;
-typedef float		*float32;
-typedef double		*float64;
+typedef float float32data;
+typedef double float64data;
+typedef float *float32;
+typedef double *float64;
 
 /*
  * boolN --
  *	Boolean value, AT LEAST N BITS IN SIZE.
  */
-typedef uint8		bool8;		/* >= 8 bits */
-typedef uint16		bool16;		/* >= 16 bits */
-typedef uint32		bool32;		/* >= 32 bits */
+typedef uint8 bool8;        /* >= 8 bits */
+typedef uint16 bool16;        /* >= 16 bits */
+typedef uint32 bool32;        /* >= 32 bits */
 
 /*
  * bitsN --
  *	Unit of bitwise operation, AT LEAST N BITS IN SIZE.
  */
-typedef uint8		bits8;		/* >= 8 bits */
-typedef uint16		bits16;		/* >= 16 bits */
-typedef uint32		bits32;		/* >= 32 bits */
+typedef uint8 bits8;        /* >= 8 bits */
+typedef uint16 bits16;        /* >= 16 bits */
+typedef uint32 bits32;        /* >= 32 bits */
 
 /*
  * wordN --
  *	Unit of storage, AT LEAST N BITS IN SIZE,
  *	used to fetch/store data.
  */
-typedef uint8		word8;		/* >= 8 bits */
-typedef uint16		word16;		/* >= 16 bits */
-typedef uint32		word32;		/* >= 32 bits */
+typedef uint8 word8;        /* >= 8 bits */
+typedef uint16 word16;        /* >= 16 bits */
+typedef uint32 word32;        /* >= 32 bits */
 
 /*
  * Size --
  *	Size of any memory resident object, as returned by sizeof.
  */
-typedef unsigned int	Size;
+typedef unsigned int Size;
 
 /*
  * Index --
@@ -271,11 +273,11 @@ typedef unsigned int	Size;
  * Note:
  *	Indices are non negative.
  */
-typedef unsigned int	Index;
+typedef unsigned int Index;
 
 #define MAXDIM 6
 typedef struct {
-	int indx[MAXDIM];
+    int indx[MAXDIM];
 } IntArray;
 
 /*
@@ -286,7 +288,7 @@ typedef struct {
  *	This differs from an Index in that an Index is always
  *	non negative, whereas Offset may be negative.
  */
-typedef signed int	Offset;
+typedef signed int Offset;
 
 /* ----------------------------------------------------------------
  *	 	Section 4:  datum type + support macros
@@ -317,8 +319,8 @@ typedef signed int	Offset;
  *	This file is MACHINE AND COMPILER dependent!!!
  */
 
-typedef unsigned long Datum;	/* XXX sizeof(long) >= sizeof(void *) */
-typedef Datum *       DatumPtr;
+typedef unsigned long Datum;    /* XXX sizeof(long) >= sizeof(void *) */
+typedef Datum *DatumPtr;
 
 #define GET_1_BYTE(datum)   (((Datum) (datum)) & 0x000000ff)
 #define GET_2_BYTES(datum)  (((Datum) (datum)) & 0x0000ffff)
@@ -501,13 +503,13 @@ typedef Datum *       DatumPtr;
  * BoolIsValid --
  *	True iff bool is valid.
  */
-#define	BoolIsValid(boolean)	((boolean) == false || (boolean) == true)
+#define    BoolIsValid(boolean)    ((boolean) == false || (boolean) == true)
 
 /*
  * PointerIsValid --
  *	True iff pointer is valid.
  */
-#define PointerIsValid(pointer)	(bool)((void*)(pointer) != NULL)
+#define PointerIsValid(pointer)    (bool)((void*)(pointer) != NULL)
 
 /*
  * PointerIsInBounds --
@@ -518,14 +520,14 @@ typedef Datum *       DatumPtr;
  *	i.e. closed on the left and open on the right.
  */
 #define PointerIsInBounds(pointer, min, max) \
-	((min) <= (pointer) && (pointer) < (max))
+    ((min) <= (pointer) && (pointer) < (max))
 
 /*
  * PointerIsAligned --
  *	True iff pointer is properly aligned to point to the given type.
  */
-#define PointerIsAligned(pointer, type)	\
-	(((long)(pointer) % (sizeof (type))) == 0)
+#define PointerIsAligned(pointer, type)    \
+    (((long)(pointer) % (sizeof (type))) == 0)
 
 /* ----------------------------------------------------------------
  *		Section 6:  offsetof, lengthof, endof
@@ -546,13 +548,13 @@ typedef Datum *       DatumPtr;
  * lengthof --
  *	Number of elements in an array.
  */
-#define lengthof(array)	(sizeof (array) / sizeof ((array)[0]))
+#define lengthof(array)    (sizeof (array) / sizeof ((array)[0]))
 
 /*
  * endof --
  *	Address of the element one past the last in an array.
  */
-#define endof(array)	(&array[lengthof(array)])
+#define endof(array)    (&array[lengthof(array)])
 
 /* ----------------------------------------------------------------
  *		Section 7:  exception handling definitions
@@ -565,7 +567,7 @@ typedef Datum *       DatumPtr;
 
 typedef char *ExcMessage;
 typedef struct Exception {
-	ExcMessage	message;
+    ExcMessage message;
 } Exception;
 
 /*
@@ -583,9 +585,9 @@ typedef struct Exception {
  *
  */
 #define Trap(condition, exception) \
-	{ if (condition) \
-		ExceptionalCondition(CppAsString(condition), &(exception), \
-			(char*)NULL, __FILE__, __LINE__); }
+    { if (condition) \
+        ExceptionalCondition(CppAsString(condition), &(exception), \
+            (char*)NULL, __FILE__, __LINE__); }
 
 /*    
  *  TrapMacro is the same as Trap but it's intended for use in macros:
@@ -596,10 +598,10 @@ typedef struct Exception {
  */
 #define TrapMacro(condition, exception) \
     ((bool) ((! condition) || \
-	     (ExceptionalCondition(CppAsString(condition), \
-				  &(exception), \
-				  (char*) NULL, __FILE__, __LINE__))))
-    
+         (ExceptionalCondition(CppAsString(condition), \
+                  &(exception), \
+                  (char*) NULL, __FILE__, __LINE__))))
+
 #ifdef NO_ASSERT_CHECKING
 #define Assert(condition)
 #define AssertMacro(condition)	true
@@ -607,16 +609,16 @@ typedef struct Exception {
 #define AssertState(condition)
 #else
 #define Assert(condition) \
-	Trap(!(condition), FailedAssertion)
+    Trap(!(condition), FailedAssertion)
 
 #define AssertMacro(condition) \
-	TrapMacro(!(condition), FailedAssertion)
+    TrapMacro(!(condition), FailedAssertion)
 
 #define AssertArg(condition) \
-	Trap(!(condition), BadArg)
+    Trap(!(condition), BadArg)
 
 #define AssertState(condition) \
-	Trap(!(condition), BadState)
+    Trap(!(condition), BadState)
 
 #endif   /* NO_ASSERT_CHECKING */
 
@@ -626,9 +628,9 @@ typedef struct Exception {
  *
  */
 #define LogTrap(condition, exception, printArgs) \
-	{ if (condition) \
-		ExceptionalCondition(CppAsString(condition), &(exception), \
-			form printArgs, __FILE__, __LINE__); }
+    { if (condition) \
+        ExceptionalCondition(CppAsString(condition), &(exception), \
+            form printArgs, __FILE__, __LINE__); }
 
 /*    
  *  LogTrapMacro is the same as LogTrap but it's intended for use in macros:
@@ -637,10 +639,10 @@ typedef struct Exception {
  */
 #define LogTrapMacro(condition, exception, printArgs) \
     ((bool) ((! condition) || \
-	     (ExceptionalCondition(CppAsString(condition), \
-				   &(exception), \
-				   form printArgs, __FILE__, __LINE__))))
-    
+         (ExceptionalCondition(CppAsString(condition), \
+                   &(exception), \
+                   form printArgs, __FILE__, __LINE__))))
+
 #ifdef NO_ASSERT_CHECKING
 #define LogAssert(condition, printArgs)
 #define LogAssertMacro(condition, printArgs) true
@@ -648,16 +650,16 @@ typedef struct Exception {
 #define LogAssertState(condition, printArgs)
 #else
 #define LogAssert(condition, printArgs) \
-	LogTrap(!(condition), FailedAssertion, printArgs)
+    LogTrap(!(condition), FailedAssertion, printArgs)
 
 #define LogAssertMacro(condition, printArgs) \
-	LogTrapMacro(!(condition), FailedAssertion, printArgs)
+    LogTrapMacro(!(condition), FailedAssertion, printArgs)
 
 #define LogAssertArg(condition, printArgs) \
-	LogTrap(!(condition), BadArg, printArgs)
+    LogTrap(!(condition), BadArg, printArgs)
 
 #define LogAssertState(condition, printArgs) \
-	LogTrap(!(condition), BadState, printArgs)
+    LogTrap(!(condition), BadState, printArgs)
 
 #endif   /* NO_ASSERT_CHECKING */
 
@@ -669,33 +671,33 @@ typedef struct Exception {
  * Max --
  *	Return the maximum of two numbers.
  */
-#define Max(x, y)	((x) > (y) ? (x) : (y))
+#define Max(x, y)    ((x) > (y) ? (x) : (y))
 
 /*
  * Min --
  *	Return the minimum of two numbers.
  */
-#define Min(x, y)	((x) < (y) ? (x) : (y))
+#define Min(x, y)    ((x) < (y) ? (x) : (y))
 
 /*
  * Abs --
  *	Return the absolute value of the argument.
  */
-#define Abs(x)		((x) >= 0 ? (x) : -(x))
+#define Abs(x)        ((x) >= 0 ? (x) : -(x))
 
 /* ----------------------------------------------------------------
  *		Section 9: externs
  * ----------------------------------------------------------------
  */
 
-extern Exception	FailedAssertion;
-extern Exception	BadArg;
-extern Exception	BadState;
+extern Exception FailedAssertion;
+extern Exception BadArg;
+extern Exception BadState;
 
 /* in utils/error/assert.c */
 extern int ExceptionalCondition(char *conditionName,
-				Exception *exceptionP, char *details,
-				char *fileName, int lineNumber);
+                                Exception *exceptionP, char *details,
+                                char *fileName, int lineNumber);
 
 
 /* ----------------
@@ -737,7 +739,7 @@ extern char *form(char *fmt, ...);
  * ----------------------------------------------------------------
  */
 
-#if defined(PORTNAME_hpux) 
+#if defined(PORTNAME_hpux)
 #include "port/hpux/fixade.h"		/* for 8.07 unaligned access fixup */
 #endif /* PORTNAME_hpux */
 
@@ -747,9 +749,9 @@ extern char *form(char *fmt, ...);
 
 /* These are for things that are one way on Unix and another on NT */
 #ifndef WIN32
-#define	NULL_DEV	"/dev/null"
-#define COPY_CMD	"cp"
-#define SEP_CHAR	'/'
+#define    NULL_DEV    "/dev/null"
+#define COPY_CMD    "cp"
+#define SEP_CHAR    '/'
 #else
 #define NULL_DEV	"NUL"
 #define COPY_CMD	"copy"
@@ -765,4 +767,4 @@ extern char *form(char *fmt, ...);
  *	end of c.h
  * ----------------
  */
-#endif	/* C_H */
+#endif    /* C_H */

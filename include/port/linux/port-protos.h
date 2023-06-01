@@ -13,10 +13,13 @@
 #ifndef PORT_PROTOS_H
 #define PORT_PROTOS_H
 
-#include "fmgr.h"			/* for func_ptr */
+#include "fmgr.h"            /* for func_ptr */
 #include "utils/dynamic_loader.h"
+
 #ifdef LINUX_ELF
+
 #include "dlfcn.h"
+
 #endif
 
 /* dynloader.c */
@@ -26,10 +29,10 @@
 #define pg_dlclose(handle)		({ dld_unlink_by_file(handle, 1); free(handle); })
 #else
 /* #define	pg_dlopen(f)	dlopen(f, 1) */
-#define	pg_dlopen(f)	dlopen(f, 2)
-#define	pg_dlsym	dlsym
-#define	pg_dlclose	dlclose
-#define	pg_dlerror	dlerror
+#define    pg_dlopen(f)    dlopen(f, 2)
+#define    pg_dlsym    dlsym
+#define    pg_dlclose    dlclose
+#define    pg_dlerror    dlerror
 #endif
 
 /* port.c */

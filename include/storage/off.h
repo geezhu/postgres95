@@ -10,11 +10,11 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	OFF_H
+#ifndef    OFF_H
 #define OFF_H
 
 #include "c.h"
-#include "machine.h"		/* for BLCKSZ */
+#include "machine.h"        /* for BLCKSZ */
 #include "storage/itemid.h"
 
 /*
@@ -23,12 +23,12 @@
  * this is a 1-based index into the linp (ItemIdData) array in the
  * header of each disk page.
  */
-typedef uint16			OffsetNumber;
+typedef uint16 OffsetNumber;
 
-#define InvalidOffsetNumber	((OffsetNumber) 0)
-#define FirstOffsetNumber	((OffsetNumber) 1)
-#define	MaxOffsetNumber		((OffsetNumber) (BLCKSZ / sizeof(ItemIdData)))
-#define	OffsetNumberMask	(0xffff)		/* valid uint16 bits */
+#define InvalidOffsetNumber    ((OffsetNumber) 0)
+#define FirstOffsetNumber    ((OffsetNumber) 1)
+#define    MaxOffsetNumber        ((OffsetNumber) (BLCKSZ / sizeof(ItemIdData)))
+#define    OffsetNumberMask    (0xffff)        /* valid uint16 bits */
 
 /* ----------------
  *	support macros
@@ -41,7 +41,7 @@ typedef uint16			OffsetNumber;
  */
 #define OffsetNumberIsValid(offsetNumber) \
     ((bool) ((offsetNumber != InvalidOffsetNumber) && \
-	     (offsetNumber <= MaxOffsetNumber)))
+         (offsetNumber <= MaxOffsetNumber)))
 
 /*
  * OffsetNumberNext --
@@ -57,4 +57,4 @@ typedef uint16			OffsetNumber;
 #define OffsetNumberPrev(offsetNumber) \
     ((OffsetNumber) (-1 + (offsetNumber)))
 
-#endif	/* OFF_H */
+#endif    /* OFF_H */

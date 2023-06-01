@@ -38,21 +38,25 @@
  */
 #include <stdio.h>
 #include <sys/types.h>
+
 #ifndef WIN32
+
 #include <sys/socket.h>
 #include <netdb.h>
 #include <netinet/in.h>
+
 #else
 #include <winsock.h>
 #endif /*WIN32 */
+
 #include <fcntl.h>
 #include <errno.h>
 
 #include "postgres.h"
-#include "miscadmin.h" 
+#include "miscadmin.h"
 #include "utils/elog.h"
 #include "storage/ipc.h"
-#include "libpq/pqcomm.h"	/* where the declarations go */
+#include "libpq/pqcomm.h"    /* where the declarations go */
 #include "libpq/libpq.h"
 
 /*
@@ -63,27 +67,27 @@
  *
  */
 int
-PacketReceive(Port *port,	/* receive port */
-	      PacketBuf *buf,   /* MAX_PACKET_SIZE-worth of buffer space */
-	      bool nonBlocking) /* NON_BLOCKING or BLOCKING i/o */
+PacketReceive(Port *port,    /* receive port */
+              PacketBuf *buf,   /* MAX_PACKET_SIZE-worth of buffer space */
+              bool nonBlocking) /* NON_BLOCKING or BLOCKING i/o */
 {
-    PacketLen   max_size = sizeof(PacketBuf);
-    PacketLen	cc;	    	/* character count -- bytes recvd */
-    PacketLen	packetLen; 	/* remaining packet chars to read */
-    Addr	tmp;	   	/* curr recv buf pointer */
-    int		addrLen = sizeof(struct sockaddr_in);
-    int         hdrLen;
-    int		flag;
-    int		decr;
-    
+    PacketLen max_size = sizeof(PacketBuf);
+    PacketLen cc;            /* character count -- bytes recvd */
+    PacketLen packetLen;    /* remaining packet chars to read */
+    Addr tmp;        /* curr recv buf pointer */
+    int addrLen = sizeof(struct sockaddr_in);
+    int hdrLen;
+    int flag;
+    int decr;
+
     hdrLen = sizeof(buf->len);
 
     if (nonBlocking == NON_BLOCKING) {
-	flag = MSG_PEEK;
-	decr = 0;
+        flag = MSG_PEEK;
+        decr = 0;
     } else {
-	flag = 0;
-	decr = hdrLen;
+        flag = 0;
+        decr = hdrLen;
     }
     /*
      * Assume port->nBytes is zero unless we were interrupted during
@@ -91,90 +95,89 @@ PacketReceive(Port *port,	/* receive port */
      * information so we know how many bytes to read.  Life would
      * be very complicated if we read too much data (buffering).
      */
-    tmp = ((Addr)buf) + port->nBytes;
+    tmp = ((Addr) buf) + port->nBytes;
 
-    if (port->nBytes >= hdrLen)  {
-	packetLen = ntohl(buf->len) - port->nBytes;
+    if (port->nBytes >= hdrLen) {
+        packetLen = ntohl(buf->len) - port->nBytes;
+    } else {
+        /* peeking into the incoming message */
+        cc = recvfrom(port->sock, (char *) &(buf->len), hdrLen, flag,
+                      (struct sockaddr *) &(port->raddr), &addrLen);
+        if (cc < hdrLen) {
+            /* if cc is negative, the system call failed */
+            if (cc < 0) {
+                return (STATUS_ERROR);
+            }
+                /* 
+                 * cc == 0 means the connection was broken at the 
+                 * other end.
+                 */
+            else if (!cc) {
+                return (STATUS_INVALID);
+
+            } else {
+                /*
+                 * Worst case.  We didn't even read in enough data to
+                 * get the header length.
+                 * since we are using a data stream, 
+                 * this happens only if the client is mallicious.
+                 *
+                 * Don't save the number of bytes we've read so far.
+                 * Since we only peeked at the incoming message, the
+                 * kernel is going to keep it for us.
+                 */
+                return (STATUS_NOT_DONE);
+            }
+        } else {
+            /*
+             * great. got the header. now get the true length (including
+             * header size).
+             */
+            packetLen = ntohl(buf->len);
+            /*
+             * if someone is sending us junk, close the connection
+             */
+            if (packetLen > max_size) {
+                port->nBytes = packetLen;
+                return (STATUS_BAD_PACKET);
+            }
+            packetLen -= decr;
+            tmp += decr - port->nBytes;
+        }
     }
-     else {
-      /* peeking into the incoming message */
-       cc = recvfrom(port->sock, (char *)&(buf->len), hdrLen, flag, 
-                      (struct sockaddr*) &(port->raddr), &addrLen);
-	if (cc < hdrLen) {
-	    /* if cc is negative, the system call failed */
-	    if (cc < 0) {
-		return(STATUS_ERROR);
-	    }
-	    /* 
-	     * cc == 0 means the connection was broken at the 
-	     * other end.
-	     */
-	    else if (! cc) {
-		return(STATUS_INVALID);
-		
-	    } else {
-		/*
-		 * Worst case.  We didn't even read in enough data to
-		 * get the header length.
-		 * since we are using a data stream, 
-		 * this happens only if the client is mallicious.
-		 *
-		 * Don't save the number of bytes we've read so far.
-		 * Since we only peeked at the incoming message, the
-		 * kernel is going to keep it for us.
-		 */
-		return(STATUS_NOT_DONE);
-	    }
-	} else {
-	    /*
-	     * great. got the header. now get the true length (including
-	     * header size).
-	     */
-	    packetLen = ntohl(buf->len);
-           /*
-            * if someone is sending us junk, close the connection
-            */
-           if (packetLen > max_size) {
-               port->nBytes = packetLen;
-               return(STATUS_BAD_PACKET);
-           }
-	    packetLen -= decr;
-	    tmp += decr - port->nBytes;
-	}
-    }
-    
+
     /*
      * Now that we know how big it is, read the packet.  We read
      * the entire packet, since the last call was just a peek.
      */
-    while (packetLen) { 
-	cc = recvfrom(port->sock, tmp, packetLen, 0,
-		      (struct sockaddr*) &(port->raddr), &addrLen);
-	if (cc < 0)
-	    return(STATUS_ERROR);
-	/* 
-	 * cc == 0 means the connection was broken at the 
-	 * other end.
-	 */
-	else if (! cc) 
-	    return(STATUS_INVALID);
-	
+    while (packetLen) {
+        cc = recvfrom(port->sock, tmp, packetLen, 0,
+                      (struct sockaddr *) &(port->raddr), &addrLen);
+        if (cc < 0)
+            return (STATUS_ERROR);
+            /* 
+             * cc == 0 means the connection was broken at the 
+             * other end.
+             */
+        else if (!cc)
+            return (STATUS_INVALID);
+
 /*
    fprintf(stderr,"expected packet of %d bytes, got %d bytes\n",
            packetLen, cc);
 */
-	tmp += cc;
-	packetLen -= cc;
-	
-	/* if non-blocking, we're done. */
-	if (nonBlocking && packetLen) {
-	    port->nBytes += cc;
-	    return(STATUS_NOT_DONE);
-	}
+        tmp += cc;
+        packetLen -= cc;
+
+        /* if non-blocking, we're done. */
+        if (nonBlocking && packetLen) {
+            port->nBytes += cc;
+            return (STATUS_NOT_DONE);
+        }
     }
-    
+
     port->nBytes = 0;
-    return(STATUS_OK);
+    return (STATUS_OK);
 }
 
 /*
@@ -188,30 +191,29 @@ PacketReceive(Port *port,	/* receive port */
  */
 int
 PacketSend(Port *port,
-	   PacketBuf *buf,
-	   PacketLen len,
-	   bool nonBlocking)
-{
-    PacketLen	totalLen;
-    int		addrLen = sizeof(struct sockaddr_in);
-    
+           PacketBuf *buf,
+           PacketLen len,
+           bool nonBlocking) {
+    PacketLen totalLen;
+    int addrLen = sizeof(struct sockaddr_in);
+
     Assert(!nonBlocking);
     Assert(buf);
-    
+
     totalLen = len;
-    
+
     len = sendto(port->sock, (Addr) buf, totalLen, /* flags */ 0,
-		 (struct sockaddr *)&(port->raddr), addrLen);
-    
+                 (struct sockaddr *) &(port->raddr), addrLen);
+
     if (len < totalLen) {
-	(void) sprintf(PQerrormsg,
-		       "FATAL: PacketSend: couldn't send complete packet: errno=%d\n",
-		       errno);
-	fputs(PQerrormsg, stderr);
-	return(STATUS_ERROR);
+        (void) sprintf(PQerrormsg,
+                       "FATAL: PacketSend: couldn't send complete packet: errno=%d\n",
+                       errno);
+        fputs(PQerrormsg, stderr);
+        return (STATUS_ERROR);
     }
-    
-    return(STATUS_OK);
+
+    return (STATUS_OK);
 }
 
 /*

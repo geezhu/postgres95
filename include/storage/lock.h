@@ -23,8 +23,8 @@
 extern SPINLOCK LockMgrLock;
 typedef int MASK;
 
-#define INIT_TABLE_SIZE		100
-#define MAX_TABLE_SIZE 		1000
+#define INIT_TABLE_SIZE        100
+#define MAX_TABLE_SIZE        1000
 
 
 /* ----------------------
@@ -60,9 +60,9 @@ typedef int LockTableId;
 
 
 typedef struct ltag {
-    Oid			relId;
-    Oid			dbId;
-    ItemPointerData	tupleId;
+    Oid relId;
+    Oid dbId;
+    ItemPointerData tupleId;
 } LOCKTAG;
 
 #define TAGSIZE (sizeof(LOCKTAG))
@@ -88,11 +88,11 @@ typedef struct ltag {
  *
  */
 typedef struct lockctl {
-  LockTableId	tableId;
-  int		nLockTypes;
-  int		conflictTab[MAX_LOCKTYPES];
-  int		prio[MAX_LOCKTYPES];
-  SPINLOCK	masterLock;
+    LockTableId tableId;
+    int nLockTypes;
+    int conflictTab[MAX_LOCKTYPES];
+    int prio[MAX_LOCKTYPES];
+    SPINLOCK masterLock;
 } LOCKCTL;
 
 /*
@@ -102,9 +102,9 @@ typedef struct lockctl {
  * ctl - control structure described above.
  */
 typedef struct ltable {
-    HTAB	*lockHash;
-    HTAB	*xidHash;
-    LOCKCTL	*ctl;
+    HTAB *lockHash;
+    HTAB *xidHash;
+    LOCKCTL *ctl;
 } LOCKTAB;
 
 /* -----------------------
@@ -137,9 +137,9 @@ typedef struct ltable {
  */
 
 typedef struct XIDTAG {
-    SHMEM_OFFSET	lock;
-    int			pid;
-    TransactionId	xid;
+    SHMEM_OFFSET lock;
+    int pid;
+    TransactionId xid;
 } XIDTAG;
 
 typedef struct XIDLookupEnt {
@@ -147,17 +147,17 @@ typedef struct XIDLookupEnt {
     XIDTAG tag;
 
     /* data */
-    int			holders[MAX_LOCKTYPES];
-    int			nHolding;
-    SHM_QUEUE		queue;
+    int holders[MAX_LOCKTYPES];
+    int nHolding;
+    SHM_QUEUE queue;
 } XIDLookupEnt;
 
 #define XID_TAGSIZE (sizeof(XIDTAG))
 
 /* originally in procq.h */
 typedef struct procQueue {
-    SHM_QUEUE	links;
-    int		size;
+    SHM_QUEUE links;
+    int size;
 } PROC_QUEUE;
 
 
@@ -174,15 +174,15 @@ typedef struct procQueue {
  */
 typedef struct Lock {
     /* hash key */
-    LOCKTAG		tag;
+    LOCKTAG tag;
 
     /* data */
-    int			mask;
-    PROC_QUEUE		waitProcs;
-    int			holders[MAX_LOCKTYPES];
-    int			nHolding;
-    int			activeHolders[MAX_LOCKTYPES];
-    int			nActive;
+    int mask;
+    PROC_QUEUE waitProcs;
+    int holders[MAX_LOCKTYPES];
+    int nHolding;
+    int activeHolders[MAX_LOCKTYPES];
+    int nActive;
 } LOCK;
 
 #define LockGetLock_nHolders(l) l->nHolders
@@ -200,19 +200,30 @@ extern SPINLOCK LockMgrLock;
  * function prototypes
  */
 extern void InitLocks(void);
+
 extern void LockDisable(int status);
+
 extern LockTableId LockTabInit(char *tabName, MASK *conflictsP, int *prioP,
-			       int ntypes);
+                               int ntypes);
+
 extern LockTableId LockTabRename(LockTableId tableId);
+
 extern bool LockAcquire(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt);
+
 extern int LockResolveConflicts(LOCKTAB *ltable, LOCK *lock, LOCKT lockt,
-			    TransactionId xid);
+                                TransactionId xid);
+
 extern int WaitOnLock(LOCKTAB *ltable, LockTableId tableId, LOCK *lock,
-		      LOCKT lockt);
+                      LOCKT lockt);
+
 extern bool LockRelease(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt);
+
 extern void GrantLock(LOCK *lock, LOCKT lockt);
+
 extern bool LockReleaseAll(LockTableId tableId, SHM_QUEUE *lockQueue);
+
 extern int LockShmemSize(void);
+
 extern bool LockingDisabled(void);
 
 #endif /* LOCK_H */

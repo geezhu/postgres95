@@ -10,27 +10,26 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	ITEMID_H
+#ifndef    ITEMID_H
 #define ITEMID_H
 
-typedef uint16	ItemOffset;
-typedef uint16	ItemLength;
+typedef uint16 ItemOffset;
+typedef uint16 ItemLength;
 
-typedef bits16	ItemIdFlags;
+typedef bits16 ItemIdFlags;
 
 
-
-typedef struct ItemIdData {		/* line pointers */
-	unsigned	lp_off:13,	/* offset to find tup */
-					/* can be reduced by 2 if necc. */
-			lp_flags:6,	/* flags on tuple */
-			lp_len:13;	/* length of tuple */
+typedef struct ItemIdData {        /* line pointers */
+    unsigned lp_off: 13,    /* offset to find tup */
+    /* can be reduced by 2 if necc. */
+    lp_flags: 6,    /* flags on tuple */
+    lp_len: 13;    /* length of tuple */
 } ItemIdData;
 
-typedef struct ItemIdData	*ItemId;
+typedef struct ItemIdData *ItemId;
 
-#ifndef	LP_USED
-#define LP_USED		0x01	/* this line pointer is being used */
+#ifndef    LP_USED
+#define LP_USED        0x01    /* this line pointer is being used */
 #endif
 
 /* ----------------
@@ -59,7 +58,7 @@ typedef struct ItemIdData	*ItemId;
  * ItemIdIsValid --
  *	True iff disk item identifier is valid.
  */
-#define	ItemIdIsValid(itemId)	PointerIsValid(itemId)
+#define    ItemIdIsValid(itemId)    PointerIsValid(itemId)
 
 /*
  * ItemIdIsUsed --
@@ -72,4 +71,4 @@ typedef struct ItemIdData	*ItemId;
     (AssertMacro(ItemIdIsValid(itemId)) ? \
      (bool) (((itemId)->lp_flags & LP_USED) != 0) : false)
 
-#endif	/* ITEMID_H */
+#endif    /* ITEMID_H */

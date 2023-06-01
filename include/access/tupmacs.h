@@ -39,5 +39,5 @@
         ? (char *) (long) *((char *)(T)) \
         : (char *) (long) *((int16 *)(T)))) \
   : (char *) (T))
-	
+
 #endif

@@ -40,7 +40,7 @@
 #include "utils/hsearch.h"
 #include "utils/elog.h"
 #include "utils/memutils.h"
-#include "executor/execdebug.h"	/* for NDirectFileRead */
+#include "executor/execdebug.h"    /* for NDirectFileRead */
 #include "catalog/catalog.h"
 
 int NLocBuffer = 64;
@@ -56,49 +56,48 @@ static int nextFreeLocalBuf = 0;
  *    allocate a local buffer. We do round robin allocation for now.
  */
 BufferDesc *
-LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
-{
+LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr) {
     int i;
     BufferDesc *bufHdr = (BufferDesc *) NULL;
 
     if (blockNum == P_NEW) {
-	blockNum = reln->rd_nblocks;
-	reln->rd_nblocks++;
-    } 
+        blockNum = reln->rd_nblocks;
+        reln->rd_nblocks++;
+    }
 
     /* a low tech search for now -- not optimized for scans */
-    for (i=0; i < NLocBuffer; i++) {
-	if (LocalBufferDescriptors[i].tag.relId.relId == reln->rd_id &&
-	    LocalBufferDescriptors[i].tag.blockNum == blockNum) {
+    for (i = 0; i < NLocBuffer; i++) {
+        if (LocalBufferDescriptors[i].tag.relId.relId == reln->rd_id &&
+            LocalBufferDescriptors[i].tag.blockNum == blockNum) {
 
 #ifdef LBDEBUG
-	    fprintf(stderr, "LB ALLOC (%d,%d) %d\n",
-		    reln->rd_id, blockNum, -i-1);
-#endif    
-	    LocalRefCount[i]++;
-	    *foundPtr = TRUE;
-	    return &LocalBufferDescriptors[i];
-	}
+            fprintf(stderr, "LB ALLOC (%d,%d) %d\n",
+                reln->rd_id, blockNum, -i-1);
+#endif
+            LocalRefCount[i]++;
+            *foundPtr = TRUE;
+            return &LocalBufferDescriptors[i];
+        }
     }
 
 #ifdef LBDEBUG
     fprintf(stderr, "LB ALLOC (%d,%d) %d\n",
-	    reln->rd_id, blockNum, -nextFreeLocalBuf-1);
-#endif    
-    
-    /* need to get a new buffer (round robin for now) */
-    for(i=0; i < NLocBuffer; i++) {
-	int b = (nextFreeLocalBuf + i) % NLocBuffer;
+        reln->rd_id, blockNum, -nextFreeLocalBuf-1);
+#endif
 
-	if (LocalRefCount[b]==0) {
-	    bufHdr = &LocalBufferDescriptors[b];
-	    LocalRefCount[b]++;
-	    nextFreeLocalBuf = (b + 1) % NLocBuffer;
-	    break;
-	}
+    /* need to get a new buffer (round robin for now) */
+    for (i = 0; i < NLocBuffer; i++) {
+        int b = (nextFreeLocalBuf + i) % NLocBuffer;
+
+        if (LocalRefCount[b] == 0) {
+            bufHdr = &LocalBufferDescriptors[b];
+            LocalRefCount[b]++;
+            nextFreeLocalBuf = (b + 1) % NLocBuffer;
+            break;
+        }
     }
-    if (bufHdr==NULL)
-	elog(WARN, "no empty local buffer.");
+    if (bufHdr == NULL)
+        elog(WARN, "no empty local buffer.");
 
     /*
      * this buffer is not referenced but it might still be dirty (the
@@ -107,13 +106,13 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
      * reusing it!
      */
     if (bufHdr->flags & BM_DIRTY) {
-	Relation bufrel = RelationIdCacheGetRelation(bufHdr->tag.relId.relId);
+        Relation bufrel = RelationIdCacheGetRelation(bufHdr->tag.relId.relId);
 
-	Assert(bufrel != NULL);
-	
-	/* flush this page */
-	smgrwrite(bufrel->rd_rel->relsmgr, bufrel, bufHdr->tag.blockNum,
-		  (char *) MAKE_PTR(bufHdr->data));
+        Assert(bufrel != NULL);
+
+        /* flush this page */
+        smgrwrite(bufrel->rd_rel->relsmgr, bufrel, bufHdr->tag.blockNum,
+                  (char *) MAKE_PTR(bufHdr->data));
     }
 
     /*
@@ -127,12 +126,12 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
      * lazy memory allocation. (see MAKE_PTR for why we need to do 
      * MAKE_OFFSET.)
      */
-    if (bufHdr->data == (SHMEM_OFFSET)0) {
-	char *data = (char *)malloc(BLCKSZ);
+    if (bufHdr->data == (SHMEM_OFFSET) 0) {
+        char *data = (char *) malloc(BLCKSZ);
 
-	bufHdr->data = MAKE_OFFSET(data);
+        bufHdr->data = MAKE_OFFSET(data);
     }
-    
+
     *foundPtr = FALSE;
     return bufHdr;
 }
@@ -142,22 +141,21 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
  *    writes out a local buffer
  */
 int
-WriteLocalBuffer(Buffer buffer, bool release)
-{
+WriteLocalBuffer(Buffer buffer, bool release) {
     int bufid;
 
     Assert(BufferIsLocal(buffer));
 
 #ifdef LBDEBUG
     fprintf(stderr, "LB WRITE %d\n", buffer);
-#endif    
-    
-    bufid = - (buffer + 1);
+#endif
+
+    bufid = -(buffer + 1);
     LocalBufferDescriptors[bufid].flags |= BM_DIRTY;
 
     if (release) {
-	Assert(LocalRefCount[bufid] > 0);
-	LocalRefCount[bufid]--;
+        Assert(LocalRefCount[bufid] > 0);
+        LocalRefCount[bufid]--;
     }
 
     return true;
@@ -168,8 +166,7 @@ WriteLocalBuffer(Buffer buffer, bool release)
  *    flushes a local buffer
  */
 int
-FlushLocalBuffer(Buffer buffer)
-{
+FlushLocalBuffer(Buffer buffer) {
     int bufid;
     Relation bufrel;
     BufferDesc *bufHdr;
@@ -178,20 +175,20 @@ FlushLocalBuffer(Buffer buffer)
 
 #ifdef LBDEBUG
     fprintf(stderr, "LB FLUSH %d\n", buffer);
-#endif    
+#endif
 
-    bufid = - (buffer + 1);
+    bufid = -(buffer + 1);
     bufHdr = &LocalBufferDescriptors[bufid];
     bufHdr->flags &= ~BM_DIRTY;
     bufrel = RelationIdCacheGetRelation(bufHdr->tag.relId.relId);
 
     Assert(bufrel != NULL);
     smgrflush(bufrel->rd_rel->relsmgr, bufrel, bufHdr->tag.blockNum,
-	      (char *) MAKE_PTR(bufHdr->data));
+              (char *) MAKE_PTR(bufHdr->data));
 
     Assert(LocalRefCount[bufid] > 0);
     LocalRefCount[bufid]--;
-    
+
     return true;
 }
 
@@ -202,32 +199,31 @@ FlushLocalBuffer(Buffer buffer)
  *    buffer until we need it.
  */
 void
-InitLocalBuffer()
-{
+InitLocalBuffer() {
     int i;
-    
+
     /*
      * these aren't going away. I'm not gonna use palloc.
      */
     LocalBufferDescriptors =
-	(BufferDesc *)malloc(sizeof(BufferDesc) * NLocBuffer);
+            (BufferDesc *) malloc(sizeof(BufferDesc) * NLocBuffer);
     memset(LocalBufferDescriptors, 0, sizeof(BufferDesc) * NLocBuffer);
     nextFreeLocalBuf = 0;
 
     for (i = 0; i < NLocBuffer; i++) {
-	BufferDesc *buf = &LocalBufferDescriptors[i];
+        BufferDesc *buf = &LocalBufferDescriptors[i];
 
-	/*
-	 * negative to indicate local buffer. This is tricky: shared buffers
-	 * start with 0. We have to start with -2. (Note that the routine
-	 * BufferDescriptorGetBuffer adds 1 to buf_id so our first buffer id
-	 * is -1.)
-	 */
-	buf->buf_id = - i - 2;	
+        /*
+         * negative to indicate local buffer. This is tricky: shared buffers
+         * start with 0. We have to start with -2. (Note that the routine
+         * BufferDescriptorGetBuffer adds 1 to buf_id so our first buffer id
+         * is -1.)
+         */
+        buf->buf_id = -i - 2;
     }
 
     LocalRefCount =
-	(long *)malloc(sizeof(long) * NLocBuffer);
+            (long *) malloc(sizeof(long) * NLocBuffer);
     memset(LocalRefCount, 0, sizeof(long) * NLocBuffer);
 }
 
@@ -238,46 +234,44 @@ InitLocalBuffer()
  *    we will not need these buffers again.
  */
 void
-LocalBufferSync()
-{
+LocalBufferSync() {
     int i;
-    
+
     for (i = 0; i < NLocBuffer; i++) {
-	BufferDesc *buf = &LocalBufferDescriptors[i];
-	Relation bufrel;
+        BufferDesc *buf = &LocalBufferDescriptors[i];
+        Relation bufrel;
 
-	if (buf->flags & BM_DIRTY) {
+        if (buf->flags & BM_DIRTY) {
 #ifdef LBDEBUG
-	    fprintf(stderr, "LB SYNC %d\n", -i-1);
-#endif	    
-	    bufrel = RelationIdCacheGetRelation(buf->tag.relId.relId);
+            fprintf(stderr, "LB SYNC %d\n", -i-1);
+#endif
+            bufrel = RelationIdCacheGetRelation(buf->tag.relId.relId);
 
-	    Assert(bufrel != NULL);
-	    
-	    smgrwrite(bufrel->rd_rel->relsmgr, bufrel, buf->tag.blockNum,
-		      (char *) MAKE_PTR(buf->data));
+            Assert(bufrel != NULL);
 
-	    buf->tag.relId.relId = InvalidOid;
-	    buf->flags &= ~BM_DIRTY;
-	}
+            smgrwrite(bufrel->rd_rel->relsmgr, bufrel, buf->tag.blockNum,
+                      (char *) MAKE_PTR(buf->data));
+
+            buf->tag.relId.relId = InvalidOid;
+            buf->flags &= ~BM_DIRTY;
+        }
     }
 
     memset(LocalRefCount, 0, sizeof(long) * NLocBuffer);
 }
 
 void
-ResetLocalBufferPool()
-{
+ResetLocalBufferPool() {
     int i;
 
     memset(LocalBufferDescriptors, 0, sizeof(BufferDesc) * NLocBuffer);
     nextFreeLocalBuf = 0;
 
     for (i = 0; i < NLocBuffer; i++) {
-	BufferDesc *buf = &LocalBufferDescriptors[i];
+        BufferDesc *buf = &LocalBufferDescriptors[i];
 
-	/* just like InitLocalBuffer() */
-	buf->buf_id = - i - 2;	
+        /* just like InitLocalBuffer() */
+        buf->buf_id = -i - 2;
     }
 
     memset(LocalRefCount, 0, sizeof(long) * NLocBuffer);

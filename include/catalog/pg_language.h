@@ -30,10 +30,10 @@
  *	pg_language definition.  cpp turns this into
  *	typedef struct FormData_pg_language
  * ----------------
- */ 
+ */
 CATALOG(pg_language) {
-    NameData 	lanname;
-    text 	lancompiler;	/* VARIABLE LENGTH FIELD */
+    NameData lanname;
+    text lancompiler;    /* VARIABLE LENGTH FIELD */
 } FormData_pg_language;
 
 /* ----------------
@@ -41,30 +41,30 @@ CATALOG(pg_language) {
  *	the format of pg_language relation.
  * ----------------
  */
-typedef FormData_pg_language	*Form_pg_language;
+typedef FormData_pg_language *Form_pg_language;
 
 /* ----------------
  *	compiler constants for pg_language
  * ----------------
  */
-#define Natts_pg_language		2
-#define Anum_pg_language_lanname	1
-#define Anum_pg_language_lancompiler	2
+#define Natts_pg_language        2
+#define Anum_pg_language_lanname    1
+#define Anum_pg_language_lancompiler    2
 
 /* ----------------
  *	initial contents of pg_language
  * ----------------
  */
 
-DATA(insert OID = 11 ( internal "n/a" ));
+DATA(insert OID = 11(internal "n/a" ));
 #define INTERNALlanguageId 11
-DATA(insert OID = 12 ( lisp "/usr/ucb/liszt" ));
-DATA(insert OID = 13 ( "C" "/bin/cc" ));
+DATA(insert OID = 12(lisp "/usr/ucb/liszt" ));
+DATA(insert OID = 13("C" "/bin/cc"));
 #define ClanguageId 13
-DATA(insert OID = 14 ( "sql" "postgres"));
+DATA(insert OID = 14("sql" "postgres"));
 #define SQLlanguageId 14
 
-    
+
 #endif /* PG_LANGUAGE_H */
 
 

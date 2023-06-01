@@ -24,21 +24,20 @@
  */
 #define ScanKeyEntryIsLegal(entry) \
     ((bool) (AssertMacro(PointerIsValid(entry)) && \
-	     AttributeNumberIsValid(entry->sk_attno)))
+         AttributeNumberIsValid(entry->sk_attno)))
 
 /*
  * ScanKeyEntrySetIllegal --
  *	Marks a scan key entry as illegal.
  */
 void
-ScanKeyEntrySetIllegal(ScanKey entry)
-{
+ScanKeyEntrySetIllegal(ScanKey entry) {
 
     Assert(PointerIsValid(entry));
-    
-    entry->sk_flags = 0;	/* just in case... */
+
+    entry->sk_flags = 0;    /* just in case... */
     entry->sk_attno = InvalidAttrNumber;
-    entry->sk_procedure = 0;	/* should be InvalidRegProcedure */
+    entry->sk_procedure = 0;    /* should be InvalidRegProcedure */
 }
 
 /*
@@ -51,18 +50,17 @@ ScanKeyEntrySetIllegal(ScanKey entry)
  */
 void
 ScanKeyEntryInitialize(ScanKey entry,
-		       bits16 flags,
-		       AttrNumber attributeNumber,
-		       RegProcedure procedure,
-		       Datum argument)
-{
+                       bits16 flags,
+                       AttrNumber attributeNumber,
+                       RegProcedure procedure,
+                       Datum argument) {
     Assert(PointerIsValid(entry));
-    
+
     entry->sk_flags = flags;
     entry->sk_attno = attributeNumber;
     entry->sk_procedure = procedure;
     entry->sk_argument = argument;
     fmgr_info(procedure, &entry->sk_func, &entry->sk_nargs);
-    
+
     Assert(ScanKeyEntryIsLegal(entry));
 }

@@ -12,7 +12,7 @@
  *-------------------------------------------------------------------------
  */
 #include "c.h"
-#include "utils/module.h"		/* where the declarations go */
+#include "utils/module.h"        /* where the declarations go */
 
 /*
  * BypassEnable --
@@ -27,19 +27,18 @@
  *	BadArg if on is invalid.
  */
 bool
-BypassEnable(int *enableCountInOutP, bool on)
-{
-	AssertArg(PointerIsValid(enableCountInOutP));
-	AssertArg(BoolIsValid(on));
+BypassEnable(int *enableCountInOutP, bool on) {
+    AssertArg(PointerIsValid(enableCountInOutP));
+    AssertArg(BoolIsValid(on));
 
-	if (on) {
-		*enableCountInOutP += 1;
-		return ((bool)(*enableCountInOutP >= 2));
-	}
+    if (on) {
+        *enableCountInOutP += 1;
+        return ((bool) (*enableCountInOutP >= 2));
+    }
 
-	AssertState(*enableCountInOutP >= 1);
+    AssertState(*enableCountInOutP >= 1);
 
-	*enableCountInOutP -= 1;
+    *enableCountInOutP -= 1;
 
-	return ((bool)(*enableCountInOutP >= 1));
+    return ((bool) (*enableCountInOutP >= 1));
 }

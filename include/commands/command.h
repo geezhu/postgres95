@@ -38,7 +38,7 @@ extern void PortalCleanup(Portal portal);
  *	"WARN" if portal not found.
  */
 extern void PerformPortalFetch(char *name, bool forward, int count,
-			       char *tag, CommandDest dest);
+                               char *tag, CommandDest dest);
 
 /*
  * PerformPortalClose --
@@ -51,6 +51,6 @@ extern void PerformPortalClose(char *name, CommandDest dest);
  *	Performs the POSTQUEL function ADD.
  */
 extern void PerformAddAttribute(char *relationName, char *userName,
-				bool inh, ColumnDef *colDef);
+                                bool inh, ColumnDef *colDef);
 
 #endif /* COMMAND_H */

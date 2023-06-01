@@ -26,7 +26,7 @@
 
 #include "optimizer/internal.h"
 #include "optimizer/planner.h"
-#include "optimizer/plancat.h"   
+#include "optimizer/plancat.h"
 #include "optimizer/prep.h"
 #include "optimizer/planmain.h"
 #include "optimizer/paths.h"
@@ -46,7 +46,9 @@
 #include "executor/executor.h"
 
 static Plan *make_sortplan(List *tlist, List *sortcls, Plan *plannode);
+
 static Plan *init_query_planner(Query *parse);
+
 static Existential *make_existential(Plan *left, Plan *right);
 
 /*****************************************************************************
@@ -66,16 +68,15 @@ static Existential *make_existential(Plan *left, Plan *right);
  * Returns a query plan.
  *    
  */
-Plan* 
-planner(Query *parse)
-{
+Plan *
+planner(Query *parse) {
     List *tlist = parse->targetList;
     List *rangetable = parse->rtable;
-    char* uniqueflag = parse->uniqueFlag;
+    char *uniqueflag = parse->uniqueFlag;
     List *sortclause = parse->sortClause;
-    Plan *special_plans = (Plan*)NULL;
+    Plan *special_plans = (Plan *) NULL;
 
-    Plan *result_plan = (Plan*) NULL;
+    Plan *result_plan = (Plan *) NULL;
 
     int rt_index;
 
@@ -84,9 +85,9 @@ planner(Query *parse)
      */
     rt_index = first_matching_rt_entry(rangetable, INHERITS_FLAG);
     if (rt_index != -1) {
-	special_plans = (Plan *)plan_union_queries((Index)rt_index,
-						   parse,
-						   INHERITS_FLAG);
+        special_plans = (Plan *) plan_union_queries((Index) rt_index,
+                                                    parse,
+                                                    INHERITS_FLAG);
     }
 
     /*
@@ -94,16 +95,16 @@ planner(Query *parse)
      */
     rt_index = first_matching_rt_entry(rangetable, ARCHIVE_FLAG);
     if (rt_index != -1) {
-	special_plans = (Plan *)plan_union_queries((Index)rt_index,
-						   parse,
-						   ARCHIVE_FLAG);
+        special_plans = (Plan *) plan_union_queries((Index) rt_index,
+                                                    parse,
+                                                    ARCHIVE_FLAG);
     }
 
     if (special_plans)
-      result_plan = special_plans;
+        result_plan = special_plans;
     else
-      result_plan = init_query_planner(parse); /* regular plans */
-    
+        result_plan = init_query_planner(parse); /* regular plans */
+
     /*
      *  For now, before we hand back the plan, check to see if there
      *  is a user-specified sort that needs to be done.  Eventually, this 
@@ -114,14 +115,14 @@ planner(Query *parse)
      */
 
     if (uniqueflag) {
-      Plan *sortplan = make_sortplan(tlist, sortclause, result_plan);
-					  
-      return((Plan*)make_unique(tlist,sortplan,uniqueflag));
+        Plan *sortplan = make_sortplan(tlist, sortclause, result_plan);
+
+        return ((Plan *) make_unique(tlist, sortplan, uniqueflag));
     } else {
-      if (sortclause) 
-	return(make_sortplan(tlist,sortclause,result_plan));
-      else 
-	return((Plan*)result_plan);
+        if (sortclause)
+            return (make_sortplan(tlist, sortclause, result_plan));
+        else
+            return ((Plan *) result_plan);
     }
 
 }
@@ -136,39 +137,38 @@ planner(Query *parse)
  * sortops:  (sortop1 sortop2 sortop3 ...)
  */
 static Plan *
-make_sortplan(List *tlist, List *sortcls, Plan *plannode)
-{
-    Plan *sortplan = (Plan*)NULL;
+make_sortplan(List *tlist, List *sortcls, Plan *plannode) {
+    Plan *sortplan = (Plan *) NULL;
     List *temp_tlist = NIL;
     List *i = NIL;
-    Resdom *resnode = (Resdom*)NULL;
-    Resdom *resdom = (Resdom*)NULL;
-    int keyno =1;
+    Resdom *resnode = (Resdom *) NULL;
+    Resdom *resdom = (Resdom *) NULL;
+    int keyno = 1;
 
     /*  First make a copy of the tlist so that we don't corrupt the 
      *  the original .
      */
-  
+
     temp_tlist = new_unsorted_tlist(tlist);
-  
+
     foreach (i, sortcls) {
-	SortClause *sortcl = (SortClause*)lfirst(i);
+        SortClause *sortcl = (SortClause *) lfirst(i);
 
-	resnode = sortcl->resdom;
-	resdom = tlist_resdom(temp_tlist, resnode);
+        resnode = sortcl->resdom;
+        resdom = tlist_resdom(temp_tlist, resnode);
 
-	/*    Order the resdom keys and replace the operator OID for each 
-	 *    key with the regproc OID. 
-	 */
-	resdom->reskey = keyno;
-	resdom->reskeyop = get_opcode(sortcl->opoid);
-	keyno += 1;
+        /*    Order the resdom keys and replace the operator OID for each 
+         *    key with the regproc OID. 
+         */
+        resdom->reskey = keyno;
+        resdom->reskeyop = get_opcode(sortcl->opoid);
+        keyno += 1;
     }
 
-    sortplan = (Plan*)make_sort(temp_tlist,
-				_TEMP_RELATION_ID_,
-				(Plan*)plannode,
-				length(sortcls));
+    sortplan = (Plan *) make_sort(temp_tlist,
+                                  _TEMP_RELATION_ID_,
+                                  (Plan *) plannode,
+                                  length(sortcls));
 
     /*
      *  XXX Assuming that an internal sort has no. cost. 
@@ -180,8 +180,8 @@ make_sortplan(List *tlist, List *sortcls, Plan *plannode)
      */
 
     sortplan->cost = plannode->cost;
-  
-    return(sortplan);
+
+    return (sortplan);
 }
 
 
@@ -195,44 +195,43 @@ make_sortplan(List *tlist, List *sortcls, Plan *plannode)
  *    
  */
 static Plan *
-init_query_planner(Query *root)
-{
+init_query_planner(Query *root) {
     List *primary_qual;
     List *existential_qual;
     Existential *exist_plan;
     List *tlist = root->targetList;
 
     tlist = preprocess_targetlist(tlist,
-				  root->commandType,
-				  root->resultRelation,
-				  root->rtable);
+                                  root->commandType,
+                                  root->resultRelation,
+                                  root->rtable);
 
     primary_qual =
-	preprocess_qualification((Expr*)root->qual,
-				 tlist,
-				 &existential_qual);
+            preprocess_qualification((Expr *) root->qual,
+                                     tlist,
+                                     &existential_qual);
 
-    if(existential_qual==NULL) {
-	return(query_planner(root,
-			     root->commandType,
-			     tlist,
-			     primary_qual));
+    if (existential_qual == NULL) {
+        return (query_planner(root,
+                              root->commandType,
+                              tlist,
+                              primary_qual));
     } else {
-	int temp = root->commandType;
-	Plan *existential_plan;
+        int temp = root->commandType;
+        Plan *existential_plan;
 
-	root->commandType = CMD_SELECT;
-	existential_plan = query_planner(root,
-					 temp, 
-					 NIL,
-					 existential_qual);
-     
-	exist_plan = make_existential(existential_plan,
-				      query_planner(root,
-						    root->commandType,
-						    tlist,
-						    primary_qual));
-	return((Plan*)exist_plan);
+        root->commandType = CMD_SELECT;
+        existential_plan = query_planner(root,
+                                         temp,
+                                         NIL,
+                                         existential_qual);
+
+        exist_plan = make_existential(existential_plan,
+                                      query_planner(root,
+                                                    root->commandType,
+                                                    tlist,
+                                                    primary_qual));
+        return ((Plan *) exist_plan);
     }
 }
 
@@ -242,13 +241,12 @@ init_query_planner(Query *root)
  *    the left and right subtree slots.
  */
 static Existential *
-make_existential(Plan *left, Plan *right)
-{
+make_existential(Plan *left, Plan *right) {
     Existential *node = makeNode(Existential);
 
     node->lefttree = left;
     node->righttree = left;
-    return(node);
+    return (node);
 }
 
 /*
@@ -261,8 +259,7 @@ make_existential(Plan *left, Plan *right)
  * type he claims.
  */
 void
-pg_checkretval(Oid rettype, QueryTreeList *queryTreeList)
-{
+pg_checkretval(Oid rettype, QueryTreeList *queryTreeList) {
     Query *parse;
     List *tlist;
     List *rt;
@@ -283,39 +280,39 @@ pg_checkretval(Oid rettype, QueryTreeList *queryTreeList)
      *  had better not be a return value declared.
      */
     if (parse->commandType == CMD_UTILITY) {
-	if (rettype == InvalidOid)
-	    return;
-	else
-	    elog(WARN, "return type mismatch in function decl: final query is a catalog utility");
+        if (rettype == InvalidOid)
+            return;
+        else
+            elog(WARN, "return type mismatch in function decl: final query is a catalog utility");
     }
 
     /* okay, it's an ordinary query */
     tlist = parse->targetList;
     rt = parse->rtable;
     cmd = parse->commandType;
-    
+
     /*
      *  test 2:  if the function is declared to return no value, then the
      *  final query had better not be a retrieve.
      */
     if (rettype == InvalidOid) {
-	if (cmd == CMD_SELECT)
-	    elog(WARN,
-		 "function declared with no return type, but final query is a retrieve");
-	else
-	    return;
+        if (cmd == CMD_SELECT)
+            elog(WARN,
+                 "function declared with no return type, but final query is a retrieve");
+        else
+            return;
     }
 
     /* by here, the function is declared to return some type */
-    if ((typ = (Type)get_id_type(rettype)) == NULL)
-	elog(WARN, "can't find return type %d for function\n", rettype);
+    if ((typ = (Type) get_id_type(rettype)) == NULL)
+        elog(WARN, "can't find return type %d for function\n", rettype);
 
     /*
      *  test 3:  if the function is declared to return a value, then the
      *  final query had better be a retrieve.
      */
     if (cmd != CMD_SELECT)
-	elog(WARN, "function declared to return type %s, but final query is not a retrieve", tname(typ));
+        elog(WARN, "function declared to return type %s, but final query is not a retrieve", tname(typ));
 
     /*
      *  test 4:  for base type returns, the target list should have exactly
@@ -323,15 +320,16 @@ pg_checkretval(Oid rettype, QueryTreeList *queryTreeList)
      */
 
     if (get_typrelid(typ) == InvalidOid) {
-	if (exec_tlist_length(tlist) > 1)
-	    elog(WARN, "function declared to return %s returns multiple values in final retrieve", tname(typ));
+        if (exec_tlist_length(tlist) > 1)
+            elog(WARN, "function declared to return %s returns multiple values in final retrieve", tname(typ));
 
-	resnode = (Resdom*) ((TargetEntry*)lfirst(tlist))->resdom;
-	if (resnode->restype != rettype)
-	    elog(WARN, "return type mismatch in function: declared to return %s, returns %s", tname(typ), tname(get_id_type(resnode->restype)));
+        resnode = (Resdom *) ((TargetEntry *) lfirst(tlist))->resdom;
+        if (resnode->restype != rettype)
+            elog(WARN, "return type mismatch in function: declared to return %s, returns %s", tname(typ),
+                 tname(get_id_type(resnode->restype)));
 
-	/* by here, base return types match */
-	return;
+        /* by here, base return types match */
+        return;
     }
 
     /*
@@ -342,9 +340,9 @@ pg_checkretval(Oid rettype, QueryTreeList *queryTreeList)
      *  return type as the function that's calling it.
      */
     if (exec_tlist_length(tlist) == 1) {
-	resnode = (Resdom*) ((TargetEntry*)lfirst(tlist))->resdom;
-	if (resnode->restype == rettype)
-	    return;
+        resnode = (Resdom *) ((TargetEntry *) lfirst(tlist))->resdom;
+        if (resnode->restype == rettype)
+            return;
     }
 
     /*
@@ -356,49 +354,49 @@ pg_checkretval(Oid rettype, QueryTreeList *queryTreeList)
     reln = heap_open(get_typrelid(typ));
 
     if (!RelationIsValid(reln))
-	elog(WARN, "cannot open relation relid %d", get_typrelid(typ));
+        elog(WARN, "cannot open relation relid %d", get_typrelid(typ));
 
     relid = reln->rd_id;
     relnatts = reln->rd_rel->relnatts;
 
     if (exec_tlist_length(tlist) != relnatts)
-	elog(WARN, "function declared to return type %s does not retrieve (%s.*)", tname(typ), tname(typ));
+        elog(WARN, "function declared to return type %s does not retrieve (%s.*)", tname(typ), tname(typ));
 
     /* expect attributes 1 .. n in order */
     for (i = 1; i <= relnatts; i++) {
-	TargetEntry *tle = lfirst(tlist);
-	Node *thenode = tle->expr;
+        TargetEntry *tle = lfirst(tlist);
+        Node *thenode = tle->expr;
 
-	tlist = lnext(tlist);
-	tletype = exprType(thenode);
+        tlist = lnext(tlist);
+        tletype = exprType(thenode);
 
 #if 0 /* fix me */
-	/* this is tedious */
-	if (IsA(thenode,Var))
-	    tletype = (Oid) ((Var*)thenode)->vartype;
-	else if (IsA(thenode,Const))
-	    tletype = (Oid) ((Const*)thenode)->consttype;
-	else if (IsA(thenode,Param)) {
-	    tletype = (Oid) ((Param*)thenode)->paramtype;
-	else if (IsA(thenode,Expr)) {
-	    tletype = Expr
-	}
-	} else if (IsA(thenode,LispList)) {
-	    thenode = lfirst(thenode);
-	    if (IsA(thenode,Oper))
-		tletype = (Oid) get_opresulttype((Oper*)thenode);
-	    else if (IsA(thenode,Func))
-		tletype = (Oid) get_functype((Func*)thenode);
-	    else
-		elog(WARN, "function declared to return type %s does not retrieve (%s.all)", tname(typ), tname(typ));
+        /* this is tedious */
+        if (IsA(thenode,Var))
+            tletype = (Oid) ((Var*)thenode)->vartype;
+        else if (IsA(thenode,Const))
+            tletype = (Oid) ((Const*)thenode)->consttype;
+        else if (IsA(thenode,Param)) {
+            tletype = (Oid) ((Param*)thenode)->paramtype;
+        else if (IsA(thenode,Expr)) {
+            tletype = Expr
+        }
+        } else if (IsA(thenode,LispList)) {
+            thenode = lfirst(thenode);
+            if (IsA(thenode,Oper))
+            tletype = (Oid) get_opresulttype((Oper*)thenode);
+            else if (IsA(thenode,Func))
+            tletype = (Oid) get_functype((Func*)thenode);
+            else
+            elog(WARN, "function declared to return type %s does not retrieve (%s.all)", tname(typ), tname(typ));
 #endif
 /*
 	} else
 	    elog(WARN, "function declared to return type %s does not retrieve (%s.all)", tname(typ), tname(typ));
 */
-	/* reach right in there, why don't you? */
-	if (tletype != reln->rd_att->attrs[i-1]->atttypid)
-	    elog(WARN, "function declared to return type %s does not retrieve (%s.all)", tname(typ), tname(typ));
+        /* reach right in there, why don't you? */
+        if (tletype != reln->rd_att->attrs[i - 1]->atttypid)
+            elog(WARN, "function declared to return type %s does not retrieve (%s.all)", tname(typ), tname(typ));
     }
 
     heap_close(reln);

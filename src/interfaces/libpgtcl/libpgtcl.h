@@ -13,8 +13,9 @@
 
 #ifndef LIBPGTCL_H
 #define LIBPGTCL_H
+
 #include "tcl.h"
 
-extern int Pg_Init (Tcl_Interp *interp);
+extern int Pg_Init(Tcl_Interp *interp);
 
 #endif /* LIBPGTCL_H */

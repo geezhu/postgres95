@@ -11,8 +11,8 @@
 -- directions and run this as "postgres", though...
 --
 UPDATE pg_user
-   SET usesuper = 't'::bool
-   WHERE usename = '_USER_';
+SET usesuper = 't'::bool
+WHERE usename = '_USER_';
 
 
 --
@@ -36,7 +36,7 @@ DROP FUNCTION overpaid(emp);
 
 DROP FUNCTION boxarea(box);
 
-DROP FUNCTION interpt_pp(path,path);
+DROP FUNCTION interpt_pp(path, path);
 
 DROP FUNCTION reverse_c16(char16);
 
@@ -44,18 +44,23 @@ DROP FUNCTION reverse_c16(char16);
 --
 -- OPERATOR REMOVAL
 --
-DROP OPERATOR ## (path, path);
+DROP
+OPERATOR ## (path, path);
 
-DROP OPERATOR <% (point, circle);
+DROP
+OPERATOR <% (point, circle);
 
 -- left unary 
-DROP OPERATOR @#@ (none, int4);
+DROP
+OPERATOR @#@ (none, int4);
 
 -- right unary 
-DROP OPERATOR #@# (int4, none);	
+DROP
+OPERATOR #@# (int4, none);	
 
 -- right unary 
-DROP OPERATOR #%# (int4, none);	
+DROP
+OPERATOR #%# (int4, none);	
 
 
 --
@@ -74,11 +79,14 @@ DROP TYPE circle;
 --
 -- AGGREGATE REMOVAL
 --
-DROP AGGREGATE newavg;
+DROP
+AGGREGATE newavg;
 
-DROP AGGREGATE newsum;
+DROP
+AGGREGATE newsum;
 
-DROP AGGREGATE newcnt;
+DROP
+AGGREGATE newcnt;
 
 
 --
@@ -142,135 +150,135 @@ DROP INDEX bt_txt_index;
 DROP INDEX bt_f8_index;
 
 
-DROP TABLE  onek;
+DROP TABLE onek;
 
-DROP TABLE  onek2;
+DROP TABLE onek2;
 
-DROP TABLE  tenk1;
+DROP TABLE tenk1;
 
-DROP TABLE  tenk2;
+DROP TABLE tenk2;
 
-DROP TABLE  Bprime;
-
-
-DROP TABLE  hobbies_r;
-
-DROP TABLE  equipment_r;
+DROP TABLE Bprime;
 
 
-DROP TABLE  aggtest;
+DROP TABLE hobbies_r;
 
-DROP TABLE  xacttest;
-
-DROP TABLE  arrtest;
-
-DROP TABLE  iportaltest;
+DROP TABLE equipment_r;
 
 
-DROP TABLE  f_star;
+DROP TABLE aggtest;
 
-DROP TABLE  e_star;
+DROP TABLE xacttest;
 
-DROP TABLE  d_star;
+DROP TABLE arrtest;
 
-DROP TABLE  c_star;
+DROP TABLE iportaltest;
 
-DROP TABLE  b_star;
 
-DROP TABLE  a_star;
+DROP TABLE f_star;
+
+DROP TABLE e_star;
+
+DROP TABLE d_star;
+
+DROP TABLE c_star;
+
+DROP TABLE b_star;
+
+DROP TABLE a_star;
 
 
 --
 -- must be in reverse inheritance order
 --
-DROP TABLE  stud_emp;
+DROP TABLE stud_emp;
 
-DROP TABLE  student;
+DROP TABLE student;
 
-DROP TABLE  slow_emp4000;
+DROP TABLE slow_emp4000;
 
-DROP TABLE  fast_emp4000;
+DROP TABLE fast_emp4000;
 
-DROP TABLE  emp;
+DROP TABLE emp;
 
-DROP TABLE  person;
-
-
-DROP TABLE  ramp;
-
-DROP TABLE  real_city;
-
-DROP TABLE  dept;
-
-DROP TABLE  ihighway;
-
-DROP TABLE  shighway;
-
-DROP TABLE  road;
-
-DROP TABLE  city;
+DROP TABLE person;
 
 
-DROP TABLE  hash_i4_heap;
+DROP TABLE ramp;
 
-DROP TABLE  hash_c16_heap;
+DROP TABLE real_city;
 
-DROP TABLE  hash_txt_heap;
+DROP TABLE dept;
 
-DROP TABLE  hash_f8_heap;
+DROP TABLE ihighway;
+
+DROP TABLE shighway;
+
+DROP TABLE road;
+
+DROP TABLE city;
+
+
+DROP TABLE hash_i4_heap;
+
+DROP TABLE hash_c16_heap;
+
+DROP TABLE hash_txt_heap;
+
+DROP TABLE hash_f8_heap;
 
 -- DROP TABLE  hash_ovfl_heap;
 
-DROP TABLE  bt_i4_heap;
+DROP TABLE bt_i4_heap;
 
-DROP TABLE  bt_c16_heap;
+DROP TABLE bt_c16_heap;
 
-DROP TABLE  bt_txt_heap;
+DROP TABLE bt_txt_heap;
 
-DROP TABLE  bt_f8_heap;
+DROP TABLE bt_f8_heap;
 
 
-DROP TABLE  BOOLTBL1;
+DROP TABLE BOOLTBL1;
 
-DROP TABLE  BOOLTBL2;
+DROP TABLE BOOLTBL2;
 
-DROP TABLE  ABSTIME_TBL;
+DROP TABLE ABSTIME_TBL;
 
-DROP TABLE  RELTIME_TBL;
+DROP TABLE RELTIME_TBL;
 
-DROP TABLE  TINTERVAL_TBL;
+DROP TABLE TINTERVAL_TBL;
 
-DROP TABLE  BOX_TBL;
+DROP TABLE BOX_TBL;
 
-DROP TABLE  CHAR_TBL;
+DROP TABLE CHAR_TBL;
 
-DROP TABLE  CHAR2_TBL;
+DROP TABLE CHAR2_TBL;
 
-DROP TABLE  CHAR4_TBL;
+DROP TABLE CHAR4_TBL;
 
-DROP TABLE  CHAR8_TBL;
+DROP TABLE CHAR8_TBL;
 
-DROP TABLE  CHAR16_TBL;
+DROP TABLE CHAR16_TBL;
 
-DROP TABLE  FLOAT4_TBL;
+DROP TABLE FLOAT4_TBL;
 
-DROP TABLE  FLOAT8_TBL;
+DROP TABLE FLOAT8_TBL;
 
-DROP TABLE  INT2_TBL;
+DROP TABLE INT2_TBL;
 
-DROP TABLE  INT4_TBL;
+DROP TABLE INT4_TBL;
 
-DROP TABLE  OID_TBL;
+DROP TABLE OID_TBL;
 
-DROP TABLE  OIDNAME_TBL;
+DROP TABLE OIDNAME_TBL;
 
-DROP TABLE  OIDINT2_TBL;
+DROP TABLE OIDINT2_TBL;
 
-DROP TABLE  OIDINT4_TBL;
+DROP TABLE OIDINT4_TBL;
 
-DROP TABLE  POINT_TBL;
+DROP TABLE POINT_TBL;
 
-DROP TABLE  POLYGON_TBL;
+DROP TABLE POLYGON_TBL;
 
 
 --

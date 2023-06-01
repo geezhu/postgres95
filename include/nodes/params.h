@@ -39,10 +39,10 @@
  *		the "OLD" tuple.
  */
 
-#define PARAM_NAMED	11
-#define PARAM_NUM	12
-#define PARAM_NEW	13
-#define PARAM_OLD	14
+#define PARAM_NAMED    11
+#define PARAM_NUM    12
+#define PARAM_NEW    13
+#define PARAM_OLD    14
 #define PARAM_INVALID   100
 
 
@@ -75,16 +75,16 @@
  */
 
 typedef struct ParamListInfoData {
-    int			kind;
-    char 		*name;
-    AttrNumber		id;
-    Oid			type;
-    Size		length;
-    bool		isnull;
-    bool		byval;
-    Datum		value;
+    int kind;
+    char *name;
+    AttrNumber id;
+    Oid type;
+    Size length;
+    bool isnull;
+    bool byval;
+    Datum value;
 } ParamListInfoData;
 
 typedef ParamListInfoData *ParamListInfo;
 
-#endif	/* PARAMS_H */
+#endif    /* PARAMS_H */

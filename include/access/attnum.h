@@ -10,7 +10,7 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	ATTNUM_H
+#ifndef    ATTNUM_H
 #define ATTNUM_H
 
 #include "c.h"
@@ -18,9 +18,9 @@
 /*
  * user defined attribute numbers start at 1.	-ay 2/95
  */
-typedef int16		AttrNumber;
+typedef int16 AttrNumber;
 
-#define InvalidAttrNumber	0
+#define InvalidAttrNumber    0
 
 /* ----------------
  *	support macros

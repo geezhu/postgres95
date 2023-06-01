@@ -22,7 +22,7 @@
  *	FixedItemData component.
  *
  */
-#ifndef	FSTACK_H
+#ifndef    FSTACK_H
 #define FSTACK_H
 
 #include "c.h"
@@ -35,11 +35,11 @@
  *	Structures must contain one FixedItemData component per stack in
  *	which it will be an item.
  */
-typedef struct FixedItemData	FixedItemData;
-typedef FixedItemData		*FixedItem;
+typedef struct FixedItemData FixedItemData;
+typedef FixedItemData *FixedItem;
 
 struct FixedItemData {
-	FixedItem	next;	/* next item or NULL */
+    FixedItem next;    /* next item or NULL */
 };
 
 /*
@@ -47,12 +47,12 @@ struct FixedItemData {
  *	Fixed format stack.
  */
 typedef struct FixedStackData {
-	FixedItem	top;	/* Top item on the stack or NULL */
-	Offset		offset;	/* Offset from struct base to item */
-	/* this could be signed short int! */
+    FixedItem top;    /* Top item on the stack or NULL */
+    Offset offset;    /* Offset from struct base to item */
+    /* this could be signed short int! */
 } FixedStackData;
 
-typedef FixedStackData		*FixedStack;
+typedef FixedStackData *FixedStack;
 
 /*
  * FixedStackInit --
@@ -110,4 +110,4 @@ extern Pointer FixedStackGetTop(FixedStack stack);
  */
 extern Pointer FixedStackGetNext(FixedStack stack, Pointer pointer);
 
-#endif	/* FSTACK_H */
+#endif    /* FSTACK_H */

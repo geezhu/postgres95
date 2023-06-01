@@ -30,6 +30,7 @@
 #include "commands/creatinh.h"
 
 static void find_rel_paths(Query *root, List *rels);
+
 static List *find_join_paths(Query *root, List *outer_rels, int levels_left);
 
 /*    
@@ -40,8 +41,7 @@ static List *find_join_paths(Query *root, List *outer_rels, int levels_left);
  * 'rels' is the list of single relation entries appearing in the query
  */
 List *
-find_paths(Query *root, List *rels)
-{
+find_paths(Query *root, List *rels) {
     int levels_left;
 
     /*
@@ -50,27 +50,27 @@ find_paths(Query *root, List *rels)
     levels_left = length(rels);
 
     if (levels_left <= 0)
-	return NIL;
+        return NIL;
 
     /*
      * Find the base relation paths.
      */
     find_rel_paths(root, rels);
-	
-    if (levels_left <= 1) {
-	/*
-	 * Unsorted single relation, no more processing is required.
-	 */
-	return (rels);   
-    }else {
-	/* 
-	 * this means that joins or sorts are required.
-	 * set selectivities of clauses that have not been set
-	 * by an index.
-	 */
-	set_rest_relselec(root, rels);
 
-	return(find_join_paths(root, rels, levels_left-1));
+    if (levels_left <= 1) {
+        /*
+         * Unsorted single relation, no more processing is required.
+         */
+        return (rels);
+    } else {
+        /* 
+         * this means that joins or sorts are required.
+         * set selectivities of clauses that have not been set
+         * by an index.
+         */
+        set_rest_relselec(root, rels);
+
+        return (find_join_paths(root, rels, levels_left - 1));
     }
 }
 
@@ -84,50 +84,49 @@ find_paths(Query *root, List *rels)
  *    MODIFIES: rels
  */
 static void
-find_rel_paths(Query *root, List *rels)
-{
+find_rel_paths(Query *root, List *rels) {
     List *temp;
     Rel *rel;
     List *lastpath;
-     
+
     foreach(temp, rels) {
-	List *sequential_scan_list;
-	List *rel_index_scan_list;
-	List *or_index_scan_list;
+        List *sequential_scan_list;
+        List *rel_index_scan_list;
+        List *or_index_scan_list;
 
-	rel = (Rel *)lfirst(temp);
-	sequential_scan_list = lcons(create_seqscan_path(rel),
-				    NIL);
+        rel = (Rel *) lfirst(temp);
+        sequential_scan_list = lcons(create_seqscan_path(rel),
+                                     NIL);
 
-	rel_index_scan_list = 
-	    find_index_paths(root, 
-			     rel,
-			     find_relation_indices(root,rel),
-			     rel->clauseinfo,
-			     rel->joininfo);
+        rel_index_scan_list =
+                find_index_paths(root,
+                                 rel,
+                                 find_relation_indices(root, rel),
+                                 rel->clauseinfo,
+                                 rel->joininfo);
 
-	or_index_scan_list = 
-	    create_or_index_paths(root, rel, rel->clauseinfo);
+        or_index_scan_list =
+                create_or_index_paths(root, rel, rel->clauseinfo);
 
-	rel->pathlist = add_pathlist(rel,
-				     sequential_scan_list,
-				     append(rel_index_scan_list, 
-					    or_index_scan_list));
-    
-	/* The unordered path is always the last in the list.  
-	 * If it is not the cheapest path, prune it.
-	 */
-	lastpath = rel->pathlist;
-	while(lnext(lastpath)!=NIL)
-	    lastpath=lnext(lastpath);
-	prune_rel_path(rel, (Path*)lfirst(lastpath));
-      /*
-       * if there is a qualification of sequential scan the selec.
-       * value is not set -- so set it explicitly -- Sunita
-       */
-      set_rest_selec(root, rel->clauseinfo);
-	rel->size = compute_rel_size(rel);
-	rel->width = compute_rel_width(rel);
+        rel->pathlist = add_pathlist(rel,
+                                     sequential_scan_list,
+                                     append(rel_index_scan_list,
+                                            or_index_scan_list));
+
+        /* The unordered path is always the last in the list.  
+         * If it is not the cheapest path, prune it.
+         */
+        lastpath = rel->pathlist;
+        while (lnext(lastpath) != NIL)
+            lastpath = lnext(lastpath);
+        prune_rel_path(rel, (Path *) lfirst(lastpath));
+        /*
+         * if there is a qualification of sequential scan the selec.
+         * value is not set -- so set it explicitly -- Sunita
+         */
+        set_rest_selec(root, rel->clauseinfo);
+        rel->size = compute_rel_size(rel);
+        rel->width = compute_rel_width(rel);
     }
     return;
 }
@@ -151,8 +150,7 @@ find_rel_paths(Query *root, List *rels)
  * the result of joining all the original relations togehter.
  */
 static List *
-find_join_paths(Query *root, List *outer_rels, int levels_left)
-{
+find_join_paths(Query *root, List *outer_rels, int levels_left) {
     List *x;
     List *new_rels;
     Rel *rel;
@@ -168,67 +166,66 @@ find_join_paths(Query *root, List *outer_rels, int levels_left)
 
     new_rels = prune_joinrels(new_rels);
 
-#if 0    
+#if 0
     /* 
      ** for each expensive predicate in each path in each distinct rel, 
      ** consider doing pullup  -- JMH 
      */
     if (XfuncMode != XFUNC_NOPULL && XfuncMode != XFUNC_OFF)
-	foreach(x, new_rels)
-	    xfunc_trypullup((Rel*)lfirst(x));
+    foreach(x, new_rels)
+        xfunc_trypullup((Rel*)lfirst(x));
 #endif
 
     prune_rel_paths(new_rels);
 
-    if(BushyPlanFlag) {
-	/*
-	 * In case of bushy trees
-	 * if there is still a join between a join relation and another
-	 * relation, add a new joininfo that involves the join relation
-	 * to the joininfo list of the other relation
-	 */
-	add_new_joininfos(root, new_rels,outer_rels);
+    if (BushyPlanFlag) {
+        /*
+         * In case of bushy trees
+         * if there is still a join between a join relation and another
+         * relation, add a new joininfo that involves the join relation
+         * to the joininfo list of the other relation
+         */
+        add_new_joininfos(root, new_rels, outer_rels);
     }
 
     foreach(x, new_rels) {
-	rel = (Rel*)lfirst(x);
-	rel->size = compute_rel_size(rel);
-	rel->width = compute_rel_width(rel);
+        rel = (Rel *) lfirst(x);
+        rel->size = compute_rel_size(rel);
+        rel->width = compute_rel_width(rel);
 
 /*#define OPTIMIZER_DEBUG*/
 #ifdef OPTIMIZER_DEBUG
-	printf("levels left: %d\n", levels_left);
-	debug_print_rel(root, rel);
-#endif	
+        printf("levels left: %d\n", levels_left);
+        debug_print_rel(root, rel);
+#endif
     }
 
-    if(BushyPlanFlag) {
-	/* 
-	 * prune rels that have been completely incorporated into
-	 * new join rels
-	 */
-	outer_rels = prune_oldrels(outer_rels);
-	/* 
-	 * merge join rels if then contain the same list of base rels
-	 */
-	outer_rels = merge_joinrels(new_rels,outer_rels);
-	root->join_relation_list_ = outer_rels;
-    }
-    else {
-	root->join_relation_list_ = new_rels;
-    }
-
-    if(levels_left == 1) {
-	if(BushyPlanFlag)
-	    return(final_join_rels(outer_rels));
-	else
-	    return(new_rels);
+    if (BushyPlanFlag) {
+        /* 
+         * prune rels that have been completely incorporated into
+         * new join rels
+         */
+        outer_rels = prune_oldrels(outer_rels);
+        /* 
+         * merge join rels if then contain the same list of base rels
+         */
+        outer_rels = merge_joinrels(new_rels, outer_rels);
+        root->join_relation_list_ = outer_rels;
     } else {
-	if(BushyPlanFlag)
-	    return(find_join_paths(root, outer_rels, levels_left - 1));
-	else
-	    return(find_join_paths(root, new_rels, levels_left - 1));
-    } 
+        root->join_relation_list_ = new_rels;
+    }
+
+    if (levels_left == 1) {
+        if (BushyPlanFlag)
+            return (final_join_rels(outer_rels));
+        else
+            return (new_rels);
+    } else {
+        if (BushyPlanFlag)
+            return (find_join_paths(root, outer_rels, levels_left - 1));
+        else
+            return (find_join_paths(root, new_rels, levels_left - 1));
+    }
 }
 
 /*****************************************************************************
@@ -236,96 +233,104 @@ find_join_paths(Query *root, List *outer_rels, int levels_left)
  *****************************************************************************/
 
 static void
-print_joinclauses(Query *root, List *clauses)
-{
+print_joinclauses(Query *root, List *clauses) {
     List *l;
     extern void print_expr(Node *expr, List *rtable); /* in print.c */
 
     foreach(l, clauses) {
-	CInfo *c = lfirst(l);
+        CInfo *c = lfirst(l);
 
-	print_expr((Node*)c->clause, root->rtable);
-	if (lnext(l)) printf(" ");
+        print_expr((Node *) c->clause, root->rtable);
+        if (lnext(l)) printf(" ");
     }
 }
 
 void
-print_path(Query *root, Path *path, int indent)
-{
+print_path(Query *root, Path *path, int indent) {
     char *ptype = NULL;
     JoinPath *jp;
     bool join;
     int i;
 
-    for(i=0; i < indent; i++)
-	printf("\t");
-    
-    switch(nodeTag(path)) {
-    case T_Path:
-	ptype = "SeqScan"; join=false; break;
-    case T_IndexPath:
-	ptype = "IdxScan"; join=false; break;
-    case T_JoinPath:
-	ptype = "Nestloop"; join=true; break;
-    case T_MergePath:
-	ptype = "MergeJoin"; join=true; break;
-    case T_HashPath:
-	ptype = "HashJoin"; join=true; break;
-    default:
-	break;
+    for (i = 0; i < indent; i++)
+        printf("\t");
+
+    switch (nodeTag(path)) {
+        case T_Path:
+            ptype = "SeqScan";
+            join = false;
+            break;
+        case T_IndexPath:
+            ptype = "IdxScan";
+            join = false;
+            break;
+        case T_JoinPath:
+            ptype = "Nestloop";
+            join = true;
+            break;
+        case T_MergePath:
+            ptype = "MergeJoin";
+            join = true;
+            break;
+        case T_HashPath:
+            ptype = "HashJoin";
+            join = true;
+            break;
+        default:
+            break;
     }
     if (join) {
-	int size = path->parent->size;
-	jp = (JoinPath*)path;
-	printf("%s size=%d cost=%f\n", ptype, size, path->path_cost);
-	switch(nodeTag(path)) {
-	case T_MergePath:
-	case T_HashPath:
-	    for(i=0; i < indent+1; i++)
-		printf("\t");
-	    printf("   clauses=(");
-	    print_joinclauses(root,
-			      ((JoinPath*)path)->pathclauseinfo);
-	    printf(")\n");
+        int size = path->parent->size;
+        jp = (JoinPath *) path;
+        printf("%s size=%d cost=%f\n", ptype, size, path->path_cost);
+        switch (nodeTag(path)) {
+            case T_MergePath:
+            case T_HashPath:
+                for (i = 0; i < indent + 1; i++)
+                    printf("\t");
+                printf("   clauses=(");
+                print_joinclauses(root,
+                                  ((JoinPath *) path)->pathclauseinfo);
+                printf(")\n");
 
-	    if (nodeTag(path)==T_MergePath) {
-		MergePath *mp = (MergePath*)path;
-		if (mp->outersortkeys || mp->innersortkeys) {
-		    for(i=0; i < indent+1; i++)
-			printf("\t");
-		    printf("   sortouter=%d sortinner=%d\n",
-			   ((mp->outersortkeys)?1:0),
-			   ((mp->innersortkeys)?1:0));
-		}
-	    }
-	    break;
-	default:
-	    break;
-	}
-	print_path(root, jp->outerjoinpath, indent+1);
-	print_path(root, jp->innerjoinpath, indent+1);
+                if (nodeTag(path) == T_MergePath) {
+                    MergePath *mp = (MergePath *) path;
+                    if (mp->outersortkeys || mp->innersortkeys) {
+                        for (i = 0; i < indent + 1; i++)
+                            printf("\t");
+                        printf("   sortouter=%d sortinner=%d\n",
+                               ((mp->outersortkeys) ? 1 : 0),
+                               ((mp->innersortkeys) ? 1 : 0));
+                    }
+                }
+                break;
+            default:
+                break;
+        }
+        print_path(root, jp->outerjoinpath, indent + 1);
+        print_path(root, jp->innerjoinpath, indent + 1);
     } else {
-	int size = path->parent->size;
-	int relid = lfirsti(path->parent->relids);
-	printf("%s(%d) size=%d cost=%f",
-	       ptype, relid, size, path->path_cost);
+        int size = path->parent->size;
+        int relid = lfirsti(path->parent->relids);
+        printf("%s(%d) size=%d cost=%f",
+               ptype, relid, size, path->path_cost);
 
-	if (nodeTag(path)==T_IndexPath) {
-	    List *k, *l;
+        if (nodeTag(path) == T_IndexPath) {
+            List *k, *l;
 
-	    printf(" keys=");
-	    foreach (k, path->keys) {
-		printf("(");
-		foreach (l, lfirst(k)) {
-		    Var *var = lfirst(l);
-		    printf("%d.%d", var->varnoold, var->varoattno);
-		    if (lnext(l)) printf(", ");
-		}
-		printf(")");
-		if (lnext(k)) printf(", ");
-	    }
-	}
-	printf("\n");
+            printf(" keys=");
+            foreach (k, path->keys) {
+                printf("(");
+                foreach (l, lfirst(k)) {
+                    Var *var = lfirst(l);
+                    printf("%d.%d", var->varnoold, var->varoattno);
+                    if (lnext(l)) printf(", ");
+                }
+                printf(")");
+                if (lnext(k)) printf(", ");
+            }
+        }
+        printf("\n");
     }
 }
 
@@ -337,13 +342,13 @@ debug_print_rel(Query *root, Rel *rel)
 
     printf("(");
     foreach(l, rel->relids) {
-	printf("%d ", lfirsti(l));
+    printf("%d ", lfirsti(l));
     }
     printf("): size=%d width=%d\n", rel->size, rel->width);
 
     printf("\tpath list:\n");
     foreach (l, rel->pathlist) {
-	print_path(root, lfirst(l), 1);
+    print_path(root, lfirst(l), 1);
     }
     printf("\tcheapest path:\n");
     print_path(root, rel->cheapestpath, 1);

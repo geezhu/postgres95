@@ -53,14 +53,13 @@ static Expr *matching2_tlvar(int var, List *tlist, bool (*test)());
  *    
  */
 bool
-match_indexkey_operand(int indexkey, Var *operand, Rel *rel)
-{
-    if (IsA (operand,Var) &&
-	(lfirsti(rel->relids) == operand->varno) &&
-	equal_indexkey_var(indexkey,operand))
-	return(true);
+match_indexkey_operand(int indexkey, Var *operand, Rel *rel) {
+    if (IsA (operand, Var) &&
+        (lfirsti(rel->relids) == operand->varno) &&
+        equal_indexkey_var(indexkey, operand))
+        return (true);
     else
-	return(false);
+        return (false);
 }
 
 /*    
@@ -70,12 +69,11 @@ match_indexkey_operand(int indexkey, Var *operand, Rel *rel)
  *    
  */
 bool
-equal_indexkey_var(int index_key, Var *var)
-{
+equal_indexkey_var(int index_key, Var *var) {
     if (index_key == var->varattno)
-	return(true);
+        return (true);
     else
-	return(false);
+        return (false);
 }
 
 /*    
@@ -85,22 +83,21 @@ equal_indexkey_var(int index_key, Var *var)
  *    
  */
 Var *
-extract_subkey(JoinKey *jk, int which_subkey)
-{
+extract_subkey(JoinKey *jk, int which_subkey) {
     Var *retval;
 
     switch (which_subkey) {
-    case OUTER: 
-	retval = jk->outer;
-	break;
-    case INNER: 
-	retval = jk->inner;
-	break;
-    default:			/* do nothing */
-	elog(DEBUG,"extract_subkey with neither INNER or OUTER");
-	retval = NULL;
+        case OUTER:
+            retval = jk->outer;
+            break;
+        case INNER:
+            retval = jk->inner;
+            break;
+        default:            /* do nothing */
+            elog(DEBUG, "extract_subkey with neither INNER or OUTER");
+            retval = NULL;
     }
-    return(retval);
+    return (retval);
 }
 
 /*    
@@ -116,20 +113,19 @@ extract_subkey(JoinKey *jk, int which_subkey)
  *    
  */
 bool
-samekeys(List *keys1, List *keys2)
-{
+samekeys(List *keys1, List *keys2) {
     bool allmember = true;
     List *key1, *key2;
 
-    for(key1=keys1,key2=keys2 ; key1 != NIL && key2 !=NIL ; 
-	key1=lnext(key1), key2=lnext(key2)) 
-	if (!member(lfirst(key1), lfirst(key2)))
-	    allmember = false;
+    for (key1 = keys1, key2 = keys2; key1 != NIL && key2 != NIL;
+         key1 = lnext(key1), key2 = lnext(key2))
+        if (!member(lfirst(key1), lfirst(key2)))
+            allmember = false;
 
-    if ( (length (keys2) >= length (keys1)) && allmember)
-	return(true);
+    if ((length(keys2) >= length(keys1)) && allmember)
+        return (true);
     else
-	return(false);
+        return (false);
 }
 
 /*    
@@ -150,44 +146,42 @@ samekeys(List *keys1, List *keys2)
  * They should be merged.
  */
 static Expr *
-matching2_tlvar(int var, List *tlist, bool (*test)())
-{
+matching2_tlvar(int var, List *tlist, bool (*test)()) {
     TargetEntry *tlentry = NULL;
 
     if (var) {
-	List *temp;
-	foreach (temp,tlist) {
-	    if ((*test)(var, get_expr(lfirst(temp)))) {
-		tlentry = lfirst(temp);
-		break;
-	    }
-	}
+        List *temp;
+        foreach (temp, tlist) {
+            if ((*test)(var, get_expr(lfirst(temp)))) {
+                tlentry = lfirst(temp);
+                break;
+            }
+        }
     }
 
-    if (tlentry) 
-	return((Expr*)get_expr(tlentry));
+    if (tlentry)
+        return ((Expr *) get_expr(tlentry));
     else
-	return((Expr*)NULL);
+        return ((Expr *) NULL);
 }
 
 
 List *
-collect_index_pathkeys(int *index_keys, List *tlist)
-{
+collect_index_pathkeys(int *index_keys, List *tlist) {
     List *retval = NIL;
 
     Assert (index_keys != NULL);
 
-    while(index_keys[0] != 0) {
-	Expr *mvar;
-	mvar = matching2_tlvar(index_keys[0],
-			       tlist,
-			       equal_indexkey_var);
-	if (mvar) 
-	    retval = nconc(retval,lcons(lcons(mvar,NIL),
-					NIL));
-	index_keys++;
+    while (index_keys[0] != 0) {
+        Expr *mvar;
+        mvar = matching2_tlvar(index_keys[0],
+                               tlist,
+                               equal_indexkey_var);
+        if (mvar)
+            retval = nconc(retval, lcons(lcons(mvar, NIL),
+                                         NIL));
+        index_keys++;
     }
-    return(retval);
+    return (retval);
 }
 

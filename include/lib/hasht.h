@@ -11,7 +11,7 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	HASHT_H
+#ifndef    HASHT_H
 #define HASHT_H
 
 #include "utils/hsearch.h"
@@ -20,4 +20,4 @@ typedef void (*HashtFunc)();
 
 extern void HashTableWalk(HTAB *hashtable, HashtFunc function, int arg);
 
-#endif	/* HASHT_H */
+#endif    /* HASHT_H */

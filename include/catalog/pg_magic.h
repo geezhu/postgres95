@@ -30,25 +30,27 @@
  *	pg_magic definition.  cpp turns this into
  *	typedef struct FormData_pg_magic
  * ----------------
- */ 
-CATALOG(pg_magic) BOOTSTRAP {
-    NameData 	magname;
-    NameData 	magvalue;
-} FormData_pg_magic;
+ */
+CATALOG(pg_magic)
+BOOTSTRAP {
+NameData magname;
+NameData magvalue;
+}
+FormData_pg_magic;
 
 /* ----------------
  *	Form_pg_magic corresponds to a pointer to a tuple with
  *	the format of pg_magic relation.
  * ----------------
  */
-typedef FormData_pg_magic	*Form_pg_magic;
+typedef FormData_pg_magic *Form_pg_magic;
 
 /* ----------------
  *	compiler constants for pg_magic
  * ----------------
  */
-#define Natts_pg_magic			2
-#define Anum_pg_magic_magname		1
-#define Anum_pg_magic_magvalue		2
+#define Natts_pg_magic            2
+#define Anum_pg_magic_magname        1
+#define Anum_pg_magic_magvalue        2
 
 #endif /* PG_MAGIC_H */

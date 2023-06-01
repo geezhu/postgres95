@@ -24,7 +24,7 @@
  *	List of relation identifiers (indexes into the rangetable).
  */
 
-typedef	List	*Relid;
+typedef List *Relid;
 
 /*
  * Rel
@@ -74,51 +74,51 @@ typedef	List	*Relid;
  *     is always 0.				2/95 - ay
  */
 
-typedef	struct Rel {
-    NodeTag	type;
+typedef struct Rel {
+    NodeTag type;
 
     /* all relations: */
-    Relid	relids;
+    Relid relids;
 
     /* catalog statistics information */
-    bool	indexed;
-    int		pages;
-    int		tuples;
-    int		size;
-    int		width;
+    bool indexed;
+    int pages;
+    int tuples;
+    int size;
+    int width;
 
     /* materialization information */
-    List	*targetlist;
-    List	*pathlist;
-    struct Path	*unorderedpath;
-    struct Path	*cheapestpath;
-    bool    	pruneable;
+    List *targetlist;
+    List *pathlist;
+    struct Path *unorderedpath;
+    struct Path *cheapestpath;
+    bool pruneable;
 
     /* used solely by indices: */
-    Oid		*classlist;		/* classes of AM operators */
-    int		*indexkeys;		/* keys over which we're indexing */
-    Oid         relam;  /* OID of the access method (in pg_am) */
-				   
-    Oid		indproc;
-    List	*indpred;
+    Oid *classlist;        /* classes of AM operators */
+    int *indexkeys;        /* keys over which we're indexing */
+    Oid relam;  /* OID of the access method (in pg_am) */
+
+    Oid indproc;
+    List *indpred;
 
     /* used by various scans and joins: */
-    Oid		*ordering;		/* OID of operators in sort order */
-    List	*clauseinfo;		/* restriction clauses */
-    List	*joininfo;		/* join clauses */
-    List	*innerjoin;
-    List	*superrels;
+    Oid *ordering;        /* OID of operators in sort order */
+    List *clauseinfo;        /* restriction clauses */
+    List *joininfo;        /* join clauses */
+    List *innerjoin;
+    List *superrels;
 } Rel;
 
 extern Var *get_expr(TargetEntry *foo);
 
 typedef struct MergeOrder {
-    NodeTag	type;
-    Oid 	join_operator;
-    Oid 	left_operator;
-    Oid 	right_operator;
-    Oid 	left_type;
-    Oid 	right_type;
+    NodeTag type;
+    Oid join_operator;
+    Oid left_operator;
+    Oid right_operator;
+    Oid left_type;
+    Oid right_type;
 } MergeOrder;
 
 typedef enum OrderType {
@@ -126,54 +126,54 @@ typedef enum OrderType {
 } OrderType;
 
 typedef struct PathOrder {
-    OrderType	ordtype;
+    OrderType ordtype;
     union {
-	Oid		*sortop;
-	MergeOrder	*merge;
+        Oid *sortop;
+        MergeOrder *merge;
     } ord;
 } PathOrder;
 
 typedef struct Path {
-    NodeTag	type;
+    NodeTag type;
 
-    Rel		*parent;
-    Cost	path_cost;
+    Rel *parent;
+    Cost path_cost;
 
-    NodeTag	pathtype;
+    NodeTag pathtype;
 
-    PathOrder	p_ordering;
+    PathOrder p_ordering;
 
-    List	*keys;
-    Cost	outerjoincost;
-    Relid	joinid;
-    List        *locclauseinfo;
+    List *keys;
+    Cost outerjoincost;
+    Relid joinid;
+    List *locclauseinfo;
 } Path;
 
 typedef struct IndexPath {
-    Path	path;
-    List	*indexid;
-    List	*indexqual;
+    Path path;
+    List *indexid;
+    List *indexqual;
 } IndexPath;
 
 typedef struct JoinPath {
-    Path	path;
-    List	*pathclauseinfo;
-    Path	*outerjoinpath;
-    Path	*innerjoinpath;
+    Path path;
+    List *pathclauseinfo;
+    Path *outerjoinpath;
+    Path *innerjoinpath;
 } JoinPath;
 
 typedef struct MergePath {
-    JoinPath	jpath;
-    List	*path_mergeclauses;
-    List	*outersortkeys;
-    List	*innersortkeys;
+    JoinPath jpath;
+    List *path_mergeclauses;
+    List *outersortkeys;
+    List *innersortkeys;
 } MergePath;
 
 typedef struct HashPath {
-    JoinPath	jpath;
-    List	*path_hashclauses;
-    List	*outerhashkeys;
-    List	*innerhashkeys;
+    JoinPath jpath;
+    List *path_hashclauses;
+    List *outerhashkeys;
+    List *innerhashkeys;
 } HashPath;
 
 /******
@@ -181,15 +181,15 @@ typedef struct HashPath {
  ******/
 
 typedef struct OrderKey {
-    NodeTag	type;
-    int 	attribute_number;
-    Index	array_index;
+    NodeTag type;
+    int attribute_number;
+    Index array_index;
 } OrderKey;
 
 typedef struct JoinKey {
-    NodeTag	type;
-    Var 	*outer;
-    Var  	*inner;
+    NodeTag type;
+    Var *outer;
+    Var *inner;
 } JoinKey;
 
 /*******
@@ -197,49 +197,49 @@ typedef struct JoinKey {
  *******/
 
 typedef struct CInfo {
-    NodeTag	type;
-    Expr	*clause;	/* should be an OP clause */
-    Cost	selectivity;
-    bool	notclause;
-    List	*indexids;
+    NodeTag type;
+    Expr *clause;    /* should be an OP clause */
+    Cost selectivity;
+    bool notclause;
+    List *indexids;
 
     /* mergesort only */
-    MergeOrder	*mergesortorder;
+    MergeOrder *mergesortorder;
 
     /* hashjoin only */
-    Oid		hashjoinoperator;
-    Relid	cinfojoinid;
+    Oid hashjoinoperator;
+    Relid cinfojoinid;
 } CInfo;
 
 typedef struct JoinMethod {
-    NodeTag	type;
-    List        *jmkeys;
-    List        *clauses;
+    NodeTag type;
+    List *jmkeys;
+    List *clauses;
 } JoinMethod;
 
 typedef struct HInfo {
-    JoinMethod	jmethod;
-    Oid        	hashop;
+    JoinMethod jmethod;
+    Oid hashop;
 } HInfo;
 
 typedef struct MInfo {
-    JoinMethod	jmethod;
-    MergeOrder	*m_ordering;
+    JoinMethod jmethod;
+    MergeOrder *m_ordering;
 } MInfo;
 
 typedef struct JInfo {
-    NodeTag	type;
-    List	*otherrels;
-    List	*jinfoclauseinfo;
-    bool	mergesortable;
-    bool	hashjoinable;
-    bool	inactive;
+    NodeTag type;
+    List *otherrels;
+    List *jinfoclauseinfo;
+    bool mergesortable;
+    bool hashjoinable;
+    bool inactive;
 } JInfo;
 
 typedef struct Iter {
-    NodeTag	type;
-    Node	*iterexpr;
-    Oid		itertype;	/* type of the iter expr (use for type
+    NodeTag type;
+    Node *iterexpr;
+    Oid itertype;    /* type of the iter expr (use for type
 				   checking) */
 } Iter;
 
@@ -265,15 +265,15 @@ typedef struct Iter {
 typedef struct Stream *StreamPtr;
 
 typedef struct Stream {
-    NodeTag	type;
-    Path	*pathptr;
-    CInfo 	*cinfo;
-    int		*clausetype;
+    NodeTag type;
+    Path *pathptr;
+    CInfo *cinfo;
+    int *clausetype;
     struct Stream *upstream;
     struct Stream *downstream;
-    bool 	groupup;
-    Cost 	groupcost;
-    Cost	 groupsel;
+    bool groupup;
+    Cost groupcost;
+    Cost groupsel;
 } Stream;
 
 #endif /* RELATION_H */

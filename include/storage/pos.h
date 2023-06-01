@@ -10,7 +10,7 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	POS_H
+#ifndef    POS_H
 #define POS_H
 
 #include "c.h"
@@ -25,8 +25,8 @@
  * pointer array contained on every page that store (heap or index)
  * tuples.
  */
-typedef bits16		PositionIdData;
-typedef PositionIdData	*PositionId;
+typedef bits16 PositionIdData;
+typedef PositionIdData *PositionId;
 
 /* ----------------
  *	support macros
@@ -61,4 +61,4 @@ typedef PositionIdData	*PositionId;
 #define PositionIdGetOffsetNumber(positionId) \
     ((OffsetNumber) *(positionId))
 
-#endif	/*  POS_H */
+#endif    /*  POS_H */

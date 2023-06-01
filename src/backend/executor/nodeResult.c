@@ -49,62 +49,61 @@
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
-ExecResult(Result *node)
-{
-    ResultState		*resstate;
-    TupleTableSlot	*outerTupleSlot;
-    TupleTableSlot	*resultSlot;
-    Plan   		*outerPlan;
-    ExprContext		*econtext;
-    Node		*qual;
-    bool		qualResult;
-    bool		isDone;
-    ProjectionInfo 	*projInfo;
-    
+ExecResult(Result *node) {
+    ResultState *resstate;
+    TupleTableSlot *outerTupleSlot;
+    TupleTableSlot *resultSlot;
+    Plan *outerPlan;
+    ExprContext *econtext;
+    Node *qual;
+    bool qualResult;
+    bool isDone;
+    ProjectionInfo *projInfo;
+
     /* ----------------
      *	initialize the result node's state
      * ----------------
      */
-    resstate =  node->resstate;
-    
+    resstate = node->resstate;
+
     /* ----------------
      *	get the expression context
      * ----------------
      */
     econtext = resstate->cstate.cs_ExprContext;
-    
+
     /* ----------------
      *   check tautological qualifications like (2 > 1)
      * ----------------
      */
     qual = node->resconstantqual;
     if (qual != NULL) {
-	qualResult = ExecQual((List*)qual, econtext);
-	/* ----------------
-	 *  if we failed the constant qual, then there
-	 *  is no need to continue processing because regardless of
-	 *  what happens, the constant qual will be false..
-	 * ----------------
-	 */
-	if (qualResult == false)
-	    return NULL;
-	
-	/* ----------------
-	 *  our constant qualification succeeded so now we
-	 *  throw away the qual because we know it will always
-	 *  succeed.
-	 * ----------------
-	 */
-	node->resconstantqual = NULL;
+        qualResult = ExecQual((List *) qual, econtext);
+        /* ----------------
+         *  if we failed the constant qual, then there
+         *  is no need to continue processing because regardless of
+         *  what happens, the constant qual will be false..
+         * ----------------
+         */
+        if (qualResult == false)
+            return NULL;
+
+        /* ----------------
+         *  our constant qualification succeeded so now we
+         *  throw away the qual because we know it will always
+         *  succeed.
+         * ----------------
+         */
+        node->resconstantqual = NULL;
     }
-    
+
     if (resstate->cstate.cs_TupFromTlist) {
-	ProjectionInfo *projInfo;
-	
-	projInfo = resstate->cstate.cs_ProjInfo;
-	resultSlot = ExecProject(projInfo, &isDone);
-	if (!isDone)
-	    return resultSlot;
+        ProjectionInfo *projInfo;
+
+        projInfo = resstate->cstate.cs_ProjInfo;
+        resultSlot = ExecProject(projInfo, &isDone);
+        if (!isDone)
+            return resultSlot;
     }
 
     /* ----------------
@@ -120,53 +119,53 @@ ExecResult(Result *node)
 
     while (!resstate->rs_done) {
 
-	/* ----------------
-	 *    get next outer tuple if necessary.
-	 * ----------------
-	 */
-	if (outerPlan != NULL) {
-	    outerTupleSlot = ExecProcNode(outerPlan, (Plan*)node);
-	
-	    if (TupIsNull(outerTupleSlot))
-		return NULL;
-	    
-	    resstate->cstate.cs_OuterTupleSlot = outerTupleSlot;
-	} else {
+        /* ----------------
+         *    get next outer tuple if necessary.
+         * ----------------
+         */
+        if (outerPlan != NULL) {
+            outerTupleSlot = ExecProcNode(outerPlan, (Plan *) node);
 
-	    /* ----------------
-	     *  if we don't have an outer plan, then it's probably
-	     *  the case that we are doing a retrieve or an append
-	     *  with a constant target list, so we should only return
-	     *  the constant tuple once or never if we fail the qual.
-	     * ----------------
-	     */
-	    resstate->rs_done = 1;
-	}
-	
-	/* ----------------
-	 *    get the information to place into the expr context
-	 * ----------------
-	 */
-	resstate =  node->resstate;
-	
-	outerTupleSlot = resstate->cstate.cs_OuterTupleSlot;
-	
-	/* ----------------
-	 *   fill in the information in the expression context
-	 *   XXX gross hack. use outer tuple as scan tuple
-	 * ----------------
-	 */
-	econtext->ecxt_outertuple = outerTupleSlot;
-	econtext->ecxt_scantuple =  outerTupleSlot;
-	
-	/* ----------------
-	 *   form the result tuple and pass it back using ExecProject()
-	 * ----------------
-	 */
-	projInfo = resstate->cstate.cs_ProjInfo;
-	resultSlot = ExecProject(projInfo, &isDone);
-	resstate->cstate.cs_TupFromTlist = !isDone;
-	return resultSlot;
+            if (TupIsNull(outerTupleSlot))
+                return NULL;
+
+            resstate->cstate.cs_OuterTupleSlot = outerTupleSlot;
+        } else {
+
+            /* ----------------
+             *  if we don't have an outer plan, then it's probably
+             *  the case that we are doing a retrieve or an append
+             *  with a constant target list, so we should only return
+             *  the constant tuple once or never if we fail the qual.
+             * ----------------
+             */
+            resstate->rs_done = 1;
+        }
+
+        /* ----------------
+         *    get the information to place into the expr context
+         * ----------------
+         */
+        resstate = node->resstate;
+
+        outerTupleSlot = resstate->cstate.cs_OuterTupleSlot;
+
+        /* ----------------
+         *   fill in the information in the expression context
+         *   XXX gross hack. use outer tuple as scan tuple
+         * ----------------
+         */
+        econtext->ecxt_outertuple = outerTupleSlot;
+        econtext->ecxt_scantuple = outerTupleSlot;
+
+        /* ----------------
+         *   form the result tuple and pass it back using ExecProject()
+         * ----------------
+         */
+        projInfo = resstate->cstate.cs_ProjInfo;
+        resultSlot = ExecProject(projInfo, &isDone);
+        resstate->cstate.cs_TupFromTlist = !isDone;
+        return resultSlot;
     }
 
     return NULL;
@@ -181,16 +180,15 @@ ExecResult(Result *node)
  * ----------------------------------------------------------------
  */
 bool
-ExecInitResult(Result *node, EState *estate, Plan *parent)
-{
-    ResultState	    *resstate;
-    
+ExecInitResult(Result *node, EState *estate, Plan *parent) {
+    ResultState *resstate;
+
     /* ----------------
      *	assign execution state to node
      * ----------------
      */
     node->plan.state = estate;
-    
+
     /* ----------------
      *	create new ResultState for node
      * ----------------
@@ -198,7 +196,7 @@ ExecInitResult(Result *node, EState *estate, Plan *parent)
     resstate = makeNode(ResultState);
     resstate->rs_done = 0;
     node->resstate = resstate;
-    
+
     /* ----------------
      *  Miscellanious initialization
      *
@@ -209,44 +207,43 @@ ExecInitResult(Result *node, EState *estate, Plan *parent)
      */
     ExecAssignNodeBaseInfo(estate, &resstate->cstate, parent);
     ExecAssignExprContext(estate, &resstate->cstate);
-    
+
 #define RESULT_NSLOTS 1
     /* ----------------
      *	tuple table initialization
      * ----------------
      */
     ExecInitResultTupleSlot(estate, &resstate->cstate);
-    
+
     /* ----------------
      *	then initialize children
      * ----------------
      */
-    ExecInitNode(outerPlan(node), estate, (Plan*)node);
+    ExecInitNode(outerPlan(node), estate, (Plan *) node);
 
     /*
      * we don't use inner plan
      */
-    Assert(innerPlan(node)==NULL);
-    
+    Assert(innerPlan(node) == NULL);
+
     /* ----------------
      * 	initialize tuple type and projection info
      * ----------------
      */
-    ExecAssignResultTypeFromTL((Plan*)node, &resstate->cstate);
-    ExecAssignProjectionInfo((Plan*)node, &resstate->cstate);
-    
+    ExecAssignResultTypeFromTL((Plan *) node, &resstate->cstate);
+    ExecAssignProjectionInfo((Plan *) node, &resstate->cstate);
+
     /* ----------------
      *	set "are we done yet" to false
      * ----------------
      */
     resstate->rs_done = 0;
-    
+
     return TRUE;
 }
 
 int
-ExecCountSlotsResult(Result *node)
-{
+ExecCountSlotsResult(Result *node) {
     return ExecCountSlotsNode(outerPlan(node)) + RESULT_NSLOTS;
 }
 
@@ -257,12 +254,11 @@ ExecCountSlotsResult(Result *node)
  * ----------------------------------------------------------------
  */
 void
-ExecEndResult(Result *node)
-{
-    ResultState	    *resstate;
-    
+ExecEndResult(Result *node) {
+    ResultState *resstate;
+
     resstate = node->resstate;
-    
+
     /* ----------------
      *	Free the projection info
      *
@@ -271,14 +267,14 @@ ExecEndResult(Result *node)
      *	      returned by ExecMain().  So for now, this
      *	      is freed at end-transaction time.  -cim 6/2/91     
      * ----------------
-     */    
+     */
     ExecFreeProjectionInfo(&resstate->cstate);
-    
+
     /* ----------------
      *	shut down subplans
      * ----------------
      */
-    ExecEndNode(outerPlan(node), (Plan*)node);
+    ExecEndNode(outerPlan(node), (Plan *) node);
 
     /* ----------------
      *	clean out the tuple table

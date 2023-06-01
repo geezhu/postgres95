@@ -42,7 +42,7 @@
 /*
  * from postmaster/postmaster.c
  */
-extern int PostmasterMain(int argc, char* argv[]);
+extern int PostmasterMain(int argc, char *argv[]);
 
 /*
  * from utils/init/globals.c
@@ -51,10 +51,11 @@ extern int Portfd;
 extern int Noversion;    /* moved from magic.c	*/
 extern int MasterPid;    /* declared and defined in utils/initglobals.c */
 extern int Quiet;
-extern char *DataDir;   
+extern char *DataDir;
 
-extern char	  OutputFileName[];
-extern void 	  InitGlobals();
+extern char OutputFileName[];
+
+extern void InitGlobals();
 
 /*
  * done in storage/backendid.h for now.
@@ -62,16 +63,16 @@ extern void 	  InitGlobals();
  * extern BackendId    MyBackendId;
  * extern BackendTag   MyBackendTag;
  */
-extern bool	    MyDatabaseIdIsInitialized;
-extern Oid	    MyDatabaseId;
-extern bool	    TransactionInitWasProcessed;
+extern bool MyDatabaseIdIsInitialized;
+extern Oid MyDatabaseId;
+extern bool TransactionInitWasProcessed;
 
-extern bool	    IsUnderPostmaster;
-extern bool	    IsPostmaster;
+extern bool IsUnderPostmaster;
+extern bool IsPostmaster;
 
-extern short	    DebugLvl;
+extern short DebugLvl;
 
-extern Oid	    LastOidProcessed;	/* for query rewrite */
+extern Oid LastOidProcessed;    /* for query rewrite */
 
 #define MAX_PARSE_BUFFER 8192
 
@@ -85,9 +86,9 @@ extern Oid	    LastOidProcessed;	/* for query rewrite */
  *	magic.h		- definitions of the indexes of the magic numbers    *
  *****************************************************************************/
 
-#define	PG_RELEASE	5
-#define PG_VERSION	1
-#define	PG_VERFILE	"PG_VERSION"
+#define    PG_RELEASE    5
+#define PG_VERSION    1
+#define    PG_VERFILE    "PG_VERSION"
 
 /*****************************************************************************
  *    pdir.h --                                                              *
@@ -96,17 +97,29 @@ extern Oid	    LastOidProcessed;	/* for query rewrite */
 
 /* now in utils/init/miscinit.c */
 extern char *GetDatabasePath(void);
+
 extern char *GetDatabaseName(void);
+
 extern void SetDatabaseName(char *name);
+
 extern void SetDatabasePath(char *path);
+
 extern char *GetPgUserName(void);
+
 extern void SetPgUserName(void);
+
 extern Oid GetUserId(void);
+
 extern void SetUserId(void);
+
 extern char *GetPGHome(void);
+
 extern char *GetPGData(void);
+
 extern int ValidateBackend(char *path);
+
 extern int FindBackend(char *backend, char *argv0);
+
 extern int CheckPathAccess(char *path, char *name, int open_mode);
 
 
@@ -136,10 +149,10 @@ extern int CheckPathAccess(char *path, char *name, int open_mode);
  */
 
 typedef enum ProcessingMode {
-    NoProcessing,		/* "nothing" can be done */
-    BootstrapProcessing,	/* bootstrap creation of template database */
-    InitProcessing,		/* initializing system */
-    NormalProcessing		/* normal processing */
+    NoProcessing,        /* "nothing" can be done */
+    BootstrapProcessing,    /* bootstrap creation of template database */
+    InitProcessing,        /* initializing system */
+    NormalProcessing        /* normal processing */
 } ProcessingMode;
 
 
@@ -152,17 +165,21 @@ typedef enum ProcessingMode {
  *	XXX AddExitHandler not defined yet.
  */
 
-typedef	int16	ExitStatus;
+typedef int16 ExitStatus;
 
-#define	NormalExitStatus	(0)
-#define	FatalExitStatus		(127)
+#define    NormalExitStatus    (0)
+#define    FatalExitStatus        (127)
 /* XXX are there any other meaningful exit codes? */
 
 /* in utils/init/postinit.c */
 extern void InitMyDatabaseId(void);
+
 extern void DoChdirAndInitDatabaseNameAndPath(char *name, char *path);
+
 extern void InitUserid(void);
+
 extern void InitCommunication(void);
+
 extern void InitStdio(void);
 
 extern bool PostgresIsInitialized;
@@ -171,15 +188,23 @@ extern void InitPostgres(char *name);
 
 /* in miscinit.c */
 extern void ExitPostgres(ExitStatus status);
+
 extern void AbortPostgres(void);
+
 extern void StatusBackendExit(int status);
+
 extern void StatusPostmasterExit(int status);
 
 extern bool IsNoProcessingMode(void);
+
 extern bool IsBootstrapProcessingMode(void);
+
 extern bool IsInitProcessingMode(void);
+
 extern bool IsNormalProcessingMode(void);
+
 extern void SetProcessingMode(ProcessingMode mode);
+
 extern ProcessingMode GetProcessingMode(void);
 
 
@@ -187,7 +212,9 @@ extern ProcessingMode GetProcessingMode(void);
  * Prototypes for utils/init/magic.c
  */
 extern int DatabaseMetaGunkIsConsistent(char database[], char path[]);
-extern int ValidPgVersion(char path []);
-extern void SetPgVersion(char path []);
 
-#endif	/* MISCADMIN_H */
+extern int ValidPgVersion(char path[]);
+
+extern void SetPgVersion(char path[]);
+
+#endif    /* MISCADMIN_H */

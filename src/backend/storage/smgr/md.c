@@ -11,14 +11,14 @@
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>		/* for sprintf() */
+#include <stdio.h>        /* for sprintf() */
 #include <sys/file.h>
 
 #include "postgres.h"
 #include "miscadmin.h"  /* for DataDir */
 
 #include "machine.h"
-#include "storage/smgr.h"	/* where the declarations go */
+#include "storage/smgr.h"    /* where the declarations go */
 #include "storage/block.h"
 #include "storage/fd.h"
 #include "utils/mcxt.h"
@@ -40,25 +40,28 @@
  */
 
 typedef struct _MdfdVec {
-    int			mdfd_vfd; /* fd number in vfd pool */
-    uint16		mdfd_flags; /* clean, dirty */
-    int			mdfd_lstbcnt; /* most recent block count */
-    struct _MdfdVec	*mdfd_chain; /* for large relations */
+    int mdfd_vfd; /* fd number in vfd pool */
+    uint16 mdfd_flags; /* clean, dirty */
+    int mdfd_lstbcnt; /* most recent block count */
+    struct _MdfdVec *mdfd_chain; /* for large relations */
 } MdfdVec;
 
-static int	Nfds = 100;
-static MdfdVec	*Md_fdvec = (MdfdVec *) NULL;
-static int	CurFd = 0;
-static MemoryContext	MdCxt;
+static int Nfds = 100;
+static MdfdVec *Md_fdvec = (MdfdVec *) NULL;
+static int CurFd = 0;
+static MemoryContext MdCxt;
 
-#define MDFD_DIRTY	(uint16) 0x01
+#define MDFD_DIRTY    (uint16) 0x01
 
-#define	RELSEG_SIZE	262144		/* (2 ** 31) / 8192 -- 2GB file */
+#define    RELSEG_SIZE    262144        /* (2 ** 31) / 8192 -- 2GB file */
 
 /* routines declared here */
-static MdfdVec	*_mdfd_openseg(Relation reln, int segno, int oflags);
-static MdfdVec	*_mdfd_getseg(Relation reln, int blkno, int oflag);
+static MdfdVec *_mdfd_openseg(Relation reln, int segno, int oflags);
+
+static MdfdVec *_mdfd_getseg(Relation reln, int blkno, int oflag);
+
 static int _fdvec_ext(void);
+
 static BlockNumber _mdnblocks(File file, Size blcksz);
 
 /*
@@ -73,36 +76,34 @@ static BlockNumber _mdnblocks(File file, Size blcksz);
  *	Returns SM_SUCCESS or SM_FAIL with errno set as appropriate.
  */
 int
-mdinit()
-{
+mdinit() {
     MemoryContext oldcxt;
 
     MdCxt = (MemoryContext) CreateGlobalMemory("MdSmgr");
     if (MdCxt == (MemoryContext) NULL)
-	return (SM_FAIL);
+        return (SM_FAIL);
 
     oldcxt = MemoryContextSwitchTo(MdCxt);
     Md_fdvec = (MdfdVec *) palloc(Nfds * sizeof(MdfdVec));
     (void) MemoryContextSwitchTo(oldcxt);
 
     if (Md_fdvec == (MdfdVec *) NULL)
-	return (SM_FAIL);
+        return (SM_FAIL);
 
-    memset(Md_fdvec, 0, Nfds * sizeof(MdfdVec)); 
+    memset(Md_fdvec, 0, Nfds * sizeof(MdfdVec));
 
     return (SM_SUCCESS);
 }
 
 int
-mdcreate(Relation reln)
-{
+mdcreate(Relation reln) {
     int fd, vfd;
     int tmp;
     char *path;
     extern bool IsBootstrapProcessingMode();
 
     path = relpath(&(reln->rd_rel->relname.data[0]));
-    fd = FileNameOpenFile(path, O_RDWR|O_CREAT|O_EXCL, 0600);
+    fd = FileNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL, 0600);
 
     /*
      *  If the file already exists and is empty, we pretend that the
@@ -112,18 +113,18 @@ mdcreate(Relation reln)
      */
 
     if (fd < 0) {
-	if ((fd = FileNameOpenFile(path, O_RDWR, 0600)) >= 0) {
-	    if (!IsBootstrapProcessingMode() &&
-		FileRead(fd, (char *) &tmp, sizeof(tmp)) != 0) {
-		FileClose(fd);
-		return (-1);
-	    }
-	}
+        if ((fd = FileNameOpenFile(path, O_RDWR, 0600)) >= 0) {
+            if (!IsBootstrapProcessingMode() &&
+                FileRead(fd, (char *) &tmp, sizeof(tmp)) != 0) {
+                FileClose(fd);
+                return (-1);
+            }
+        }
     }
 
     if (CurFd >= Nfds) {
-	if (_fdvec_ext() == SM_FAIL)
-	    return (-1);
+        if (_fdvec_ext() == SM_FAIL)
+            return (-1);
     }
 
     Md_fdvec[CurFd].mdfd_vfd = fd;
@@ -140,37 +141,36 @@ mdcreate(Relation reln)
  *  mdunlink() -- Unlink a relation.
  */
 int
-mdunlink(Relation reln)
-{
+mdunlink(Relation reln) {
     int fd;
     int i;
     MdfdVec *v, *ov;
     MemoryContext oldcxt;
-    char fname[20];	/* XXX should have NAMESIZE defined */
+    char fname[20];    /* XXX should have NAMESIZE defined */
     char tname[20];
 
- /* On Windows NT you can't unlink a file if it is open so we have
- ** to do this.
- */
+    /* On Windows NT you can't unlink a file if it is open so we have
+    ** to do this.
+    */
 #ifdef WIN32
     (void) mdclose(reln);
 #endif /* WIN32 */
- 
 
-    memset(fname,0,20); 
+
+    memset(fname, 0, 20);
     strncpy(fname, RelationGetRelationName(reln)->data, 16);
 
     if (FileNameUnlink(fname) < 0)
-	return (SM_FAIL);
+        return (SM_FAIL);
 
     /* unlink all the overflow files for large relations */
-    for (i = 1; ; i++) {
+    for (i = 1;; i++) {
 #ifdef WIN32
-       (void) mdclose(reln);
+        (void) mdclose(reln);
 #endif /* WIN32 */
-	sprintf(tname, "%s.%d", fname, i);
-	if (FileNameUnlink(tname) < 0)
-	    break;
+        sprintf(tname, "%s.%d", fname, i);
+        if (FileNameUnlink(tname) < 0)
+            break;
     }
 
     /* finally, clean out the mdfd vector */
@@ -178,11 +178,11 @@ mdunlink(Relation reln)
     Md_fdvec[fd].mdfd_flags = (uint16) 0;
 
     oldcxt = MemoryContextSwitchTo(MdCxt);
-    for (v = &Md_fdvec[fd]; v != (MdfdVec *) NULL; ) {
-	ov = v;
-	v = v->mdfd_chain;
-	if (ov != &Md_fdvec[fd])
-	    pfree(ov);
+    for (v = &Md_fdvec[fd]; v != (MdfdVec *) NULL;) {
+        ov = v;
+        v = v->mdfd_chain;
+        if (ov != &Md_fdvec[fd])
+            pfree(ov);
     }
     Md_fdvec[fd].mdfd_chain = (MdfdVec *) NULL;
     (void) MemoryContextSwitchTo(oldcxt);
@@ -197,8 +197,7 @@ mdunlink(Relation reln)
  *	appropriate.
  */
 int
-mdextend(Relation reln, char *buffer)
-{
+mdextend(Relation reln, char *buffer) {
     long pos;
     int nblocks;
     MdfdVec *v;
@@ -207,22 +206,22 @@ mdextend(Relation reln, char *buffer)
     v = _mdfd_getseg(reln, nblocks, O_CREAT);
 
     if ((pos = FileSeek(v->mdfd_vfd, 0L, SEEK_END)) < 0)
-	return (SM_FAIL);
+        return (SM_FAIL);
 
     if (FileWrite(v->mdfd_vfd, buffer, BLCKSZ) != BLCKSZ)
-	return (SM_FAIL);
+        return (SM_FAIL);
 
     /* remember that we did a write, so we can sync at xact commit */
     v->mdfd_flags |= MDFD_DIRTY;
 
     /* try to keep the last block count current, though it's just a hint */
     if ((v->mdfd_lstbcnt = (++nblocks % RELSEG_SIZE)) == 0)
-	v->mdfd_lstbcnt = RELSEG_SIZE;
+        v->mdfd_lstbcnt = RELSEG_SIZE;
 
 #ifdef DIAGNOSTIC
     if (_mdnblocks(v->mdfd_vfd, BLCKSZ) > RELSEG_SIZE
-	|| v->mdfd_lstbcnt > RELSEG_SIZE)
-	elog(FATAL, "segment too big!");
+    || v->mdfd_lstbcnt > RELSEG_SIZE)
+    elog(FATAL, "segment too big!");
 #endif
 
     return (SM_SUCCESS);
@@ -232,15 +231,14 @@ mdextend(Relation reln, char *buffer)
  *  mdopen() -- Open the specified relation.
  */
 int
-mdopen(Relation reln)
-{
+mdopen(Relation reln) {
     char *path;
     int fd;
     int vfd;
 
     if (CurFd >= Nfds) {
-	if (_fdvec_ext() == SM_FAIL)
-	    return (-1);
+        if (_fdvec_ext() == SM_FAIL)
+            return (-1);
     }
 
     path = relpath(&(reln->rd_rel->relname.data[0]));
@@ -249,7 +247,7 @@ mdopen(Relation reln)
 
     /* this should only happen during bootstrap processing */
     if (fd < 0)
-	fd = FileNameOpenFile(path, O_RDWR|O_CREAT|O_EXCL, 0600);
+        fd = FileNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL, 0600);
 
     Md_fdvec[CurFd].mdfd_vfd = fd;
     Md_fdvec[CurFd].mdfd_flags = (uint16) 0;
@@ -258,7 +256,7 @@ mdopen(Relation reln)
 
 #ifdef DIAGNOSTIC
     if (Md_fdvec[CurFd].mdfd_lstbcnt > RELSEG_SIZE)
-	elog(FATAL, "segment too big on relopen!");
+    elog(FATAL, "segment too big on relopen!");
 #endif
 
     vfd = CurFd++;
@@ -272,8 +270,7 @@ mdopen(Relation reln)
  *	Returns SM_SUCCESS or SM_FAIL with errno set as appropriate.
  */
 int
-mdclose(Relation reln)
-{
+mdclose(Relation reln) {
     int fd;
     MdfdVec *v;
 
@@ -281,20 +278,20 @@ mdclose(Relation reln)
 
     for (v = &Md_fdvec[fd]; v != (MdfdVec *) NULL; v = v->mdfd_chain) {
 
-	/* may be closed already */
-	if (v->mdfd_vfd < 0)
-	    continue;
+        /* may be closed already */
+        if (v->mdfd_vfd < 0)
+            continue;
 
-	/*
-	 *  We sync the file descriptor so that we don't need to reopen it at
-	 *  transaction commit to force changes to disk.
-	 */
+        /*
+         *  We sync the file descriptor so that we don't need to reopen it at
+         *  transaction commit to force changes to disk.
+         */
 
-	FileSync(v->mdfd_vfd);
-	FileClose(v->mdfd_vfd);
+        FileSync(v->mdfd_vfd);
+        FileClose(v->mdfd_vfd);
 
-	/* mark this file descriptor as clean in our private table */
-	v->mdfd_flags &= ~MDFD_DIRTY;
+        /* mark this file descriptor as clean in our private table */
+        v->mdfd_flags &= ~MDFD_DIRTY;
     }
 
     return (SM_SUCCESS);
@@ -306,8 +303,7 @@ mdclose(Relation reln)
  *	Returns SM_SUCCESS or SM_FAIL.
  */
 int
-mdread(Relation reln, BlockNumber blocknum, char *buffer)
-{
+mdread(Relation reln, BlockNumber blocknum, char *buffer) {
     int status;
     long seekpos;
     int nbytes;
@@ -319,20 +315,20 @@ mdread(Relation reln, BlockNumber blocknum, char *buffer)
 
 #ifdef DIAGNOSTIC
     if (seekpos >= BLCKSZ * RELSEG_SIZE)
-	elog(FATAL, "seekpos too big!");
+    elog(FATAL, "seekpos too big!");
 #endif
 
     if (FileSeek(v->mdfd_vfd, seekpos, SEEK_SET) != seekpos) {
-	return (SM_FAIL);
+        return (SM_FAIL);
     }
 
     status = SM_SUCCESS;
     if ((nbytes = FileRead(v->mdfd_vfd, buffer, BLCKSZ)) != BLCKSZ) {
-	if (nbytes == 0) {
-	  memset(buffer, 0, BLCKSZ); 
-	} else {
-	    status = SM_FAIL;
-	}
+        if (nbytes == 0) {
+            memset(buffer, 0, BLCKSZ);
+        } else {
+            status = SM_FAIL;
+        }
     }
 
     return (status);
@@ -344,8 +340,7 @@ mdread(Relation reln, BlockNumber blocknum, char *buffer)
  *	Returns SM_SUCCESS or SM_FAIL.
  */
 int
-mdwrite(Relation reln, BlockNumber blocknum, char *buffer)
-{
+mdwrite(Relation reln, BlockNumber blocknum, char *buffer) {
     int status;
     long seekpos;
     MdfdVec *v;
@@ -355,16 +350,16 @@ mdwrite(Relation reln, BlockNumber blocknum, char *buffer)
     seekpos = (long) (BLCKSZ * (blocknum % RELSEG_SIZE));
 #ifdef DIAGNOSTIC
     if (seekpos >= BLCKSZ * RELSEG_SIZE)
-	elog(FATAL, "seekpos too big!");
+    elog(FATAL, "seekpos too big!");
 #endif
 
     if (FileSeek(v->mdfd_vfd, seekpos, SEEK_SET) != seekpos) {
-	return (SM_FAIL);
+        return (SM_FAIL);
     }
 
     status = SM_SUCCESS;
     if (FileWrite(v->mdfd_vfd, buffer, BLCKSZ) != BLCKSZ)
-	status = SM_FAIL;
+        status = SM_FAIL;
 
     v->mdfd_flags |= MDFD_DIRTY;
 
@@ -378,8 +373,7 @@ mdwrite(Relation reln, BlockNumber blocknum, char *buffer)
  *	system buffer cache has been flushed.
  */
 int
-mdflush(Relation reln, BlockNumber blocknum, char *buffer)
-{
+mdflush(Relation reln, BlockNumber blocknum, char *buffer) {
     int status;
     long seekpos;
     MdfdVec *v;
@@ -389,18 +383,18 @@ mdflush(Relation reln, BlockNumber blocknum, char *buffer)
     seekpos = (long) (BLCKSZ * (blocknum % RELSEG_SIZE));
 #ifdef DIAGNOSTIC
     if (seekpos >= BLCKSZ * RELSEG_SIZE)
-	elog(FATAL, "seekpos too big!");
+    elog(FATAL, "seekpos too big!");
 #endif
 
     if (FileSeek(v->mdfd_vfd, seekpos, SEEK_SET) != seekpos) {
-	return (SM_FAIL);
+        return (SM_FAIL);
     }
 
     /* write and sync the block */
     status = SM_SUCCESS;
     if (FileWrite(v->mdfd_vfd, buffer, BLCKSZ) != BLCKSZ
-	|| FileSync(v->mdfd_vfd) < 0)
-	status = SM_FAIL;
+        || FileSync(v->mdfd_vfd) < 0)
+        status = SM_FAIL;
 
     /*
      *  By here, the block is written and changes have been forced to stable
@@ -422,12 +416,11 @@ mdflush(Relation reln, BlockNumber blocknum, char *buffer)
  */
 int
 mdblindwrt(char *dbstr,
-	   char *relstr,
-	   Oid dbid,
-	   Oid relid,
-	   BlockNumber blkno,
-	   char *buffer)
-{
+           char *relstr,
+           Oid dbid,
+           Oid relid,
+           BlockNumber blkno,
+           char *buffer) {
     int fd;
     int segno;
     long seekpos;
@@ -438,45 +431,45 @@ mdblindwrt(char *dbstr,
     /* be sure we have enough space for the '.segno', if any */
     segno = blkno / RELSEG_SIZE;
     if (segno > 0)
-	nchars = 10;
+        nchars = 10;
     else
-	nchars = 0;
+        nchars = 0;
 
     /* construct the path to the file and open it */
     if (dbid == (Oid) 0) {
-	path = (char *) palloc(strlen(DataDir) + sizeof(NameData) + 2 + nchars);
-	if (segno == 0)
-	    sprintf(path, "%s/%.*s", DataDir, NAMEDATALEN, relstr);
-	else
-	    sprintf(path, "%s/%.*s.%d", DataDir, NAMEDATALEN, relstr, segno);
+        path = (char *) palloc(strlen(DataDir) + sizeof(NameData) + 2 + nchars);
+        if (segno == 0)
+            sprintf(path, "%s/%.*s", DataDir, NAMEDATALEN, relstr);
+        else
+            sprintf(path, "%s/%.*s.%d", DataDir, NAMEDATALEN, relstr, segno);
     } else {
-	path = (char *) palloc(strlen(DataDir) + strlen("/base/") + 2 * sizeof(NameData) + 2 + nchars);
-	if (segno == 0)
-	    sprintf(path, "%s/base/%.*s/%.*s", DataDir, NAMEDATALEN, 
-			dbstr, NAMEDATALEN, relstr);
-	else
-	    sprintf(path, "%s/base/%.*s/%.*s.%d", DataDir, NAMEDATALEN, dbstr,
-			NAMEDATALEN, relstr, segno);
+        path = (char *) palloc(strlen(DataDir) + strlen("/base/") + 2 * sizeof(NameData) + 2 + nchars);
+        if (segno == 0)
+            sprintf(path, "%s/base/%.*s/%.*s", DataDir, NAMEDATALEN,
+                    dbstr, NAMEDATALEN, relstr);
+        else
+            sprintf(path, "%s/base/%.*s/%.*s.%d", DataDir, NAMEDATALEN, dbstr,
+                    NAMEDATALEN, relstr, segno);
     }
 
     if ((fd = open(path, O_RDWR, 0600)) < 0)
-	return (SM_FAIL);
+        return (SM_FAIL);
 
     /* seek to the right spot */
     seekpos = (long) (BLCKSZ * (blkno % RELSEG_SIZE));
     if (lseek(fd, seekpos, SEEK_SET) != seekpos) {
-	(void) close(fd);
-	return (SM_FAIL);
+        (void) close(fd);
+        return (SM_FAIL);
     }
 
     status = SM_SUCCESS;
 
     /* write and sync the block */
     if (write(fd, buffer, BLCKSZ) != BLCKSZ || fsync(fd) < 0)
-	status = SM_FAIL;
+        status = SM_FAIL;
 
     if (close(fd) < 0)
-	status = SM_FAIL;
+        status = SM_FAIL;
 
     pfree(path);
 
@@ -489,8 +482,7 @@ mdblindwrt(char *dbstr,
  *	Returns # of blocks or -1 on error.
  */
 int
-mdnblocks(Relation reln)
-{
+mdnblocks(Relation reln) {
     int fd;
     MdfdVec *v;
     int nblocks;
@@ -501,28 +493,28 @@ mdnblocks(Relation reln)
 
 #ifdef DIAGNOSTIC
     if (_mdnblocks(v->mdfd_vfd, BLCKSZ) > RELSEG_SIZE)
-	elog(FATAL, "segment too big in getseg!");
+    elog(FATAL, "segment too big in getseg!");
 #endif
 
     segno = 0;
     for (;;) {
-	if (v->mdfd_lstbcnt == RELSEG_SIZE
-	    || (nblocks = _mdnblocks(v->mdfd_vfd, BLCKSZ)) == RELSEG_SIZE) {
+        if (v->mdfd_lstbcnt == RELSEG_SIZE
+            || (nblocks = _mdnblocks(v->mdfd_vfd, BLCKSZ)) == RELSEG_SIZE) {
 
-	    v->mdfd_lstbcnt = RELSEG_SIZE;
-	    segno++;
+            v->mdfd_lstbcnt = RELSEG_SIZE;
+            segno++;
 
-	    if (v->mdfd_chain == (MdfdVec *) NULL) {
-		v->mdfd_chain = _mdfd_openseg(reln, segno, O_CREAT);
-		if (v->mdfd_chain == (MdfdVec *) NULL)
-		    elog(WARN, "cannot count blocks for %.16s -- open failed",
-				RelationGetRelationName(reln));
-	    }
+            if (v->mdfd_chain == (MdfdVec *) NULL) {
+                v->mdfd_chain = _mdfd_openseg(reln, segno, O_CREAT);
+                if (v->mdfd_chain == (MdfdVec *) NULL)
+                    elog(WARN, "cannot count blocks for %.16s -- open failed",
+                         RelationGetRelationName(reln));
+            }
 
-	    v = v->mdfd_chain;
-	} else {
-	    return ((segno * RELSEG_SIZE) + nblocks);
-	}
+            v = v->mdfd_chain;
+        } else {
+            return ((segno * RELSEG_SIZE) + nblocks);
+        }
     }
 }
 
@@ -537,20 +529,19 @@ mdnblocks(Relation reln)
  *	Returns SM_SUCCESS or SM_FAIL with errno set as appropriate.
  */
 int
-mdcommit()
-{
+mdcommit() {
     int i;
     MdfdVec *v;
 
     for (i = 0; i < CurFd; i++) {
-	for (v = &Md_fdvec[i]; v != (MdfdVec *) NULL; v = v->mdfd_chain) {
-	    if (v->mdfd_flags & MDFD_DIRTY) {
-		if (FileSync(v->mdfd_vfd) < 0)
-		    return (SM_FAIL);
+        for (v = &Md_fdvec[i]; v != (MdfdVec *) NULL; v = v->mdfd_chain) {
+            if (v->mdfd_flags & MDFD_DIRTY) {
+                if (FileSync(v->mdfd_vfd) < 0)
+                    return (SM_FAIL);
 
-		v->mdfd_flags &= ~MDFD_DIRTY;
-	    }
-	}
+                v->mdfd_flags &= ~MDFD_DIRTY;
+            }
+        }
     }
 
     return (SM_SUCCESS);
@@ -563,15 +554,14 @@ mdcommit()
  *	all file descriptors as clean here.  Always returns SM_SUCCESS.
  */
 int
-mdabort()
-{
+mdabort() {
     int i;
     MdfdVec *v;
 
     for (i = 0; i < CurFd; i++) {
-	for (v = &Md_fdvec[i]; v != (MdfdVec *) NULL; v = v->mdfd_chain) {
-	    v->mdfd_flags &= ~MDFD_DIRTY;
-	}
+        for (v = &Md_fdvec[i]; v != (MdfdVec *) NULL; v = v->mdfd_chain) {
+            v->mdfd_flags &= ~MDFD_DIRTY;
+        }
     }
 
     return (SM_SUCCESS);
@@ -584,8 +574,7 @@ mdabort()
  *	'fd' entries.
  */
 static
-int _fdvec_ext()
-{
+int _fdvec_ext() {
     MdfdVec *nvec;
     MemoryContext oldcxt;
 
@@ -594,8 +583,8 @@ int _fdvec_ext()
     oldcxt = MemoryContextSwitchTo(MdCxt);
 
     nvec = (MdfdVec *) palloc(Nfds * sizeof(MdfdVec));
-    memset(nvec, 0, Nfds * sizeof(MdfdVec)); 
-    memmove(nvec, (char *) Md_fdvec, (Nfds / 2) * sizeof(MdfdVec)); 
+    memset(nvec, 0, Nfds * sizeof(MdfdVec));
+    memmove(nvec, (char *) Md_fdvec, (Nfds / 2) * sizeof(MdfdVec));
     pfree(Md_fdvec);
 
     (void) MemoryContextSwitchTo(oldcxt);
@@ -606,8 +595,7 @@ int _fdvec_ext()
 }
 
 static MdfdVec *
-_mdfd_openseg(Relation reln, int segno, int oflags)
-{
+_mdfd_openseg(Relation reln, int segno, int oflags) {
     MemoryContext oldcxt;
     MdfdVec *v;
     int fd;
@@ -619,20 +607,20 @@ _mdfd_openseg(Relation reln, int segno, int oflags)
 
     dofree = false;
     if (segno > 0) {
-	dofree = true;
-	fullpath = (char *) palloc(strlen(path) + 12);
-	sprintf(fullpath, "%s.%d", path, segno);
+        dofree = true;
+        fullpath = (char *) palloc(strlen(path) + 12);
+        sprintf(fullpath, "%s.%d", path, segno);
     } else
-	fullpath = path;
+        fullpath = path;
 
     /* open the file */
-    fd = PathNameOpenFile(fullpath, O_RDWR|oflags, 0600);
+    fd = PathNameOpenFile(fullpath, O_RDWR | oflags, 0600);
 
     if (dofree)
-	pfree(fullpath);
+        pfree(fullpath);
 
     if (fd < 0)
-	return ((MdfdVec *) NULL);
+        return ((MdfdVec *) NULL);
 
     /* allocate an mdfdvec entry for it */
     oldcxt = MemoryContextSwitchTo(MdCxt);
@@ -647,7 +635,7 @@ _mdfd_openseg(Relation reln, int segno, int oflags)
 
 #ifdef DIAGNOSTIC
     if (v->mdfd_lstbcnt > RELSEG_SIZE)
-	elog(FATAL, "segment too big on open!");
+    elog(FATAL, "segment too big on open!");
 #endif
 
     /* all done */
@@ -655,8 +643,7 @@ _mdfd_openseg(Relation reln, int segno, int oflags)
 }
 
 static MdfdVec *
-_mdfd_getseg(Relation reln, int blkno, int oflag)
-{
+_mdfd_getseg(Relation reln, int blkno, int oflag) {
     MdfdVec *v;
     int segno;
     int fd;
@@ -664,34 +651,33 @@ _mdfd_getseg(Relation reln, int blkno, int oflag)
 
     fd = RelationGetFile(reln);
     if (fd < 0) {
-	if ((fd = mdopen(reln)) < 0)
-	    elog(WARN, "cannot open relation %.16s",
-			RelationGetRelationName(reln));
-	reln->rd_fd = fd;
+        if ((fd = mdopen(reln)) < 0)
+            elog(WARN, "cannot open relation %.16s",
+                 RelationGetRelationName(reln));
+        reln->rd_fd = fd;
     }
 
     for (v = &Md_fdvec[fd], segno = blkno / RELSEG_SIZE, i = 1;
-	 segno > 0;
-	 i++, segno--) {
+         segno > 0;
+         i++, segno--) {
 
-	if (v->mdfd_chain == (MdfdVec *) NULL) {
-	    v->mdfd_chain = _mdfd_openseg(reln, i, oflag);
+        if (v->mdfd_chain == (MdfdVec *) NULL) {
+            v->mdfd_chain = _mdfd_openseg(reln, i, oflag);
 
-	    if (v->mdfd_chain == (MdfdVec *) NULL)
-		elog(WARN, "cannot open segment %d of relation %.16s",
-			    i, RelationGetRelationName(reln));
-	}
-	v = v->mdfd_chain;
+            if (v->mdfd_chain == (MdfdVec *) NULL)
+                elog(WARN, "cannot open segment %d of relation %.16s",
+                     i, RelationGetRelationName(reln));
+        }
+        v = v->mdfd_chain;
     }
 
     return (v);
 }
 
 static BlockNumber
-_mdnblocks(File file, Size blcksz)
-{
+_mdnblocks(File file, Size blcksz) {
     long len;
-    
+
     len = FileSeek(file, 0L, SEEK_END) - 1;
-    return((BlockNumber)((len < 0) ? 0 : 1 + len / blcksz));
+    return ((BlockNumber) ((len < 0) ? 0 : 1 + len / blcksz));
 }

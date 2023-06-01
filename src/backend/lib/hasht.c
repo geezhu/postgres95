@@ -26,22 +26,21 @@
  * -----------------------------------
  */
 void
-HashTableWalk(HTAB *hashtable, HashtFunc function, int arg)
-{
+HashTableWalk(HTAB *hashtable, HashtFunc function, int arg) {
     long *hashent;
     long *data;
     int keysize;
-    
+
     keysize = hashtable->hctl->keysize;
-    (void)hash_seq((HTAB *)NULL);
+    (void) hash_seq((HTAB *) NULL);
     while ((hashent = hash_seq(hashtable)) != (long *) TRUE) {
-	if (hashent == NULL)
-	    elog(FATAL, "error in HashTableWalk.");
-	/* 
-	 * XXX the corresponding hash table insertion does NOT
-	 * LONGALIGN -- make sure the keysize is ok
-	 */
-	data = (long *) LONGALIGN((char*) hashent + keysize);
-	(*function)(data, arg);
+        if (hashent == NULL)
+            elog(FATAL, "error in HashTableWalk.");
+        /* 
+         * XXX the corresponding hash table insertion does NOT
+         * LONGALIGN -- make sure the keysize is ok
+         */
+        data = (long *) LONGALIGN((char *) hashent + keysize);
+        (*function)(data, arg);
     }
 }

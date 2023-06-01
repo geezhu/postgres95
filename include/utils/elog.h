@@ -10,22 +10,22 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	ELOG_H
+#ifndef    ELOG_H
 #define ELOG_H
 
-#define NOTICE	0	/* random info - no special action */
-#define WARN	-1	/* Warning error - return to known state */
-#define FATAL	1	/* Fatal error - abort process */
-#define DEBUG	-2	/* debug message */
-#define NOIND	-3	/* debug message, don't indent as far */
+#define NOTICE    0    /* random info - no special action */
+#define WARN    -1    /* Warning error - return to known state */
+#define FATAL    1    /* Fatal error - abort process */
+#define DEBUG    -2    /* debug message */
+#define NOIND    -3    /* debug message, don't indent as far */
 
-#define PTIME	0x100	/* prepend time to message */
-#define POS	0x200	/* prepend source position to message */
-#define USERMSG	0x400	/* send message to user */
-#define TERM	0x800	/* send message to terminal */
-#define DBLOG	0x1000	/* put message in per db log */
-#define SLOG	0x2000	/* put message in system log */
-#define ABORT	0x4000	/* abort process after logging */
+#define PTIME    0x100    /* prepend time to message */
+#define POS    0x200    /* prepend source position to message */
+#define USERMSG    0x400    /* send message to user */
+#define TERM    0x800    /* send message to terminal */
+#define DBLOG    0x1000    /* put message in per db log */
+#define SLOG    0x2000    /* put message in system log */
+#define ABORT    0x4000    /* abort process after logging */
 
 #define ELOG_MAXLEN 4096
 
@@ -35,4 +35,4 @@
 
 extern void elog(int lev, char *fmt, ...);
 
-#endif	/* ELOG_H */
+#endif    /* ELOG_H */

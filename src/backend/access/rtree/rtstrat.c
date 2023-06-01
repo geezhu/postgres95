@@ -49,40 +49,40 @@
  */
 
 /* if a op b, what operator tells us if (not a op b)? */
-static StrategyNumber	RTNegate[RTNStrategies] = {
-    InvalidStrategy,
-    InvalidStrategy,
-    InvalidStrategy,
-    InvalidStrategy,
-    InvalidStrategy,
-    InvalidStrategy,
-    InvalidStrategy,
-    InvalidStrategy
-    };
+static StrategyNumber RTNegate[RTNStrategies] = {
+        InvalidStrategy,
+        InvalidStrategy,
+        InvalidStrategy,
+        InvalidStrategy,
+        InvalidStrategy,
+        InvalidStrategy,
+        InvalidStrategy,
+        InvalidStrategy
+};
 
 /* if a op_1 b, what is the operator op_2 such that b op_2 a? */
-static StrategyNumber	RTCommute[RTNStrategies] = {
-    InvalidStrategy,
-    InvalidStrategy,
-    InvalidStrategy,
-    InvalidStrategy,
-    InvalidStrategy,
-    InvalidStrategy,
-    InvalidStrategy,
-    InvalidStrategy
-    };
+static StrategyNumber RTCommute[RTNStrategies] = {
+        InvalidStrategy,
+        InvalidStrategy,
+        InvalidStrategy,
+        InvalidStrategy,
+        InvalidStrategy,
+        InvalidStrategy,
+        InvalidStrategy,
+        InvalidStrategy
+};
 
 /* if a op_1 b, what is the operator op_2 such that (b !op_2 a)? */
-static StrategyNumber	RTNegateCommute[RTNStrategies] = {
-    InvalidStrategy,
-    InvalidStrategy,
-    InvalidStrategy,
-    InvalidStrategy,
-    InvalidStrategy,
-    InvalidStrategy,
-    InvalidStrategy,
-    InvalidStrategy
-    };
+static StrategyNumber RTNegateCommute[RTNStrategies] = {
+        InvalidStrategy,
+        InvalidStrategy,
+        InvalidStrategy,
+        InvalidStrategy,
+        InvalidStrategy,
+        InvalidStrategy,
+        InvalidStrategy,
+        InvalidStrategy
+};
 
 /*
  *  Now do the TermData arrays.  These exist in case the user doesn't give
@@ -118,28 +118,28 @@ static StrategyNumber	RTNegateCommute[RTNStrategies] = {
 
 /* if you only have "contained-by", how do you determine equality? */
 static uint16 RTContainedByTermData[] = {
-    2,					/* make two comparisons */
-    RTContainedByStrategyNumber,		/* use "a contained-by b" */
-    0x0,					/* without any magic */
-    RTContainedByStrategyNumber,		/* then use contained-by, */
-    SK_COMMUTE				/* swapping a and b */
-    };
+        2,                    /* make two comparisons */
+        RTContainedByStrategyNumber,        /* use "a contained-by b" */
+        0x0,                    /* without any magic */
+        RTContainedByStrategyNumber,        /* then use contained-by, */
+        SK_COMMUTE                /* swapping a and b */
+};
 
 /* if you only have "contains", how do you determine equality? */
 static uint16 RTContainsTermData[] = {
-    2,					/* make two comparisons */
-    RTContainsStrategyNumber,		/* use "a contains b" */
-    0x0,					/* without any magic */
-    RTContainsStrategyNumber,		/* then use contains again, */
-    SK_COMMUTE				/* swapping a and b */
-    };
+        2,                    /* make two comparisons */
+        RTContainsStrategyNumber,        /* use "a contains b" */
+        0x0,                    /* without any magic */
+        RTContainsStrategyNumber,        /* then use contains again, */
+        SK_COMMUTE                /* swapping a and b */
+};
 
 /* now put all that together in one place for the planner */
 static StrategyTerm RTEqualExpressionData[] = {
-    (StrategyTerm) RTContainedByTermData,
-    (StrategyTerm) RTContainsTermData,
-    NULL
-    };
+        (StrategyTerm) RTContainedByTermData,
+        (StrategyTerm) RTContainsTermData,
+        NULL
+};
 
 /*
  *  If you were sufficiently attentive to detail, you would go through
@@ -158,23 +158,23 @@ static StrategyTerm RTEqualExpressionData[] = {
  */
 
 static StrategyEvaluationData RTEvaluationData = {
-    RTNStrategies,				/* # of strategies */
-    (StrategyTransformMap) RTNegate,	/* how to do (not qual) */
-    (StrategyTransformMap) RTCommute,	/* how to swap operands */
-    (StrategyTransformMap) RTNegateCommute,	/* how to do both */
-    {
-	NULL,					/* express left */
-	NULL,					/* express overleft */
-	NULL,					/* express over */
-	NULL,					/* express overright */
-	NULL,					/* express right */
-	(StrategyExpression) RTEqualExpressionData,	/* express same */
-	NULL,					/* express contains */
-	NULL,					/* express contained-by */
-	NULL,
-	NULL,
-	NULL
-    }
+        RTNStrategies,                /* # of strategies */
+        (StrategyTransformMap) RTNegate,    /* how to do (not qual) */
+        (StrategyTransformMap) RTCommute,    /* how to swap operands */
+        (StrategyTransformMap) RTNegateCommute,    /* how to do both */
+        {
+                NULL,                    /* express left */
+                NULL,                    /* express overleft */
+                NULL,                    /* express over */
+                NULL,                    /* express overright */
+                NULL,                    /* express right */
+                (StrategyExpression) RTEqualExpressionData,    /* express same */
+                NULL,                    /* express contains */
+                NULL,                    /* express contained-by */
+                NULL,
+                NULL,
+                NULL
+        }
 };
 
 /*
@@ -193,47 +193,44 @@ static StrategyEvaluationData RTEvaluationData = {
  *	contains, contained-by
  */
 static StrategyNumber RTOperMap[RTNStrategies] = {
-    RTOverLeftStrategyNumber,
-    RTOverLeftStrategyNumber,
-    RTOverlapStrategyNumber,
-    RTOverRightStrategyNumber,
-    RTOverRightStrategyNumber,
-    RTContainsStrategyNumber,
-    RTContainsStrategyNumber,
-    RTOverlapStrategyNumber
-    };
+        RTOverLeftStrategyNumber,
+        RTOverLeftStrategyNumber,
+        RTOverlapStrategyNumber,
+        RTOverRightStrategyNumber,
+        RTOverRightStrategyNumber,
+        RTContainsStrategyNumber,
+        RTContainsStrategyNumber,
+        RTOverlapStrategyNumber
+};
 
 StrategyNumber
 RelationGetRTStrategy(Relation r,
-		      AttrNumber attnum,
-		      RegProcedure proc)
-{
+                      AttrNumber attnum,
+                      RegProcedure proc) {
     return (RelationGetStrategy(r, attnum, &RTEvaluationData, proc));
 }
 
 bool
 RelationInvokeRTStrategy(Relation r,
-			 AttrNumber attnum,
-			 StrategyNumber s,
-			 Datum left,
-			 Datum right)
-{
+                         AttrNumber attnum,
+                         StrategyNumber s,
+                         Datum left,
+                         Datum right) {
     return (RelationInvokeStrategy(r, &RTEvaluationData, attnum, s,
-				   left, right));
+                                   left, right));
 }
 
 RegProcedure
 RTMapOperator(Relation r,
-	      AttrNumber attnum,
-	      RegProcedure proc)
-{
+              AttrNumber attnum,
+              RegProcedure proc) {
     StrategyNumber procstrat;
     StrategyMap strategyMap;
-    
+
     procstrat = RelationGetRTStrategy(r, attnum, proc);
     strategyMap = IndexStrategyGetStrategyMap(RelationGetIndexStrategy(r),
-					      RTNStrategies,
-					      attnum);
-    
+                                              RTNStrategies,
+                                              attnum);
+
     return (strategyMap->entry[RTOperMap[procstrat - 1] - 1].sk_procedure);
 }

@@ -11,7 +11,7 @@
  *
  *-------------------------------------------------------------------------
  */
-#include "utils/builtins.h"	/* where the declarations go */
+#include "utils/builtins.h"    /* where the declarations go */
 #include "utils/elog.h"
 #include "utils/palloc.h"
 
@@ -23,24 +23,22 @@
  *	boolin		- converts "t" or "f" to 1 or 0
  */
 int32
-boolin(char *b)
-{
+boolin(char *b) {
     if (b == NULL)
-	elog(WARN, "Bad input string for type bool");
-    return((int32) (*b == 't') || (*b == 'T'));
+        elog(WARN, "Bad input string for type bool");
+    return ((int32) (*b == 't') || (*b == 'T'));
 }
 
 /*
  *	boolout		- converts 1 or 0 to "t" or "f"
  */
 char *
-boolout(long b)
-{
-    char	*result = (char *) palloc(2);
-    
+boolout(long b) {
+    char *result = (char *) palloc(2);
+
     *result = (b) ? 't' : 'f';
     result[1] = '\0';
-    return(result);
+    return (result);
 }
 
 /***************************************************************************** 
@@ -48,15 +46,13 @@ boolout(long b)
  *****************************************************************************/
 
 int32
-booleq(int8 arg1, int8 arg2)	
-{ 
-    return(arg1 == arg2); 
+booleq(int8 arg1, int8 arg2) {
+    return (arg1 == arg2);
 }
 
 int32
-boolne(int8 arg1, int8 arg2)	
-{
-    return(arg1 != arg2); 
+boolne(int8 arg1, int8 arg2) {
+    return (arg1 != arg2);
 }
 
 

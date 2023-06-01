@@ -14,11 +14,12 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	IPC_H
+#ifndef    IPC_H
 #define IPC_H
 
 #include <sys/types.h>
-#ifndef	_IPC_
+
+#ifndef    _IPC_
 #define _IPC_
 #include <sys/ipc.h>
 #endif
@@ -117,60 +118,75 @@ union semun {
 };
 #endif
 
-typedef uint16	SystemPortAddress;
+typedef uint16 SystemPortAddress;
 
 /* semaphore definitions */
 
-#define IPCProtection	(0600)		/* access/modify by user only */
+#define IPCProtection    (0600)        /* access/modify by user only */
 
-#define IPC_NMAXSEM	25		/* maximum number of semaphores */
-#define IpcSemaphoreDefaultStartValue	255
-#define IpcSharedLock					(-1)
-#define IpcExclusiveLock			  (-255)
+#define IPC_NMAXSEM    25        /* maximum number of semaphores */
+#define IpcSemaphoreDefaultStartValue    255
+#define IpcSharedLock                    (-1)
+#define IpcExclusiveLock              (-255)
 
-#define IpcUnknownStatus	(-1)
-#define IpcInvalidArgument	(-2)
-#define IpcSemIdExist		(-3)
-#define IpcSemIdNotExist	(-4)
+#define IpcUnknownStatus    (-1)
+#define IpcInvalidArgument    (-2)
+#define IpcSemIdExist        (-3)
+#define IpcSemIdNotExist    (-4)
 
-typedef uint32	IpcSemaphoreKey;		/* semaphore key */
-typedef int	IpcSemaphoreId;
+typedef uint32 IpcSemaphoreKey;        /* semaphore key */
+typedef int IpcSemaphoreId;
 
-/* shared memory definitions */ 
+/* shared memory definitions */
 
-#define IpcMemCreationFailed	(-1)
-#define IpcMemIdGetFailed	(-2)
-#define IpcMemAttachFailed	0
+#define IpcMemCreationFailed    (-1)
+#define IpcMemIdGetFailed    (-2)
+#define IpcMemAttachFailed    0
 
-typedef uint32	IPCKey;
-#define PrivateIPCKey	IPC_PRIVATE
-#define DefaultIPCKey	17317
+typedef uint32 IPCKey;
+#define PrivateIPCKey    IPC_PRIVATE
+#define DefaultIPCKey    17317
 
-typedef uint32  IpcMemoryKey;			/* shared memory key */
-typedef int	IpcMemoryId;
+typedef uint32 IpcMemoryKey;            /* shared memory key */
+typedef int IpcMemoryId;
 
 
 /* ipc.c */
 extern void exitpg(int code);
+
 extern void quasi_exitpg(void);
+
 extern on_exitpg(void (*function)(), caddr_t arg);
 
 extern IpcSemaphoreId IpcSemaphoreCreate(IpcSemaphoreKey semKey,
-		int semNum, int permission, int semStartValue,
-		int removeOnExit, int *status);
+                                         int semNum, int permission, int semStartValue,
+                                         int removeOnExit, int *status);
+
 extern void IpcSemaphoreSet(int semId, int semno, int value);
+
 extern void IpcSemaphoreKill(IpcSemaphoreKey key);
+
 extern void IpcSemaphoreLock(IpcSemaphoreId semId, int sem, int lock);
+
 extern void IpcSemaphoreUnlock(IpcSemaphoreId semId, int sem, int lock);
+
 extern int IpcSemaphoreGetCount(IpcSemaphoreId semId, int sem);
+
 extern int IpcSemaphoreGetValue(IpcSemaphoreId semId, int sem);
+
 extern IpcMemoryId IpcMemoryCreate(IpcMemoryKey memKey, uint32 size,
-				   int permission);
+                                   int permission);
+
 extern IpcMemoryId IpcMemoryIdGet(IpcMemoryKey memKey, uint32 size);
+
 extern void IpcMemoryDetach(int status, char *shmaddr);
+
 extern char *IpcMemoryAttach(IpcMemoryId memId);
+
 extern void IpcMemoryKill(IpcMemoryKey memKey);
+
 extern void CreateAndInitSLockMemory(IPCKey key);
+
 extern void AttachSLockMemory(IPCKey key);
 
 
@@ -231,7 +247,7 @@ typedef enum _LockId_ {
     FIRSTFREELOCKID
 } _LockId_;
 
-#define MAX_SPINS	FIRSTFREELOCKID
+#define MAX_SPINS    FIRSTFREELOCKID
 
 #endif /* HAS_TEST_AND_SET */
 
@@ -247,25 +263,25 @@ typedef enum _LockId_ {
  *	These must not hash to DefaultIPCKey or PrivateIPCKey.
  */
 #define SystemPortAddressGetIPCKey(address) \
-	(28597 * (address) + 17491)
+    (28597 * (address) + 17491)
 
 /*
  * these keys are originally numbered from 1 to 12 consecutively but not
  * all are used. The unused ones are removed.		- ay 4/95.
  */
 #define IPCKeyGetBufferMemoryKey(key) \
-	((key == PrivateIPCKey) ? key : 1 + (key))
+    ((key == PrivateIPCKey) ? key : 1 + (key))
 
 #define IPCKeyGetSIBufferMemoryBlock(key) \
-	((key == PrivateIPCKey) ? key : 7 + (key))
+    ((key == PrivateIPCKey) ? key : 7 + (key))
 
 #define IPCKeyGetSLockSharedMemoryKey(key) \
-	((key == PrivateIPCKey) ? key : 10 + (key))
+    ((key == PrivateIPCKey) ? key : 10 + (key))
 
 #define IPCKeyGetSpinLockSemaphoreKey(key) \
-	((key == PrivateIPCKey) ? key : 11 + (key))
+    ((key == PrivateIPCKey) ? key : 11 + (key))
 #define IPCKeyGetWaitIOSemaphoreKey(key) \
-	((key == PrivateIPCKey) ? key : 12 + (key))
+    ((key == PrivateIPCKey) ? key : 12 + (key))
 
 /* --------------------------
  * NOTE: This macro must always give the highest numbered key as every backend
@@ -275,11 +291,13 @@ typedef enum _LockId_ {
  * --------------------------
  */
 #define IPCGetProcessSemaphoreInitKey(key) \
-	((key == PrivateIPCKey) ? key : 14 + (key))
+    ((key == PrivateIPCKey) ? key : 14 + (key))
 
 /* ipci.c */
 extern IPCKey SystemPortAddressCreateIPCKey(SystemPortAddress address);
+
 extern void CreateSharedMemoryAndSemaphores(IPCKey key);
+
 extern void AttachSharedMemoryAndSemaphores(IPCKey key);
 
-#endif	/* IPC_H */
+#endif    /* IPC_H */

@@ -31,15 +31,14 @@
  *
  */
 Node *
-newNode(Size size, NodeTag tag)
-{
+newNode(Size size, NodeTag tag) {
     Node *newNode;
-    
-    Assert(size >= 4);	/* need the tag, at least */
-    
-    newNode = (Node *)palloc(size);
-    memset((char *)newNode, 0, size);
+
+    Assert(size >= 4);    /* need the tag, at least */
+
+    newNode = (Node *) palloc(size);
+    memset((char *) newNode, 0, size);
     newNode->type = tag;
-    return(newNode);
+    return (newNode);
 }
 

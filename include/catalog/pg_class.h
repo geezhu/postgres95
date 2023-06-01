@@ -53,24 +53,24 @@
  * ----------------
  */
 CATALOG(pg_class) BOOTSTRAP {
-     NameData 	relname;
-     Oid        reltype;          
-     Oid 	relowner;
-     Oid 	relam;
-     int4 	relpages;
-     int4 	reltuples;
-     int4 	relexpires; /* really used as a abstime, but fudge it for now*/
-     int4	relpreserved;/*really used as a reltime, but fudge it for now*/
-     bool 	relhasindex;
-     bool 	relisshared;
-     char 	relkind;
-     char 	relarch; /* 'h' = heavy, 'l' = light, 'n' = no archival*/
-     int2 	relnatts;
-     int2	relsmgr;
-     int28 	relkey;			/* not used */
-     oid8	relkeyop;		/* not used */
-     bool	relhasrules;
-     aclitem	relacl[1];		/* this is here for the catalog */
+    NameData relname;
+    Oid reltype;
+    Oid relowner;
+    Oid relam;
+    int4 relpages;
+    int4 reltuples;
+    int4 relexpires; /* really used as a abstime, but fudge it for now*/
+    int4 relpreserved;/*really used as a reltime, but fudge it for now*/
+    bool relhasindex;
+    bool relisshared;
+    char relkind;
+    char relarch; /* 'h' = heavy, 'l' = light, 'n' = no archival*/
+    int2 relnatts;
+    int2 relsmgr;
+    int28 relkey;            /* not used */
+    oid8 relkeyop;        /* not used */
+    bool relhasrules;
+    aclitem relacl[1];        /* this is here for the catalog */
 } FormData_pg_class;
 
 #define CLASS_TUPLE_SIZE \
@@ -81,7 +81,7 @@ CATALOG(pg_class) BOOTSTRAP {
  *	the format of pg_class relation.
  * ----------------
  */
-typedef FormData_pg_class	*Form_pg_class;
+typedef FormData_pg_class *Form_pg_class;
 
 /* ----------------
  *	compiler constants for pg_class
@@ -94,64 +94,64 @@ typedef FormData_pg_class	*Form_pg_class;
  *	relacl field.
  * ----------------
  */
-#define Natts_pg_class_fixed		17
-#define Natts_pg_class			18
-#define Anum_pg_class_relname		1
+#define Natts_pg_class_fixed        17
+#define Natts_pg_class            18
+#define Anum_pg_class_relname        1
 #define Anum_pg_class_reltype           2
-#define Anum_pg_class_relowner		3
-#define Anum_pg_class_relam		4
-#define Anum_pg_class_relpages		5
-#define Anum_pg_class_reltuples		6
-#define Anum_pg_class_relexpires	7
-#define Anum_pg_class_relpreserved	8
-#define Anum_pg_class_relhasindex	9
-#define Anum_pg_class_relisshared	10
-#define Anum_pg_class_relkind		11
-#define Anum_pg_class_relarch		12
-#define Anum_pg_class_relnatts		13
-#define Anum_pg_class_relsmgr		14
-#define Anum_pg_class_relkey		15
-#define Anum_pg_class_relkeyop		16
-#define Anum_pg_class_relhasrules	17
-#define Anum_pg_class_relacl		18
+#define Anum_pg_class_relowner        3
+#define Anum_pg_class_relam        4
+#define Anum_pg_class_relpages        5
+#define Anum_pg_class_reltuples        6
+#define Anum_pg_class_relexpires    7
+#define Anum_pg_class_relpreserved    8
+#define Anum_pg_class_relhasindex    9
+#define Anum_pg_class_relisshared    10
+#define Anum_pg_class_relkind        11
+#define Anum_pg_class_relarch        12
+#define Anum_pg_class_relnatts        13
+#define Anum_pg_class_relsmgr        14
+#define Anum_pg_class_relkey        15
+#define Anum_pg_class_relkeyop        16
+#define Anum_pg_class_relhasrules    17
+#define Anum_pg_class_relacl        18
 
 /* ----------------
  *	initial contents of pg_class
  * ----------------
  */
 
-DATA(insert OID =  71 (  pg_type 71          PGUID 0 0 0 0 0 f f r n 16 0 - - f _null_ ));
-DATA(insert OID =  75 (  pg_attribute 75      PGUID 0 0 0 0 0 f f r n 16 0 - - f _null_ ));
-DATA(insert OID =  76 (  pg_demon 76          PGUID 0 0 0 0 0 f t r n 4 0 - - f _null_ ));
-DATA(insert OID =  80 (  pg_magic 80         PGUID 0 0 0 0 0 f t r n 2 0 - - f _null_ ));
-DATA(insert OID =  81 (  pg_proc 81          PGUID 0 0 0 0 0 f f r n 16 0 - - f _null_ ));
-DATA(insert OID =  82 (  pg_server 82         PGUID 0 0 0 0 0 f t r n 3 0 - - f _null_ ));
-DATA(insert OID =  83 (  pg_class 83         PGUID 0 0 0 0 0 f f r n 17 0 - - f _null_ ));    
-DATA(insert OID =  86 (  pg_user 86          PGUID 0 0 0 0 0 f t r n 6 0 - - f _null_ ));
-DATA(insert OID =  87 (  pg_group 87          PGUID 0 0 0 0 0 f t s n 3 0 - - f _null_ ));
-DATA(insert OID =  88 (  pg_database 88      PGUID 0 0 0 0 0 f t r n 3 0 - - f _null_ ));
-DATA(insert OID =  89 (  pg_defaults 89       PGUID 0 0 0 0 0 f t r n 2 0 - - f _null_ ));
-DATA(insert OID =  90 (  pg_variable 90        PGUID 0 0 0 0 0 f t s n 2 0 - - f _null_ ));
-DATA(insert OID =  99 (  pg_log  99           PGUID 0 0 0 0 0 f t s n 1 0 - - f _null_ ));
-DATA(insert OID = 100 (  pg_time 100           PGUID 0 0 0 0 0 f t s n 1 0 - - f _null_ ));
-DATA(insert OID = 101 (  pg_hosts 101           PGUID 0 0 0 0 0 f t s n 3 0 - - f _null_ ));
+DATA(insert OID = 71(pg_type 71 PGUID 0 0 0 0 0 f f r n 16 0 - -f _null_ ));
+DATA(insert OID = 75(pg_attribute 75 PGUID 0 0 0 0 0 f f r n 16 0 - -f _null_ ));
+DATA(insert OID = 76(pg_demon 76 PGUID 0 0 0 0 0 f t r n 4 0 - -f _null_ ));
+DATA(insert OID = 80(pg_magic 80 PGUID 0 0 0 0 0 f t r n 2 0 - -f _null_ ));
+DATA(insert OID = 81(pg_proc 81 PGUID 0 0 0 0 0 f f r n 16 0 - -f _null_ ));
+DATA(insert OID = 82(pg_server 82 PGUID 0 0 0 0 0 f t r n 3 0 - -f _null_ ));
+DATA(insert OID = 83(pg_class 83 PGUID 0 0 0 0 0 f f r n 17 0 - -f _null_ ));
+DATA(insert OID = 86(pg_user 86 PGUID 0 0 0 0 0 f t r n 6 0 - -f _null_ ));
+DATA(insert OID = 87(pg_group 87 PGUID 0 0 0 0 0 f t s n 3 0 - -f _null_ ));
+DATA(insert OID = 88(pg_database 88 PGUID 0 0 0 0 0 f t r n 3 0 - -f _null_ ));
+DATA(insert OID = 89(pg_defaults 89 PGUID 0 0 0 0 0 f t r n 2 0 - -f _null_ ));
+DATA(insert OID = 90(pg_variable 90 PGUID 0 0 0 0 0 f t s n 2 0 - -f _null_ ));
+DATA(insert OID = 99(pg_log 99 PGUID 0 0 0 0 0 f t s n 1 0 - -f _null_ ));
+DATA(insert OID = 100(pg_time 100 PGUID 0 0 0 0 0 f t s n 1 0 - -f _null_ ));
+DATA(insert OID = 101(pg_hosts 101 PGUID 0 0 0 0 0 f t s n 3 0 - -f _null_ ));
 
-#define RelOid_pg_type		71
-#define RelOid_pg_demon       	76   
-#define RelOid_pg_attribute  	75   
-#define RelOid_pg_magic   	80      
-#define RelOid_pg_proc       	81   
-#define RelOid_pg_server     	82   
-#define RelOid_pg_class   	83   
-#define RelOid_pg_user       	86   
-#define RelOid_pg_group       	87
-#define RelOid_pg_database    	88   
-#define RelOid_pg_defaults  	89    
-#define RelOid_pg_variable   	90   
-#define RelOid_pg_log   	99       
-#define RelOid_pg_time   	100      
-#define RelOid_pg_hosts   	101      
-    
+#define RelOid_pg_type        71
+#define RelOid_pg_demon        76
+#define RelOid_pg_attribute    75
+#define RelOid_pg_magic    80
+#define RelOid_pg_proc        81
+#define RelOid_pg_server        82
+#define RelOid_pg_class    83
+#define RelOid_pg_user        86
+#define RelOid_pg_group        87
+#define RelOid_pg_database        88
+#define RelOid_pg_defaults    89
+#define RelOid_pg_variable    90
+#define RelOid_pg_log    99
+#define RelOid_pg_time    100
+#define RelOid_pg_hosts    101
+
 #define MAX_SYSTEM_RELOID       101
 
 #define       RELKIND_INDEX           'i'     /* secondary index */

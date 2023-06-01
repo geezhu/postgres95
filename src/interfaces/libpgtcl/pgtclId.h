@@ -14,5 +14,7 @@
  */
 
 extern void PgSetId(char *id, void *ptr);
-extern void* PgGetId(char *id);
-extern int PgValidId(char* id);
+
+extern void *PgGetId(char *id);
+
+extern int PgValidId(char *id);

@@ -26,17 +26,17 @@
 #include "postgres.h"
 
 CATALOG(pg_group) BOOTSTRAP {
-        NameData groname;
-        int4    grosysid;
-	int4	grolist[1];
+    NameData groname;
+    int4 grosysid;
+    int4 grolist[1];
 } FormData_pg_group;
 /* VARIABLE LENGTH STRUCTURE */
 
-typedef FormData_pg_group	*Form_pg_group;
+typedef FormData_pg_group *Form_pg_group;
 
-#define Natts_pg_group		1
-#define Anum_pg_group_groname	1
-#define Anum_pg_group_grosysid	2
-#define Anum_pg_group_grolist	3
+#define Natts_pg_group        1
+#define Anum_pg_group_groname    1
+#define Anum_pg_group_grosysid    2
+#define Anum_pg_group_grolist    3
 
 #endif /* PG_GROUP_H */

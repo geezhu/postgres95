@@ -58,15 +58,15 @@
  *	$Id: cdefs.h,v 1.1.1.1 1996/07/09 06:21:49 scrappy Exp $
  */
 
-#ifndef	_CDEFS_H_
-#define	_CDEFS_H_
+#ifndef    _CDEFS_H_
+#define    _CDEFS_H_
 
 #if defined(__cplusplus)
 #define	__BEGIN_DECLS	extern "C" {
 #define	__END_DECLS	};
 #else
-#define	__BEGIN_DECLS
-#define	__END_DECLS
+#define    __BEGIN_DECLS
+#define    __END_DECLS
 #endif
 
 /*
@@ -77,13 +77,13 @@
  * strings produced by the __STRING macro, but this only works with ANSI C.
  */
 #if defined(__STDC__) || defined(__cplusplus)
-#define	__P(protos)	protos		/* full-blown ANSI C */
-#define	__CONCAT(x,y)	x ## y
-#define	__STRING(x)	#x
+#define    __P(protos)    protos        /* full-blown ANSI C */
+#define    __CONCAT(x, y)    x ## y
+#define    __STRING(x)    #x
 
-#define	__const		const		/* define reserved names to standard */
-#define	__signed	signed
-#define	__volatile	volatile
+#define    __const        const        /* define reserved names to standard */
+#define    __signed    signed
+#define    __volatile    volatile
 #if defined(__cplusplus)
 #define	__inline	inline		/* convert to C++ keyword */
 #else
@@ -117,7 +117,7 @@
 #define	volatile
 #endif
 #endif	/* !__GNUC__ */
-#endif	/* !(__STDC__ || __cplusplus) */
+#endif    /* !(__STDC__ || __cplusplus) */
 
 /*
  * GCC1 and some versions of GCC2 declare dead (non-returning) and
@@ -128,10 +128,10 @@
  * in the distribution version of 2.5.5).
  */
 #if !defined(__GNUC__) || __GNUC__ < 2 || __GNUC_MINOR__ < 5
-#define	__attribute__(x)	/* delete __attribute__ if non-gcc or gcc1 */
+#define    __attribute__(x)    /* delete __attribute__ if non-gcc or gcc1 */
 #if defined(__GNUC__) && !defined(__STRICT_ANSI__)
-#define	__dead		__volatile
-#define	__pure		__const
+#define    __dead        __volatile
+#define    __pure        __const
 #endif
 #endif
 

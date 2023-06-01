@@ -30,11 +30,11 @@
  *	pg_inherits definition.  cpp turns this into
  *	typedef struct FormData_pg_inherits
  * ----------------
- */ 
+ */
 CATALOG(pg_inherits) {
-    Oid 	inhrel;
-    Oid 	inhparent;
-    int4 	inhseqno;
+    Oid inhrel;
+    Oid inhparent;
+    int4 inhseqno;
 } FormData_pg_inherits;
 
 /* ----------------
@@ -42,16 +42,16 @@ CATALOG(pg_inherits) {
  *	the format of pg_inherits relation.
  * ----------------
  */
-typedef FormData_pg_inherits	*InheritsTupleForm;
+typedef FormData_pg_inherits *InheritsTupleForm;
 
 /* ----------------
  *	compiler constants for pg_inherits
  * ----------------
  */
-#define Natts_pg_inherits		3
-#define Anum_pg_inherits_inhrel		1
-#define Anum_pg_inherits_inhparent	2
-#define Anum_pg_inherits_inhseqno	3
+#define Natts_pg_inherits        3
+#define Anum_pg_inherits_inhrel        1
+#define Anum_pg_inherits_inhparent    2
+#define Anum_pg_inherits_inhseqno    3
 
 
 #endif /* PG_INHERITS_H */

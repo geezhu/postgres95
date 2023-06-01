@@ -42,12 +42,12 @@
  * ----------------
  */
 typedef enum {
-    None,		/* results are discarded */
-    Debug,		/* results go to debugging output */
-    Local,		/* results go in local portal buffer */
-    Remote,		/* results sent to frontend process */
-    CopyBegin,		/* results sent to frontend process but are strings */
-    CopyEnd,	        /* results sent to frontend process but are strings */
+    None,        /* results are discarded */
+    Debug,        /* results go to debugging output */
+    Local,        /* results go in local portal buffer */
+    Remote,        /* results sent to frontend process */
+    CopyBegin,        /* results sent to frontend process but are strings */
+    CopyEnd,            /* results sent to frontend process but are strings */
     RemoteInternal      /* results sent to frontend process in internal
 			   (binary) form */
 } CommandDest;
@@ -63,16 +63,25 @@ typedef struct AttrInfo {
 */
 
 extern void donothing(List *tuple, List *attrdesc);
+
 extern void (*DestToFunction(CommandDest dest))();
+
 extern void EndCommand(char *commandTag, CommandDest dest);
+
 extern void SendCopyBegin();
+
 extern void ReceiveCopyBegin();
+
 extern void NullCommand(CommandDest dest);
+
 extern void BeginCommand(char *pname, int operation, TupleDesc attinfo,
-			 bool isIntoRel, bool isIntoPortal, char *tag,
-			 CommandDest dest);
+                         bool isIntoRel, bool isIntoPortal, char *tag,
+                         CommandDest dest);
+
 extern void ResetAppendOid();
+
 extern void UpdateAppendOid(Oid newoid);
+
 extern Oid GetAppendOid();
 
 #endif  /* DEST_H */

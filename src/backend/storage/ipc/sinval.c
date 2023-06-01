@@ -20,12 +20,12 @@
 #include "storage/spin.h"
 #include "utils/elog.h"
 
-extern SISeg		*shmInvalBuffer;/* the shared buffer segment, set by*/
-    	    	    	    	    	/*   SISegmentAttach()	    	    */
-extern BackendId	MyBackendId;
-extern BackendTag	MyBackendTag;
+extern SISeg *shmInvalBuffer;/* the shared buffer segment, set by*/
+/*   SISegmentAttach()	    	    */
+extern BackendId MyBackendId;
+extern BackendTag MyBackendTag;
 
-SPINLOCK		SInvalLock = (SPINLOCK) NULL;
+SPINLOCK SInvalLock = (SPINLOCK) NULL;
 
 /****************************************************************************/
 /*  CreateSharedInvalidationState(key)   Create a buffer segment    	    */
@@ -33,20 +33,19 @@ SPINLOCK		SInvalLock = (SPINLOCK) NULL;
 /*  should be called only by the POSTMASTER 	    	    	    	    */
 /****************************************************************************/
 void
-CreateSharedInvalidationState(IPCKey key)
-{
-    int	status;
-    
+CreateSharedInvalidationState(IPCKey key) {
+    int status;
+
     /* REMOVED
        SISyncKill(IPCKeyGetSIBufferMemorySemaphoreKey(key));
        SISyncInit(IPCKeyGetSIBufferMemorySemaphoreKey(key));
        */
-    
+
     /* SInvalLock gets set in spin.c, during spinlock init */
     status = SISegmentInit(true, IPCKeyGetSIBufferMemoryBlock(key));
-    
+
     if (status == -1) {
-    	elog(FATAL, "CreateSharedInvalidationState: failed segment init");
+        elog(FATAL, "CreateSharedInvalidationState: failed segment init");
     }
 }
 /****************************************************************************/
@@ -55,31 +54,28 @@ CreateSharedInvalidationState(IPCKey key)
 /*  should be called only by the POSTMASTER 	    	    	    	    */
 /****************************************************************************/
 void
-AttachSharedInvalidationState(IPCKey key)
-{
-    int	status;
-    
+AttachSharedInvalidationState(IPCKey key) {
+    int status;
+
     if (key == PrivateIPCKey) {
-	CreateSharedInvalidationState(key);
-	return;
+        CreateSharedInvalidationState(key);
+        return;
     }
     /* SInvalLock gets set in spin.c, during spinlock init */
     status = SISegmentInit(false, IPCKeyGetSIBufferMemoryBlock(key));
-    
+
     if (status == -1) {
-    	elog(FATAL, "AttachSharedInvalidationState: failed segment init");
+        elog(FATAL, "AttachSharedInvalidationState: failed segment init");
     }
 }
 
 void
-InitSharedInvalidationState()
-{
+InitSharedInvalidationState() {
     SpinAcquire(SInvalLock);
-    if (!SIBackendInit(shmInvalBuffer))
-	{
-	    SpinRelease(SInvalLock);
-	    elog(FATAL, "Backend cache invalidation initialization failed");
-	}
+    if (!SIBackendInit(shmInvalBuffer)) {
+        SpinRelease(SInvalLock);
+        elog(FATAL, "Backend cache invalidation initialization failed");
+    }
     SpinRelease(SInvalLock);
 }
 
@@ -99,11 +95,10 @@ InitSharedInvalidationState()
 /****************************************************************************/
 void
 RegisterSharedInvalid(int cacheId, /* XXX */
-		      Index hashIndex,
-		      ItemPointer pointer)
-{
-    SharedInvalidData   newInvalid;
-    
+                      Index hashIndex,
+                      ItemPointer pointer) {
+    SharedInvalidData newInvalid;
+
     /*
      * This code has been hacked to accept two types of messages.  This might
      * be treated more generally in the future.
@@ -118,30 +113,30 @@ RegisterSharedInvalid(int cacheId, /* XXX */
      *	hashIndex= object id contained in (possibly) cached relation descriptor
      *	pointer= null
      */
-    
+
     newInvalid.cacheId = cacheId;
     newInvalid.hashIndex = hashIndex;
-    
+
     if (ItemPointerIsValid(pointer)) {
-	ItemPointerCopy(pointer, &newInvalid.pointerData);
+        ItemPointerCopy(pointer, &newInvalid.pointerData);
     } else {
-	ItemPointerSetInvalid(&newInvalid.pointerData);
+        ItemPointerSetInvalid(&newInvalid.pointerData);
     }
-    
+
     SpinAcquire(SInvalLock);
     if (!SISetDataEntry(shmInvalBuffer, &newInvalid)) {
-    	/* buffer full */
-    	/* release a message, mark process cache states to be invalid */
-    	SISetProcStateInvalid(shmInvalBuffer);
-	
-    	if (!SIDelDataEntry(shmInvalBuffer)) {
-    	    /* inconsistent buffer state -- shd never happen */
-	    SpinRelease(SInvalLock);
-    	    elog(FATAL, "RegisterSharedInvalid: inconsistent buffer state");
-    	}
-	
-    	/* write again */
-    	(void) SISetDataEntry(shmInvalBuffer, &newInvalid);
+        /* buffer full */
+        /* release a message, mark process cache states to be invalid */
+        SISetProcStateInvalid(shmInvalBuffer);
+
+        if (!SIDelDataEntry(shmInvalBuffer)) {
+            /* inconsistent buffer state -- shd never happen */
+            SpinRelease(SInvalLock);
+            elog(FATAL, "RegisterSharedInvalid: inconsistent buffer state");
+        }
+
+        /* write again */
+        (void) SISetDataEntry(shmInvalBuffer, &newInvalid);
     }
     SpinRelease(SInvalLock);
 }
@@ -158,12 +153,11 @@ RegisterSharedInvalid(int cacheId, /* XXX */
 /****************************************************************************/
 void
 InvalidateSharedInvalid(void (*invalFunction)(),
-			void (*resetFunction)())
-{
+                        void (*resetFunction)()) {
     SpinAcquire(SInvalLock);
-    SIReadEntryData(shmInvalBuffer, MyBackendId, 
-    	    	    invalFunction, resetFunction);  
-    
+    SIReadEntryData(shmInvalBuffer, MyBackendId,
+                    invalFunction, resetFunction);
+
     SIDelExpiredDataEntries(shmInvalBuffer);
     SpinRelease(SInvalLock);
 }

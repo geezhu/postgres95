@@ -27,14 +27,17 @@
 
 
 static int match_pathkey_joinkeys(List *pathkey, List *joinkeys,
-		 int which_subkey);
+                                  int which_subkey);
+
 static bool every_func(List *joinkeys, List *pathkey,
-		 int which_subkey);
+                       int which_subkey);
+
 static List *new_join_pathkey(List *subkeys,
-		 List *considered_subkeys, List *join_rel_tlist,
-		 List *joinclauses);
+                              List *considered_subkeys, List *join_rel_tlist,
+                              List *joinclauses);
+
 static List *new_matching_subkeys(Var *subkey, List *considered_subkeys,
-		 List *join_rel_tlist, List *joinclauses);
+                                  List *join_rel_tlist, List *joinclauses);
 
 /****************************************************************************
  *     	KEY COMPARISONS
@@ -71,41 +74,40 @@ static List *new_matching_subkeys(Var *subkey, List *considered_subkeys,
  */
 List *
 match_pathkeys_joinkeys(List *pathkeys,
-			List *joinkeys,
-			List *joinclauses,
-			int which_subkey,
-			List **matchedJoinClausesPtr)
-{
+                        List *joinkeys,
+                        List *joinclauses,
+                        int which_subkey,
+                        List **matchedJoinClausesPtr) {
     List *matched_joinkeys = NIL;
     List *matched_joinclauses = NIL;
     List *pathkey = NIL;
     List *i = NIL;
     int matched_joinkey_index = -1;
-    
+
     foreach(i, pathkeys) {
-	pathkey = lfirst(i);
-	matched_joinkey_index = 
-	    match_pathkey_joinkeys(pathkey, joinkeys, which_subkey);
-	
-	if (matched_joinkey_index != -1 ) {
-	    List *xjoinkey = nth(matched_joinkey_index,joinkeys);
-	    List *joinclause = nth(matched_joinkey_index,joinclauses);
-	    
-	    /* XXX was "push" function */
-	    matched_joinkeys = lappend(matched_joinkeys,xjoinkey);
-	    matched_joinkeys = nreverse(matched_joinkeys);
-	    
-	    matched_joinclauses = lappend(matched_joinclauses,joinclause);
-	    matched_joinclauses = nreverse(matched_joinclauses);
-	    joinkeys = LispRemove(xjoinkey,joinkeys);
-	} else {
-	    return(NIL);
-	} 
-	
+        pathkey = lfirst(i);
+        matched_joinkey_index =
+                match_pathkey_joinkeys(pathkey, joinkeys, which_subkey);
+
+        if (matched_joinkey_index != -1) {
+            List *xjoinkey = nth(matched_joinkey_index, joinkeys);
+            List *joinclause = nth(matched_joinkey_index, joinclauses);
+
+            /* XXX was "push" function */
+            matched_joinkeys = lappend(matched_joinkeys, xjoinkey);
+            matched_joinkeys = nreverse(matched_joinkeys);
+
+            matched_joinclauses = lappend(matched_joinclauses, joinclause);
+            matched_joinclauses = nreverse(matched_joinclauses);
+            joinkeys = LispRemove(xjoinkey, joinkeys);
+        } else {
+            return (NIL);
+        }
+
     }
-    if(matched_joinkeys==NULL ||
-       length(matched_joinkeys) != length(pathkeys)) {
-	return NIL;
+    if (matched_joinkeys == NULL ||
+        length(matched_joinkeys) != length(pathkeys)) {
+        return NIL;
     }
 
     *matchedJoinClausesPtr = nreverse(matched_joinclauses);
@@ -119,27 +121,26 @@ match_pathkeys_joinkeys(List *pathkeys,
  */
 static int
 match_pathkey_joinkeys(List *pathkey,
-		       List *joinkeys,
-		       int which_subkey) 
-{
+                       List *joinkeys,
+                       int which_subkey) {
     Var *path_subkey;
     int pos;
     List *i = NIL;
     List *x = NIL;
     JoinKey *jk;
-    
+
     foreach(i, pathkey) {
-	path_subkey = (Var *)lfirst(i);
-	pos = 0;
-	foreach(x, joinkeys) {
-	    jk = (JoinKey*)lfirst(x);
-	    if(var_equal(path_subkey,
-			 extract_subkey(jk, which_subkey)))
-		return(pos);
-	    pos++;
-	}
+        path_subkey = (Var *) lfirst(i);
+        pos = 0;
+        foreach(x, joinkeys) {
+            jk = (JoinKey *) lfirst(x);
+            if (var_equal(path_subkey,
+                          extract_subkey(jk, which_subkey)))
+                return (pos);
+            pos++;
+        }
     }
-    return(-1);    /* no index found   */
+    return (-1);    /* no index found   */
 }
 
 /*    
@@ -164,31 +165,30 @@ match_pathkey_joinkeys(List *pathkey,
  * Returns the matching path node if one exists, nil otherwise.
  */
 static bool
-every_func(List *joinkeys, List *pathkey, int which_subkey)
-{
+every_func(List *joinkeys, List *pathkey, int which_subkey) {
     JoinKey *xjoinkey;
     Var *temp;
     Var *tempkey = NULL;
     bool found = false;
     List *i = NIL;
     List *j = NIL;
-    
-    foreach(i,joinkeys) {
-	xjoinkey = (JoinKey*)lfirst(i);
-	found = false;
-	foreach(j,pathkey) {
-	    temp = (Var*)lfirst((List*)lfirst(j));
-	    if(temp == NULL) continue;
-	    tempkey = extract_subkey(xjoinkey,which_subkey);
-	    if(var_equal(tempkey, temp)) {
-		found = true;
-		break;
-	    }
-	}
-	if(found == false)
-	    return(false);
+
+    foreach(i, joinkeys) {
+        xjoinkey = (JoinKey *) lfirst(i);
+        found = false;
+        foreach(j, pathkey) {
+            temp = (Var *) lfirst((List *) lfirst(j));
+            if (temp == NULL) continue;
+            tempkey = extract_subkey(xjoinkey, which_subkey);
+            if (var_equal(tempkey, temp)) {
+                found = true;
+                break;
+            }
+        }
+        if (found == false)
+            return (false);
     }
-    return(found);
+    return (found);
 }
 
 
@@ -198,35 +198,33 @@ every_func(List *joinkeys, List *pathkey, int which_subkey)
  */
 Path *
 match_paths_joinkeys(List *joinkeys,
-		     PathOrder *ordering,
-		     List *paths,
-		     int which_subkey)
-{
-    Path *matched_path = NULL ;
+                     PathOrder *ordering,
+                     List *paths,
+                     int which_subkey) {
+    Path *matched_path = NULL;
     bool key_match = false;
     List *i = NIL;
 
-    foreach(i,paths) {
-	Path *path = (Path*)lfirst(i);
+    foreach(i, paths) {
+        Path *path = (Path *) lfirst(i);
 
-	key_match = every_func(joinkeys, path->keys, which_subkey);
-	
-	if (equal_path_path_ordering(ordering,
-				    &path->p_ordering) &&
-	    length(joinkeys) == length(path->keys) &&
-	    key_match) {
+        key_match = every_func(joinkeys, path->keys, which_subkey);
 
-	    if (matched_path) {
-		if (path->path_cost < matched_path->path_cost)
-		    matched_path = path;
-	    } else {
-		matched_path = path;
-	    }
-	}
+        if (equal_path_path_ordering(ordering,
+                                     &path->p_ordering) &&
+            length(joinkeys) == length(path->keys) &&
+            key_match) {
+
+            if (matched_path) {
+                if (path->path_cost < matched_path->path_cost)
+                    matched_path = path;
+            } else {
+                matched_path = path;
+            }
+        }
     }
     return matched_path;
 }
-
 
 
 /*    
@@ -245,38 +243,37 @@ match_paths_joinkeys(List *joinkeys,
  */
 List *
 extract_path_keys(List *joinkeys,
-		  List *tlist,
-		  int which_subkey)
-{
+                  List *tlist,
+                  int which_subkey) {
     List *pathkeys = NIL;
     List *jk;
-    
+
     foreach(jk, joinkeys) {
-	JoinKey *jkey = (JoinKey*)lfirst(jk);
-	Var *var, *key;
-	List *p;
+        JoinKey *jkey = (JoinKey *) lfirst(jk);
+        Var *var, *key;
+        List *p;
 
-	/*
-	 * find the right Var in the target list for this key
-	 */
-	var = (Var*)extract_subkey(jkey, which_subkey);
-	key = (Var*)matching_tlvar(var, tlist);
+        /*
+         * find the right Var in the target list for this key
+         */
+        var = (Var *) extract_subkey(jkey, which_subkey);
+        key = (Var *) matching_tlvar(var, tlist);
 
-	/*
-	 * include it in the pathkeys list if we haven't already done so
-	 */
-	foreach(p, pathkeys) {
-	    Var *pkey = lfirst((List*)lfirst(p));	/* XXX fix me */
-	    if (key == pkey)
-		break;
-	}
-	if (p!=NIL)
-	    continue;	/* key already in pathkeys */
+        /*
+         * include it in the pathkeys list if we haven't already done so
+         */
+        foreach(p, pathkeys) {
+            Var *pkey = lfirst((List *) lfirst(p));    /* XXX fix me */
+            if (key == pkey)
+                break;
+        }
+        if (p != NIL)
+            continue;    /* key already in pathkeys */
 
-	pathkeys =
-	    lappend(pathkeys, lcons(key,NIL));
+        pathkeys =
+                lappend(pathkeys, lcons(key, NIL));
     }
-    return(pathkeys);
+    return (pathkeys);
 }
 
 
@@ -303,23 +300,22 @@ extract_path_keys(List *joinkeys,
  */
 List *
 new_join_pathkeys(List *outer_pathkeys,
-		  List *join_rel_tlist,
-		  List *joinclauses)
-{	
+                  List *join_rel_tlist,
+                  List *joinclauses) {
     List *outer_pathkey = NIL;
     List *t_list = NIL;
     List *x;
     List *i = NIL;
-    
+
     foreach(i, outer_pathkeys) {
-	outer_pathkey = lfirst(i);
-	x = new_join_pathkey(outer_pathkey, NIL, 
-			     join_rel_tlist,joinclauses);
-	if (x!=NIL) {
-	    t_list = lappend(t_list, x);
-	}
+        outer_pathkey = lfirst(i);
+        x = new_join_pathkey(outer_pathkey, NIL,
+                             join_rel_tlist, joinclauses);
+        if (x != NIL) {
+            t_list = lappend(t_list, x);
+        }
     }
-    return(t_list);
+    return (t_list);
 }
 
 /*    
@@ -341,42 +337,40 @@ new_join_pathkeys(List *outer_pathkeys,
  */
 static List *
 new_join_pathkey(List *subkeys,
-		 List *considered_subkeys,
-		 List *join_rel_tlist,
-		 List *joinclauses)
-{
+                 List *considered_subkeys,
+                 List *join_rel_tlist,
+                 List *joinclauses) {
     List *t_list = NIL;
     Var *subkey;
     List *i = NIL;
     List *matched_subkeys = NIL;
-    Expr *tlist_key = (Expr*)NULL;
+    Expr *tlist_key = (Expr *) NULL;
     List *newly_considered_subkeys = NIL;
-    
-    foreach (i, subkeys) {
-	subkey = (Var *)lfirst(i);
-	if(subkey == NULL)
-	    break;    /* XXX something is wrong */
-	matched_subkeys = 
-	    new_matching_subkeys(subkey,considered_subkeys,
-				 join_rel_tlist,joinclauses);
-	tlist_key = matching_tlvar(subkey,join_rel_tlist);
-	newly_considered_subkeys = NIL;
-	
-	if (tlist_key) {
-	    if(!member(tlist_key, matched_subkeys))
-		newly_considered_subkeys = lcons(tlist_key,
-						 matched_subkeys);
-	} 
-	else {
-	    newly_considered_subkeys = matched_subkeys;
-	} 
-	
-	considered_subkeys = 
-	    append(considered_subkeys, newly_considered_subkeys); 
 
-	t_list = nconc(t_list,newly_considered_subkeys);
+    foreach (i, subkeys) {
+        subkey = (Var *) lfirst(i);
+        if (subkey == NULL)
+            break;    /* XXX something is wrong */
+        matched_subkeys =
+                new_matching_subkeys(subkey, considered_subkeys,
+                                     join_rel_tlist, joinclauses);
+        tlist_key = matching_tlvar(subkey, join_rel_tlist);
+        newly_considered_subkeys = NIL;
+
+        if (tlist_key) {
+            if (!member(tlist_key, matched_subkeys))
+                newly_considered_subkeys = lcons(tlist_key,
+                                                 matched_subkeys);
+        } else {
+            newly_considered_subkeys = matched_subkeys;
+        }
+
+        considered_subkeys =
+                append(considered_subkeys, newly_considered_subkeys);
+
+        t_list = nconc(t_list, newly_considered_subkeys);
     }
-    return(t_list);
+    return (t_list);
 }
 
 /*    
@@ -398,35 +392,34 @@ new_join_pathkey(List *subkeys,
  */
 static List *
 new_matching_subkeys(Var *subkey,
-		     List *considered_subkeys,
-		     List *join_rel_tlist,
-		     List *joinclauses)
-{
+                     List *considered_subkeys,
+                     List *join_rel_tlist,
+                     List *joinclauses) {
     Expr *joinclause = NULL;
     List *t_list = NIL;
     List *temp = NIL;
     List *i = NIL;
-    Expr *tlist_other_var = (Expr *)NULL;
-    
-    foreach(i,joinclauses) {
-	joinclause = lfirst(i);
-	tlist_other_var = 
-	    matching_tlvar(other_join_clause_var(subkey,joinclause),
-			   join_rel_tlist);
-	
-	if(tlist_other_var && 
-	   !(member(tlist_other_var,considered_subkeys))) {
+    Expr *tlist_other_var = (Expr *) NULL;
 
-	    /* XXX was "push" function  */
-	    considered_subkeys = lappend(considered_subkeys,
-					  tlist_other_var);
+    foreach(i, joinclauses) {
+        joinclause = lfirst(i);
+        tlist_other_var =
+                matching_tlvar(other_join_clause_var(subkey, joinclause),
+                               join_rel_tlist);
 
-	    /* considered_subkeys = nreverse(considered_subkeys); 
-	       XXX -- I am not sure of this. */
-	    
-	    temp = lcons(tlist_other_var, NIL);
-	    t_list = nconc(t_list,temp);
-	} 
+        if (tlist_other_var &&
+            !(member(tlist_other_var, considered_subkeys))) {
+
+            /* XXX was "push" function  */
+            considered_subkeys = lappend(considered_subkeys,
+                                         tlist_other_var);
+
+            /* considered_subkeys = nreverse(considered_subkeys); 
+               XXX -- I am not sure of this. */
+
+            temp = lcons(tlist_other_var, NIL);
+            t_list = nconc(t_list, temp);
+        }
     }
-    return(t_list);
+    return (t_list);
 }

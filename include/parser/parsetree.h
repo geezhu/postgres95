@@ -12,7 +12,7 @@
  *-------------------------------------------------------------------------
  */
 #ifndef PARSETREE_H
-#define PARSETREE_H		/* include once only */
+#define PARSETREE_H        /* include once only */
 
 /* ----------------
  *	need pg_list.h for definitions of CAR(), etc. macros
@@ -70,7 +70,7 @@
  *	Given the range index of a relation, return the corresponding
  *	relation id or relation name.
  */
-#define getrelid(rangeindex,rangetable) \
+#define getrelid(rangeindex, rangetable) \
     ((RangeTblEntry*)nth((rangeindex)-1, rangetable))->relid
 
 #define getrelname(rangeindex, rangetable) \

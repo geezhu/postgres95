@@ -10,13 +10,13 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	REL_H
+#ifndef    REL_H
 #define REL_H
 
 #include "postgres.h"
 
 #include "storage/fd.h"
-#include "access/strat.h"	
+#include "access/strat.h"
 #include "access/tupdesc.h"
 
 #include "catalog/pg_am.h"
@@ -26,22 +26,22 @@
 #include "rewrite/prs2lock.h"
 
 typedef struct RelationData {
-    File		rd_fd; 		/* open file descriptor */
-    int                 rd_nblocks;	/* number of blocks in rel */
-    uint16		rd_refcnt; 	/* reference count */
-    bool		rd_islocal; 	/* uses the local buffer mgr */
-    bool		rd_isnailed; 	/* rel is nailed in cache */
-    Form_pg_am 		rd_am; 		/* AM tuple */
-    Form_pg_class	rd_rel;		/* RELATION tuple */
-    Oid			rd_id;		/* relations's object id */
-    Pointer		lockInfo; 	/* ptr. to misc. info. */
-    TupleDesc           rd_att;		/* tuple desciptor */
-    RuleLock		*rd_rules;	/* rewrite rules */
-    IndexStrategy       rd_istrat;    
-    RegProcedure*       rd_support;
+    File rd_fd;        /* open file descriptor */
+    int rd_nblocks;    /* number of blocks in rel */
+    uint16 rd_refcnt;    /* reference count */
+    bool rd_islocal;    /* uses the local buffer mgr */
+    bool rd_isnailed;    /* rel is nailed in cache */
+    Form_pg_am rd_am;        /* AM tuple */
+    Form_pg_class rd_rel;        /* RELATION tuple */
+    Oid rd_id;        /* relations's object id */
+    Pointer lockInfo;    /* ptr. to misc. info. */
+    TupleDesc rd_att;        /* tuple desciptor */
+    RuleLock *rd_rules;    /* rewrite rules */
+    IndexStrategy rd_istrat;
+    RegProcedure *rd_support;
 } RelationData;
 
-typedef RelationData	*Relation;
+typedef RelationData *Relation;
 
 /* ----------------
  *	RelationPtr is used in the executor to support index scans
@@ -49,17 +49,17 @@ typedef RelationData	*Relation;
  *	array.  -cim 9/10/89
  * ----------------
  */
-typedef Relation	*RelationPtr;
+typedef Relation *RelationPtr;
 
-#define InvalidRelation	((Relation)NULL)
+#define InvalidRelation    ((Relation)NULL)
 
-typedef char	ArchiveMode;
+typedef char ArchiveMode;
 
 /*
  * RelationIsValid --
  *	True iff relation descriptor is valid.
  */
-#define	RelationIsValid(relation) PointerIsValid(relation)
+#define    RelationIsValid(relation) PointerIsValid(relation)
 
 /*
  * RelationGetSystemPort --
@@ -85,13 +85,13 @@ typedef char	ArchiveMode;
  *	Assumes relation descriptor is valid.
  */
 #define RelationHasReferenceCountZero(relation) \
-	((bool)((relation)->rd_refcnt == 0))
+    ((bool)((relation)->rd_refcnt == 0))
 
 /*
  * RelationSetReferenceCount --
  *	Sets relation reference count.
  */
-#define RelationSetReferenceCount(relation,count) ((relation)->rd_refcnt = count)
+#define RelationSetReferenceCount(relation, count) ((relation)->rd_refcnt = count)
 
 /*
  * RelationIncrementReferenceCount --
@@ -166,5 +166,6 @@ typedef char	ArchiveMode;
 extern IndexStrategy RelationGetIndexStrategy(Relation relation);
 
 extern void RelationSetIndexSupport(Relation relation, IndexStrategy strategy,
-			     RegProcedure *support);
-#endif	/* REL_H */
+                                    RegProcedure *support);
+
+#endif    /* REL_H */

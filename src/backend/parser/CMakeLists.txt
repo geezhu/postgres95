@@ -27,7 +27,7 @@ execute_process(
 )
 
 execute_process(
-        COMMAND mv ${CMAKE_CURRENT_SOURCE_DIR}/parse.h  ${CMAKE_SOURCE_DIR}/include/parser/parse.h
+        COMMAND mv ${CMAKE_CURRENT_SOURCE_DIR}/parse.h ${CMAKE_SOURCE_DIR}/include/parser/parse.h
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 

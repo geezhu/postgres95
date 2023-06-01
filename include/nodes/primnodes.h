@@ -11,7 +11,7 @@
  *-------------------------------------------------------------------------
  */
 #ifndef PRIMNODES_H
-#define	PRIMNODES_H
+#define    PRIMNODES_H
 
 #include "postgres.h"
 
@@ -44,14 +44,14 @@
  * ----------------
  */
 typedef struct Resdom {
-    NodeTag		type;
-    AttrNumber		resno;
-    Oid			restype;
-    int			reslen;
-    char		*resname;
-    Index		reskey;
-    Oid			reskeyop; 
-    int			resjunk;
+    NodeTag type;
+    AttrNumber resno;
+    Oid restype;
+    int reslen;
+    char *resname;
+    Index reskey;
+    Oid reskeyop;
+    int resjunk;
 } Resdom;
 
 /* -------------
@@ -72,12 +72,12 @@ typedef struct Resdom {
  *			  0, we treat them as the set {NULL}.
  */
 typedef struct Fjoin {
-    NodeTag		type;
-    bool		fj_initialized;
-    int			fj_nNodes;
-    List		*fj_innerNode;
-    DatumPtr		fj_results;
-    BoolPtr		fj_alwaysDone;
+    NodeTag type;
+    bool fj_initialized;
+    int fj_nNodes;
+    List *fj_innerNode;
+    DatumPtr fj_results;
+    BoolPtr fj_alwaysDone;
 } Fjoin;
 
 /* ----------------
@@ -94,11 +94,11 @@ typedef enum OpType {
 } OpType;
 
 typedef struct Expr {
-    NodeTag		type;
-    Oid			typeOid;	/* oid of the type of this expr */
-    OpType		opType;		/* type of the op */
-    Node		*oper;		/* could be Oper or Func */
-    List		*args;  	/* list of argument nodes */
+    NodeTag type;
+    Oid typeOid;    /* oid of the type of this expr */
+    OpType opType;        /* type of the op */
+    Node *oper;        /* could be Oper or Func */
+    List *args;    /* list of argument nodes */
 } Expr;
 
 /* ----------------
@@ -113,19 +113,19 @@ typedef struct Expr {
  *	 		  [ '(varnoold varoattno) was varid   -ay 2/95]
  * ----------------
  */
-#define    INNER 	65000
-#define    OUTER 	65001
+#define    INNER    65000
+#define    OUTER    65001
 
-#define    PRS2_CURRENT_VARNO		1
-#define    PRS2_NEW_VARNO		2
+#define    PRS2_CURRENT_VARNO        1
+#define    PRS2_NEW_VARNO        2
 
 typedef struct Var {
-    NodeTag		type;
-    Index		varno; 
-    AttrNumber		varattno;
-    Oid			vartype;
-    Index		varnoold;	/* only used by optimizer */
-    AttrNumber		varoattno;	/* only used by optimizer */
+    NodeTag type;
+    Index varno;
+    AttrNumber varattno;
+    Oid vartype;
+    Index varnoold;    /* only used by optimizer */
+    AttrNumber varoattno;    /* only used by optimizer */
 } Var;
 
 /* ----------------
@@ -149,12 +149,12 @@ typedef struct Var {
  * ----------------
  */
 typedef struct Oper {
-    NodeTag		type;
-    Oid			opno;
-    Oid			opid;
-    Oid			opresulttype;
-    int			opsize;
-    FunctionCachePtr	op_fcache;
+    NodeTag type;
+    Oid opno;
+    Oid opid;
+    Oid opresulttype;
+    int opsize;
+    FunctionCachePtr op_fcache;
 } Oper;
 
 
@@ -175,13 +175,13 @@ typedef struct Oper {
  * ----------------
  */
 typedef struct Const {
-    NodeTag		type;
-    Oid			consttype;
-    Size		constlen;
-    Datum		constvalue;
-    bool		constisnull;
-    bool		constbyval;
-    bool        	constisset;
+    NodeTag type;
+    Oid consttype;
+    Size constlen;
+    Datum constvalue;
+    bool constisnull;
+    bool constbyval;
+    bool constisset;
 } Const;
 
 /* ----------------
@@ -212,12 +212,12 @@ typedef struct Const {
  * ----------------
  */
 typedef struct Param {
-    NodeTag		type;
-    int			paramkind;
-    AttrNumber		paramid;
-    char		*paramname;
-    Oid			paramtype;
-    List		*param_tlist;
+    NodeTag type;
+    int paramkind;
+    AttrNumber paramid;
+    char *paramname;
+    Oid paramtype;
+    List *param_tlist;
 } Param;
 
 
@@ -237,14 +237,14 @@ typedef struct Param {
  * ----------------
  */
 typedef struct Func {
-    NodeTag		type;
-    Oid			funcid;
-    Oid			functype;
-    bool		funcisindex;
-    int			funcsize;
-    FunctionCachePtr	func_fcache;
-    List                *func_tlist;
-    List                *func_planlist;
+    NodeTag type;
+    Oid funcid;
+    Oid functype;
+    bool funcisindex;
+    int funcsize;
+    FunctionCachePtr func_fcache;
+    List *func_tlist;
+    List *func_planlist;
 } Func;
 
 /* ----------------
@@ -257,12 +257,12 @@ typedef struct Func {
  * ----------------
  */
 typedef struct Aggreg {
-    NodeTag		type;
-    char		*aggname;
-    Oid                 basetype;       /* base type of the aggregate */
-    Oid			aggtype;	/* type of final result */
-    Node		*target;	/* attribute to aggreg on */
-    int			aggno;		/* index to ecxt_values */
+    NodeTag type;
+    char *aggname;
+    Oid basetype;       /* base type of the aggregate */
+    Oid aggtype;    /* type of final result */
+    Node *target;    /* attribute to aggreg on */
+    int aggno;        /* index to ecxt_values */
 } Aggreg;
 
 /* ----------------
@@ -281,14 +281,14 @@ typedef struct Aggreg {
  *  around a bunch of unfortunate implementation decisions made there.
  */
 typedef struct Array {
-    NodeTag		type;
-    Oid			arrayelemtype;
-    int			arrayelemlength;
-    bool		arrayelembyval;
-    int 		arrayndim;
-    IntArray		arraylow;
-    IntArray		arrayhigh;
-    int			arraylen;
+    NodeTag type;
+    Oid arrayelemtype;
+    int arrayelemlength;
+    bool arrayelembyval;
+    int arrayndim;
+    IntArray arraylow;
+    IntArray arrayhigh;
+    int arraylen;
 } Array;
 
 /* ----------------
@@ -304,15 +304,15 @@ typedef struct Array {
  * ----------------
  */
 typedef struct ArrayRef {
-    NodeTag		type;
-    int			refattrlength;
-    int			refelemlength;
-    Oid			refelemtype;
-    bool		refelembyval;
-    List		*refupperindexpr;
-    List		*reflowerindexpr;
-    Node		*refexpr;
-    Node		*refassgnexpr;
+    NodeTag type;
+    int refattrlength;
+    int refelemlength;
+    Oid refelemtype;
+    bool refelembyval;
+    List *refupperindexpr;
+    List *reflowerindexpr;
+    Node *refexpr;
+    Node *refassgnexpr;
 } ArrayRef;
 
 #endif /* PRIMNODES_H */

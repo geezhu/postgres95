@@ -25,12 +25,20 @@
 #include "access/genam.h"
 #include "access/nbtree.h"
 
-static InsertIndexResult _bt_insertonpg(Relation rel, Buffer buf, BTStack stack, int keysz, ScanKey scankey, BTItem btitem, BTItem afteritem);
+static InsertIndexResult
+_bt_insertonpg(Relation rel, Buffer buf, BTStack stack, int keysz, ScanKey scankey, BTItem btitem, BTItem afteritem);
+
 static Buffer _bt_split(Relation rel, Buffer buf);
+
 static OffsetNumber _bt_findsplitloc(Relation rel, Page page, OffsetNumber start, OffsetNumber maxoff, Size llimit);
+
 static void _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf);
-static OffsetNumber _bt_pgaddtup(Relation rel, Buffer buf, int keysz, ScanKey itup_scankey, Size itemsize, BTItem btitem, BTItem afteritem);
+
+static OffsetNumber
+_bt_pgaddtup(Relation rel, Buffer buf, int keysz, ScanKey itup_scankey, Size itemsize, BTItem btitem, BTItem afteritem);
+
 static bool _bt_goesonpg(Relation rel, Buffer buf, Size keysz, ScanKey scankey, BTItem afteritem);
+
 static void _bt_updateitem(Relation rel, Size keysz, Buffer buf, Oid bti_oid, BTItem newItem);
 
 /*
@@ -41,8 +49,7 @@ static void _bt_updateitem(Relation rel, Size keysz, Buffer buf, Oid bti_oid, BT
  *	(xid, seqno) pair.
  */
 InsertIndexResult
-_bt_doinsert(Relation rel, BTItem btitem)
-{
+_bt_doinsert(Relation rel, BTItem btitem) {
     ScanKey itup_scankey;
     IndexTuple itup;
     BTStack stack;
@@ -50,21 +57,21 @@ _bt_doinsert(Relation rel, BTItem btitem)
     BlockNumber blkno;
     int natts;
     InsertIndexResult res;
-    
+
     itup = &(btitem->bti_itup);
-    
+
     /* we need a scan key to do our search, so build one */
     itup_scankey = _bt_mkscankey(rel, itup);
     natts = rel->rd_rel->relnatts;
-    
+
     /* find the page containing this key */
     stack = _bt_search(rel, natts, itup_scankey, &buf);
     blkno = BufferGetBlockNumber(buf);
-    
+
     /* trade in our read lock for a write lock */
     _bt_relbuf(rel, buf, BT_READ);
     buf = _bt_getbuf(rel, blkno, BT_WRITE);
-    
+
     /*
      *  If the page was split between the time that we surrendered our
      *  read lock and acquired our write lock, then this page may no
@@ -72,17 +79,17 @@ _bt_doinsert(Relation rel, BTItem btitem)
      *  case, we need to move right in the tree.  See Lehman and Yao for
      *  an excruciatingly precise description.
      */
-    
+
     buf = _bt_moveright(rel, buf, natts, itup_scankey, BT_WRITE);
-    
+
     /* do the insertion */
     res = _bt_insertonpg(rel, buf, stack, natts, itup_scankey,
-			 btitem, (BTItem) NULL);
-    
+                         btitem, (BTItem) NULL);
+
     /* be tidy */
     _bt_freestack(stack);
     _bt_freeskey(itup_scankey);
-    
+
     return (res);
 }
 
@@ -116,13 +123,12 @@ _bt_doinsert(Relation rel, BTItem btitem)
  */
 static InsertIndexResult
 _bt_insertonpg(Relation rel,
-	       Buffer buf,
-	       BTStack stack,
-	       int keysz,
-	       ScanKey scankey,
-	       BTItem btitem,
-	       BTItem afteritem)
-{
+               Buffer buf,
+               BTStack stack,
+               int keysz,
+               ScanKey scankey,
+               BTItem btitem,
+               BTItem afteritem) {
     InsertIndexResult res;
     Page page;
     Buffer rbuf;
@@ -137,136 +143,136 @@ _bt_insertonpg(Relation rel,
     InsertIndexResult newres;
     BTItem new_item = (BTItem) NULL;
     BTItem lowLeftItem;
-    
+
     page = BufferGetPage(buf);
     itemsz = IndexTupleDSize(btitem->bti_itup)
-	+ (sizeof(BTItemData) - sizeof(IndexTupleData));
+             + (sizeof(BTItemData) - sizeof(IndexTupleData));
 
-    itemsz = DOUBLEALIGN(itemsz);	/* be safe, PageAddItem will do this
+    itemsz = DOUBLEALIGN(itemsz);    /* be safe, PageAddItem will do this
 					   but we need to be consistent */
-    
-    if (PageGetFreeSpace(page) < itemsz) {
-	
-	/* split the buffer into left and right halves */
-	rbuf = _bt_split(rel, buf);
-	
-	/* which new page (left half or right half) gets the tuple? */
-	if (_bt_goesonpg(rel, buf, keysz, scankey, afteritem)) {
-	    /* left page */
-	    itup_off = _bt_pgaddtup(rel, buf, keysz, scankey,
-				    itemsz, btitem, afteritem);
-	    itup_blkno = BufferGetBlockNumber(buf);
-	} else {
-	    /* right page */
-	    itup_off = _bt_pgaddtup(rel, rbuf, keysz, scankey,
-				    itemsz, btitem, afteritem);
-	    itup_blkno = BufferGetBlockNumber(rbuf);
-	}
-	
-	/*
-	 *  By here,
-	 *
-	 *	+  our target page has been split;
-	 *	+  the original tuple has been inserted;
-	 *	+  we have write locks on both the old (left half) and new
-	 *	   (right half) buffers, after the split; and
-	 *	+  we have the key we want to insert into the parent.
-	 *
-	 *  Do the parent insertion.  We need to hold onto the locks for
-	 *  the child pages until we locate the parent, but we can release
-	 *  them before doing the actual insertion (see Lehman and Yao for
-	 *  the reasoning).
-	 */
-	
-	if (stack == (BTStack) NULL) {
-	    
-	    /* create a new root node and release the split buffers */
-	    _bt_newroot(rel, buf, rbuf);
-	    _bt_relbuf(rel, buf, BT_WRITE);
-	    _bt_relbuf(rel, rbuf, BT_WRITE);
-	    
-	} else {
 
-	    /* form a index tuple that points at the new right page */
-	    rbknum = BufferGetBlockNumber(rbuf);
-	    rpage = BufferGetPage(rbuf);
-	    rpageop = (BTPageOpaque) PageGetSpecialPointer(rpage);
-	    
-	    /*
-	     *  By convention, the first entry (0) on every
-	     *  non-rightmost page is the high key for that page.  In
-	     *  order to get the lowest key on the new right page, we
-	     *  actually look at its second (1) entry.
-	     */
-	    
-	    if (! P_RIGHTMOST(rpageop)) {
-		ritem = (BTItem) PageGetItem(rpage,
-					     PageGetItemId(rpage, P_FIRSTKEY));
-	    } else {
-		ritem = (BTItem) PageGetItem(rpage,
-					     PageGetItemId(rpage, P_HIKEY));
-	    }
-	    
-	    /* get a unique btitem for this key */
-	    new_item = _bt_formitem(&(ritem->bti_itup));
-	    
-	    ItemPointerSet(&(new_item->bti_itup.t_tid), rbknum, P_HIKEY);
-	    
-	    /* find the parent buffer */
-	    pbuf = _bt_getstackbuf(rel, stack, BT_WRITE);
-	    
-	    /*
-	     *  If the key of new_item is < than the key of the item
-	     *  in the parent page pointing to the left page
-	     *  (stack->bts_btitem), we have to update the latter key;
-	     *  otherwise the keys on the parent page wouldn't be
-	     *  monotonically increasing after we inserted the new
-	     *  pointer to the right page (new_item). This only
-	     *  happens if our left page is the leftmost page and a
-	     *  new minimum key had been inserted before, which is not
-	     *  reflected in the parent page but didn't matter so
-	     *  far. If there are duplicate keys and this new minimum
-	     *  key spills over to our new right page, we get an
-	     *  inconsistency if we don't update the left key in the
-	     *  parent page.
-	     */
-	    
-	    if (_bt_itemcmp(rel, keysz, stack->bts_btitem, new_item,
-	                    BTGreaterStrategyNumber)) {
-		lowLeftItem =
-		    (BTItem) PageGetItem(page,
-					 PageGetItemId(page, P_FIRSTKEY));
-		/* page must have right pointer after split */
-		_bt_updateitem(rel, keysz, pbuf, stack->bts_btitem->bti_oid,
-		               lowLeftItem);
-	    }
-	    
-	    /* don't need the children anymore */
-	    _bt_relbuf(rel, buf, BT_WRITE);
-	    _bt_relbuf(rel, rbuf, BT_WRITE);
-	    
-	    newskey = _bt_mkscankey(rel, &(new_item->bti_itup));
-	    newres = _bt_insertonpg(rel, pbuf, stack->bts_parent,
-				    keysz, newskey, new_item,
-				    stack->bts_btitem);
-	    
-	    /* be tidy */
-	    pfree(newres);
-	    pfree(newskey);
-	    pfree(new_item);
-	}
+    if (PageGetFreeSpace(page) < itemsz) {
+
+        /* split the buffer into left and right halves */
+        rbuf = _bt_split(rel, buf);
+
+        /* which new page (left half or right half) gets the tuple? */
+        if (_bt_goesonpg(rel, buf, keysz, scankey, afteritem)) {
+            /* left page */
+            itup_off = _bt_pgaddtup(rel, buf, keysz, scankey,
+                                    itemsz, btitem, afteritem);
+            itup_blkno = BufferGetBlockNumber(buf);
+        } else {
+            /* right page */
+            itup_off = _bt_pgaddtup(rel, rbuf, keysz, scankey,
+                                    itemsz, btitem, afteritem);
+            itup_blkno = BufferGetBlockNumber(rbuf);
+        }
+
+        /*
+         *  By here,
+         *
+         *	+  our target page has been split;
+         *	+  the original tuple has been inserted;
+         *	+  we have write locks on both the old (left half) and new
+         *	   (right half) buffers, after the split; and
+         *	+  we have the key we want to insert into the parent.
+         *
+         *  Do the parent insertion.  We need to hold onto the locks for
+         *  the child pages until we locate the parent, but we can release
+         *  them before doing the actual insertion (see Lehman and Yao for
+         *  the reasoning).
+         */
+
+        if (stack == (BTStack) NULL) {
+
+            /* create a new root node and release the split buffers */
+            _bt_newroot(rel, buf, rbuf);
+            _bt_relbuf(rel, buf, BT_WRITE);
+            _bt_relbuf(rel, rbuf, BT_WRITE);
+
+        } else {
+
+            /* form a index tuple that points at the new right page */
+            rbknum = BufferGetBlockNumber(rbuf);
+            rpage = BufferGetPage(rbuf);
+            rpageop = (BTPageOpaque) PageGetSpecialPointer(rpage);
+
+            /*
+             *  By convention, the first entry (0) on every
+             *  non-rightmost page is the high key for that page.  In
+             *  order to get the lowest key on the new right page, we
+             *  actually look at its second (1) entry.
+             */
+
+            if (!P_RIGHTMOST(rpageop)) {
+                ritem = (BTItem) PageGetItem(rpage,
+                                             PageGetItemId(rpage, P_FIRSTKEY));
+            } else {
+                ritem = (BTItem) PageGetItem(rpage,
+                                             PageGetItemId(rpage, P_HIKEY));
+            }
+
+            /* get a unique btitem for this key */
+            new_item = _bt_formitem(&(ritem->bti_itup));
+
+            ItemPointerSet(&(new_item->bti_itup.t_tid), rbknum, P_HIKEY);
+
+            /* find the parent buffer */
+            pbuf = _bt_getstackbuf(rel, stack, BT_WRITE);
+
+            /*
+             *  If the key of new_item is < than the key of the item
+             *  in the parent page pointing to the left page
+             *  (stack->bts_btitem), we have to update the latter key;
+             *  otherwise the keys on the parent page wouldn't be
+             *  monotonically increasing after we inserted the new
+             *  pointer to the right page (new_item). This only
+             *  happens if our left page is the leftmost page and a
+             *  new minimum key had been inserted before, which is not
+             *  reflected in the parent page but didn't matter so
+             *  far. If there are duplicate keys and this new minimum
+             *  key spills over to our new right page, we get an
+             *  inconsistency if we don't update the left key in the
+             *  parent page.
+             */
+
+            if (_bt_itemcmp(rel, keysz, stack->bts_btitem, new_item,
+                            BTGreaterStrategyNumber)) {
+                lowLeftItem =
+                        (BTItem) PageGetItem(page,
+                                             PageGetItemId(page, P_FIRSTKEY));
+                /* page must have right pointer after split */
+                _bt_updateitem(rel, keysz, pbuf, stack->bts_btitem->bti_oid,
+                               lowLeftItem);
+            }
+
+            /* don't need the children anymore */
+            _bt_relbuf(rel, buf, BT_WRITE);
+            _bt_relbuf(rel, rbuf, BT_WRITE);
+
+            newskey = _bt_mkscankey(rel, &(new_item->bti_itup));
+            newres = _bt_insertonpg(rel, pbuf, stack->bts_parent,
+                                    keysz, newskey, new_item,
+                                    stack->bts_btitem);
+
+            /* be tidy */
+            pfree(newres);
+            pfree(newskey);
+            pfree(new_item);
+        }
     } else {
-	itup_off = _bt_pgaddtup(rel, buf, keysz, scankey,
-				itemsz, btitem, afteritem);
-	itup_blkno = BufferGetBlockNumber(buf);
-	
-	_bt_relbuf(rel, buf, BT_WRITE);
+        itup_off = _bt_pgaddtup(rel, buf, keysz, scankey,
+                                itemsz, btitem, afteritem);
+        itup_blkno = BufferGetBlockNumber(buf);
+
+        _bt_relbuf(rel, buf, BT_WRITE);
     }
-    
+
     /* by here, the new tuple is inserted */
     res = (InsertIndexResult) palloc(sizeof(InsertIndexResultData));
     ItemPointerSet(&(res->pointerData), itup_blkno, itup_off);
-    
+
     return (res);
 }
 
@@ -278,8 +284,7 @@ _bt_insertonpg(Relation rel,
  *	pin and lock on buf are maintained.
  */
 static Buffer
-_bt_split(Relation rel, Buffer buf)
-{
+_bt_split(Relation rel, Buffer buf) {
     Buffer rbuf;
     Page origpage;
     Page leftpage, rightpage;
@@ -296,20 +301,20 @@ _bt_split(Relation rel, Buffer buf)
     OffsetNumber firstright;
     OffsetNumber i;
     Size llimit;
-    
+
     rbuf = _bt_getbuf(rel, P_NEW, BT_WRITE);
     origpage = BufferGetPage(buf);
     leftpage = PageGetTempPage(origpage, sizeof(BTPageOpaqueData));
     rightpage = BufferGetPage(rbuf);
-    
+
     _bt_pageinit(rightpage, BufferGetPageSize(rbuf));
     _bt_pageinit(leftpage, BufferGetPageSize(buf));
-    
+
     /* init btree private data */
     oopaque = (BTPageOpaque) PageGetSpecialPointer(origpage);
     lopaque = (BTPageOpaque) PageGetSpecialPointer(leftpage);
     ropaque = (BTPageOpaque) PageGetSpecialPointer(rightpage);
-    
+
     /* if we're splitting this page, it won't be the root when we're done */
     oopaque->btpo_flags &= ~BTP_ROOT;
     lopaque->btpo_flags = ropaque->btpo_flags = oopaque->btpo_flags;
@@ -317,7 +322,7 @@ _bt_split(Relation rel, Buffer buf)
     ropaque->btpo_prev = BufferGetBlockNumber(buf);
     lopaque->btpo_next = BufferGetBlockNumber(rbuf);
     ropaque->btpo_next = oopaque->btpo_next;
-    
+
     /*
      *  If the page we're splitting is not the rightmost page at its
      *  level in the tree, then the first (0) entry on the page is the
@@ -329,61 +334,61 @@ _bt_split(Relation rel, Buffer buf)
      *  left page.  We'll come back later and fill it in with the high
      *  key item we get from the right key.
      */
-    
+
     leftoff = P_FIRSTKEY;
     ropaque->btpo_next = oopaque->btpo_next;
-    if (! P_RIGHTMOST(oopaque)) {
-	/* splitting a non-rightmost page, start at the first data item */
-	start = P_FIRSTKEY;
+    if (!P_RIGHTMOST(oopaque)) {
+        /* splitting a non-rightmost page, start at the first data item */
+        start = P_FIRSTKEY;
 
-	/* copy the original high key to the new page */
-	itemid = PageGetItemId(origpage, P_HIKEY);
-	itemsz = ItemIdGetLength(itemid);
-	item = (BTItem) PageGetItem(origpage, itemid);
-	(void) PageAddItem(rightpage, (Item) item, itemsz, P_HIKEY, LP_USED);
-	rightoff = P_FIRSTKEY;
+        /* copy the original high key to the new page */
+        itemid = PageGetItemId(origpage, P_HIKEY);
+        itemsz = ItemIdGetLength(itemid);
+        item = (BTItem) PageGetItem(origpage, itemid);
+        (void) PageAddItem(rightpage, (Item) item, itemsz, P_HIKEY, LP_USED);
+        rightoff = P_FIRSTKEY;
     } else {
-	/* splitting a rightmost page, "high key" is the first data item */
-	start = P_HIKEY;
+        /* splitting a rightmost page, "high key" is the first data item */
+        start = P_HIKEY;
 
-	/* the new rightmost page will not have a high key */
-	rightoff = P_HIKEY;
+        /* the new rightmost page will not have a high key */
+        rightoff = P_HIKEY;
     }
     maxoff = PageGetMaxOffsetNumber(origpage);
     llimit = PageGetFreeSpace(leftpage) / 2;
     firstright = _bt_findsplitloc(rel, origpage, start, maxoff, llimit);
-    
+
     for (i = start; i <= maxoff; i = OffsetNumberNext(i)) {
-	itemid = PageGetItemId(origpage, i);
-	itemsz = ItemIdGetLength(itemid);
-	item = (BTItem) PageGetItem(origpage, itemid);
-	
-	/* decide which page to put it on */
-	if (i < firstright) {
-	    (void) PageAddItem(leftpage, (Item) item, itemsz, leftoff,
-			       LP_USED);
-	    leftoff = OffsetNumberNext(leftoff);
-	} else {
-	    (void) PageAddItem(rightpage, (Item) item, itemsz, rightoff,
-			       LP_USED);
-	    rightoff = OffsetNumberNext(rightoff);
-	}
+        itemid = PageGetItemId(origpage, i);
+        itemsz = ItemIdGetLength(itemid);
+        item = (BTItem) PageGetItem(origpage, itemid);
+
+        /* decide which page to put it on */
+        if (i < firstright) {
+            (void) PageAddItem(leftpage, (Item) item, itemsz, leftoff,
+                               LP_USED);
+            leftoff = OffsetNumberNext(leftoff);
+        } else {
+            (void) PageAddItem(rightpage, (Item) item, itemsz, rightoff,
+                               LP_USED);
+            rightoff = OffsetNumberNext(rightoff);
+        }
     }
-    
+
     /*
      *  Okay, page has been split, high key on right page is correct.  Now
      *  set the high key on the left page to be the min key on the right
      *  page.
      */
-    
+
     if (P_RIGHTMOST(ropaque)) {
-	itemid = PageGetItemId(rightpage, P_HIKEY);
+        itemid = PageGetItemId(rightpage, P_HIKEY);
     } else {
-	itemid = PageGetItemId(rightpage, P_FIRSTKEY);
+        itemid = PageGetItemId(rightpage, P_FIRSTKEY);
     }
     itemsz = ItemIdGetLength(itemid);
     item = (BTItem) PageGetItem(rightpage, itemid);
-    
+
     /*
      *  We left a hole for the high key on the left page; fill it.  The
      *  modal crap is to tell the page manager to put the new item on the
@@ -391,11 +396,11 @@ _bt_split(Relation rel, Buffer buf)
      *  this interface has presumably crawled back into the dung heap they
      *  came from.  No one here will admit to it.
      */
-    
+
     PageManagerModeSet(OverwritePageManagerMode);
     (void) PageAddItem(leftpage, (Item) item, itemsz, P_HIKEY, LP_USED);
     PageManagerModeSet(ShufflePageManagerMode);
-    
+
     /*
      *  By here, the original data page has been split into two new halves,
      *  and these are correct.  The algorithm requires that the left page
@@ -405,13 +410,13 @@ _bt_split(Relation rel, Buffer buf)
      *  page always be clean, and the most efficient way to guarantee this
      *  is just to compact the data by reinserting it into a new left page.
      */
-    
+
     PageRestoreTempPage(leftpage, origpage);
-    
+
     /* write these guys out */
     _bt_wrtnorelbuf(rel, rbuf);
     _bt_wrtnorelbuf(rel, buf);
-    
+
     /*
      *  Finally, we need to grab the right sibling (if any) and fix the
      *  prev pointer there.  We are guaranteed that this is deadlock-free
@@ -419,17 +424,17 @@ _bt_split(Relation rel, Buffer buf)
      *  and trying to move left, and all readers release locks on a page
      *  before trying to fetch its neighbors.
      */
-    
-    if (! P_RIGHTMOST(ropaque)) {
-	sbuf = _bt_getbuf(rel, ropaque->btpo_next, BT_WRITE);
-	spage = BufferGetPage(sbuf);
-	sopaque = (BTPageOpaque) PageGetSpecialPointer(spage);
-	sopaque->btpo_prev = BufferGetBlockNumber(rbuf);
-	
-	/* write and release the old right sibling */
-	_bt_wrtbuf(rel, sbuf);
+
+    if (!P_RIGHTMOST(ropaque)) {
+        sbuf = _bt_getbuf(rel, ropaque->btpo_next, BT_WRITE);
+        spage = BufferGetPage(sbuf);
+        sopaque = (BTPageOpaque) PageGetSpecialPointer(spage);
+        sopaque->btpo_prev = BufferGetBlockNumber(rbuf);
+
+        /* write and release the old right sibling */
+        _bt_wrtbuf(rel, sbuf);
     }
-    
+
     /* split's done */
     return (rbuf);
 }
@@ -455,11 +460,10 @@ _bt_split(Relation rel, Buffer buf)
  */
 static OffsetNumber
 _bt_findsplitloc(Relation rel,
-		 Page page,
-		 OffsetNumber start,
-		 OffsetNumber maxoff,
-		 Size llimit)
-{
+                 Page page,
+                 OffsetNumber start,
+                 OffsetNumber maxoff,
+                 Size llimit) {
     OffsetNumber i;
     OffsetNumber saferight;
     ItemId nxtitemid, safeitemid;
@@ -472,56 +476,56 @@ _bt_findsplitloc(Relation rel,
     Datum attsafe;
     Datum attnext;
     bool null;
-    
+
     itupdesc = RelationGetTupleDescriptor(rel);
     natts = rel->rd_rel->relnatts;
-    
+
     saferight = start;
     safeitemid = PageGetItemId(page, saferight);
     nbytes = ItemIdGetLength(safeitemid) + sizeof(ItemIdData);
     safeitem = (BTItem) PageGetItem(page, safeitemid);
     safetup = &(safeitem->bti_itup);
-    
-    i = OffsetNumberNext(start);
-    
-    while (nbytes < llimit) {
-	
-	/* check the next item on the page */
-	nxtitemid = PageGetItemId(page, i);
-	nbytes += (ItemIdGetLength(nxtitemid) + sizeof(ItemIdData));
-	nxtitem = (BTItem) PageGetItem(page, nxtitemid);
-	nxttup = &(nxtitem->bti_itup);
-	
-	/* test against last known safe item */
-	for (attno = 1; attno <= natts; attno++) {
-	    attsafe = index_getattr(safetup, attno, itupdesc, &null);
-	    attnext = index_getattr(nxttup, attno, itupdesc, &null);
 
-	    /*
-	     *  If the tuple we're looking at isn't equal to the last safe one
-	     *  we saw, then it's our new safe tuple.
-	     */
-	    
-	    if (!_bt_invokestrat(rel, attno, BTEqualStrategyNumber,
-				 attsafe, attnext)) {
-		safetup = nxttup;
-		saferight = i;
-		
-		/* break is for the attno for loop */
-		break;
-	    }
-	}
-	i = OffsetNumberNext(i);
+    i = OffsetNumberNext(start);
+
+    while (nbytes < llimit) {
+
+        /* check the next item on the page */
+        nxtitemid = PageGetItemId(page, i);
+        nbytes += (ItemIdGetLength(nxtitemid) + sizeof(ItemIdData));
+        nxtitem = (BTItem) PageGetItem(page, nxtitemid);
+        nxttup = &(nxtitem->bti_itup);
+
+        /* test against last known safe item */
+        for (attno = 1; attno <= natts; attno++) {
+            attsafe = index_getattr(safetup, attno, itupdesc, &null);
+            attnext = index_getattr(nxttup, attno, itupdesc, &null);
+
+            /*
+             *  If the tuple we're looking at isn't equal to the last safe one
+             *  we saw, then it's our new safe tuple.
+             */
+
+            if (!_bt_invokestrat(rel, attno, BTEqualStrategyNumber,
+                                 attsafe, attnext)) {
+                safetup = nxttup;
+                saferight = i;
+
+                /* break is for the attno for loop */
+                break;
+            }
+        }
+        i = OffsetNumberNext(i);
     }
-    
+
     /*
      *  If the chain of dups starts at the beginning of the page and extends
      *  past the halfway mark, we can split it in the middle.
      */
-    
+
     if (saferight == start)
-	saferight = i;
-    
+        saferight = i;
+
     return (saferight);
 }
 
@@ -543,8 +547,7 @@ _bt_findsplitloc(Relation rel,
  *	two new children.  The new root page is neither pinned nor locked.
  */
 static void
-_bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
-{
+_bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf) {
     Buffer rootbuf;
     Page lpage, rpage, rootpage;
     BlockNumber lbkno, rbkno;
@@ -554,26 +557,26 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
     BTItem item;
     Size itemsz;
     BTItem new_item;
-    
+
     /* get a new root page */
     rootbuf = _bt_getbuf(rel, P_NEW, BT_WRITE);
     rootpage = BufferGetPage(rootbuf);
     _bt_pageinit(rootpage, BufferGetPageSize(rootbuf));
-    
+
     /* set btree special data */
     rootopaque = (BTPageOpaque) PageGetSpecialPointer(rootpage);
     rootopaque->btpo_prev = rootopaque->btpo_next = P_NONE;
     rootopaque->btpo_flags |= BTP_ROOT;
-    
+
     /*
      *  Insert the internal tuple pointers.
      */
-    
+
     lbkno = BufferGetBlockNumber(lbuf);
     rbkno = BufferGetBlockNumber(rbuf);
     lpage = BufferGetPage(lbuf);
     rpage = BufferGetPage(rbuf);
-    
+
     /*
      * step over the high key on the left page while building the 
      * left page pointer.
@@ -583,7 +586,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
     item = (BTItem) PageGetItem(lpage, itemid);
     new_item = _bt_formitem(&(item->bti_itup));
     ItemPointerSet(&(new_item->bti_itup.t_tid), lbkno, P_FIRSTKEY);
-    
+
     /*
      * insert the left page pointer into the new root page.  the root
      * page is the rightmost page on its level so the "high key" item
@@ -591,7 +594,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
      */
     (void) PageAddItem(rootpage, (Item) new_item, itemsz, P_HIKEY, LP_USED);
     pfree(new_item);
-    
+
     /*
      * the right page is the rightmost page on the second level, so 
      * the "high key" item is the first data item on that page as well.
@@ -601,17 +604,17 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
     item = (BTItem) PageGetItem(rpage, itemid);
     new_item = _bt_formitem(&(item->bti_itup));
     ItemPointerSet(&(new_item->bti_itup.t_tid), rbkno, P_HIKEY);
-    
+
     /*
      * insert the right page pointer into the new root page.
      */
     (void) PageAddItem(rootpage, (Item) new_item, itemsz, P_FIRSTKEY, LP_USED);
     pfree(new_item);
-    
+
     /* write and let go of the root buffer */
     rootbknum = BufferGetBlockNumber(rootbuf);
     _bt_wrtbuf(rel, rootbuf);
-    
+
     /* update metadata page with new root block number */
     _bt_metaproot(rel, rootbknum);
 }
@@ -628,42 +631,41 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
  */
 static OffsetNumber
 _bt_pgaddtup(Relation rel,
-	     Buffer buf,
-	     int keysz,
-	     ScanKey itup_scankey,
-	     Size itemsize,
-	     BTItem btitem,
-	     BTItem afteritem)
-{
+             Buffer buf,
+             int keysz,
+             ScanKey itup_scankey,
+             Size itemsize,
+             BTItem btitem,
+             BTItem afteritem) {
     OffsetNumber itup_off;
     OffsetNumber first;
     Page page;
     BTPageOpaque opaque;
     BTItem chkitem;
     Oid afteroid;
-    
+
     page = BufferGetPage(buf);
     opaque = (BTPageOpaque) PageGetSpecialPointer(page);
     first = P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY;
-    
+
     if (afteritem == (BTItem) NULL) {
-	itup_off = _bt_binsrch(rel, buf, keysz, itup_scankey, BT_INSERTION);
+        itup_off = _bt_binsrch(rel, buf, keysz, itup_scankey, BT_INSERTION);
     } else {
-	afteroid = afteritem->bti_oid;
-	itup_off = first;
-	
-	do {
-	    chkitem =
-		(BTItem) PageGetItem(page, PageGetItemId(page, itup_off));
-	    itup_off = OffsetNumberNext(itup_off);
-	} while (chkitem->bti_oid != afteroid);
+        afteroid = afteritem->bti_oid;
+        itup_off = first;
+
+        do {
+            chkitem =
+                    (BTItem) PageGetItem(page, PageGetItemId(page, itup_off));
+            itup_off = OffsetNumberNext(itup_off);
+        } while (chkitem->bti_oid != afteroid);
     }
 
     (void) PageAddItem(page, (Item) btitem, itemsize, itup_off, LP_USED);
-    
+
     /* write the buffer, but hold our lock */
     _bt_wrtnorelbuf(rel, buf);
-    
+
     return (itup_off);
 }
 
@@ -680,11 +682,10 @@ _bt_pgaddtup(Relation rel,
  */
 static bool
 _bt_goesonpg(Relation rel,
-	     Buffer buf,
-	     Size keysz,
-	     ScanKey scankey,
-	     BTItem afteritem)
-{
+             Buffer buf,
+             Size keysz,
+             ScanKey scankey,
+             BTItem afteritem) {
     Page page;
     ItemId hikey;
     BTPageOpaque opaque;
@@ -692,14 +693,14 @@ _bt_goesonpg(Relation rel,
     OffsetNumber offnum, maxoff;
     Oid afteroid;
     bool found;
-    
+
     page = BufferGetPage(buf);
-    
+
     /* no right neighbor? */
     opaque = (BTPageOpaque) PageGetSpecialPointer(page);
     if (P_RIGHTMOST(opaque))
-	return (true);
-    
+        return (true);
+
     /*
      *  this is a non-rightmost page, so it must have a high key item.
      *
@@ -708,29 +709,29 @@ _bt_goesonpg(Relation rel,
      */
     hikey = PageGetItemId(page, P_HIKEY);
     if (_bt_skeycmp(rel, keysz, scankey, page, hikey, BTLessStrategyNumber))
-	return (true);
-    
+        return (true);
+
     /*
      *  If the scan key is > the high key, then it for sure doesn't belong
      *  here.
      */
-    
+
     if (_bt_skeycmp(rel, keysz, scankey, page, hikey, BTGreaterStrategyNumber))
-	return (false);
-    
+        return (false);
+
     /*
      *  If we have no adjacency information, and the item is equal to the
      *  high key on the page (by here it is), then the item does not belong
      *  on this page.
      */
-    
+
     if (afteritem == (BTItem) NULL)
-	return (false);
-    
+        return (false);
+
     /* damn, have to work for it.  i hate that. */
     afteroid = afteritem->bti_oid;
     maxoff = PageGetMaxOffsetNumber(page);
-    
+
     /*
      *  Search the entire page for the afteroid.  We need to do this, rather
      *  than doing a binary search and starting from there, because if the
@@ -738,18 +739,18 @@ _bt_goesonpg(Relation rel,
      *  level, then a binary search will do the wrong thing.  Splits are
      *  pretty infrequent, so the cost isn't as bad as it could be.
      */
-    
+
     found = false;
     for (offnum = P_FIRSTKEY;
-	 offnum <= maxoff;
-	 offnum = OffsetNumberNext(offnum)) {
-	chkitem = (BTItem) PageGetItem(page, PageGetItemId(page, offnum));
-	if (chkitem->bti_oid == afteroid) {
-	    found = true;
-	    break;
-	}
+         offnum <= maxoff;
+         offnum = OffsetNumberNext(offnum)) {
+        chkitem = (BTItem) PageGetItem(page, PageGetItemId(page, offnum));
+        if (chkitem->bti_oid == afteroid) {
+            found = true;
+            break;
+        }
     }
-    
+
     return (found);
 }
 
@@ -760,29 +761,28 @@ _bt_goesonpg(Relation rel,
  */
 bool
 _bt_itemcmp(Relation rel,
-	    Size keysz,
-	    BTItem item1,
-	    BTItem item2,
-	    StrategyNumber strat)
-{
+            Size keysz,
+            BTItem item1,
+            BTItem item2,
+            StrategyNumber strat) {
     TupleDesc tupDes;
     IndexTuple indexTuple1, indexTuple2;
     Datum attrDatum1, attrDatum2;
     int i;
     bool isNull;
     bool compare;
-    
+
     tupDes = RelationGetTupleDescriptor(rel);
     indexTuple1 = &(item1->bti_itup);
     indexTuple2 = &(item2->bti_itup);
-    
+
     for (i = 1; i <= keysz; i++) {
-	attrDatum1 = index_getattr(indexTuple1, i, tupDes, &isNull);
-	attrDatum2 = index_getattr(indexTuple2, i, tupDes, &isNull);
-	compare = _bt_invokestrat(rel, i, strat, attrDatum1, attrDatum2);
-	if (!compare) {
-	    return (false);
-	}
+        attrDatum1 = index_getattr(indexTuple1, i, tupDes, &isNull);
+        attrDatum2 = index_getattr(indexTuple2, i, tupDes, &isNull);
+        compare = _bt_invokestrat(rel, i, strat, attrDatum1, attrDatum2);
+        if (!compare) {
+            return (false);
+        }
     }
     return (true);
 }
@@ -794,36 +794,35 @@ _bt_itemcmp(Relation rel,
  */
 static void
 _bt_updateitem(Relation rel,
-	       Size keysz,
-	       Buffer buf,
-	       Oid bti_oid,
-	       BTItem newItem)
-{
+               Size keysz,
+               Buffer buf,
+               Oid bti_oid,
+               BTItem newItem) {
     Page page;
     OffsetNumber maxoff;
     OffsetNumber i;
     ItemPointerData itemPtrData;
     BTItem item;
     IndexTuple oldIndexTuple, newIndexTuple;
-    
+
     page = BufferGetPage(buf);
     maxoff = PageGetMaxOffsetNumber(page);
-    
+
     /* locate item on the page */
     i = P_HIKEY;
     do {
-	item = (BTItem) PageGetItem(page, PageGetItemId(page, i));
-	i = OffsetNumberNext(i);
+        item = (BTItem) PageGetItem(page, PageGetItemId(page, i));
+        i = OffsetNumberNext(i);
     } while (i <= maxoff && item->bti_oid != bti_oid);
-    
+
     /* this should never happen (in theory) */
     if (item->bti_oid != bti_oid) {
-	elog(FATAL, "_bt_getstackbuf was lying!!");
+        elog(FATAL, "_bt_getstackbuf was lying!!");
     }
-    
+
     oldIndexTuple = &(item->bti_itup);
     newIndexTuple = &(newItem->bti_itup);
-    
+
     /* keep the original item pointer */
     ItemPointerCopy(&(oldIndexTuple->t_tid), &itemPtrData);
     CopyIndexTuple(newIndexTuple, &oldIndexTuple);

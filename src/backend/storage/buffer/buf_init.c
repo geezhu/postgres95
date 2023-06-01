@@ -32,36 +32,36 @@
 #include "utils/hsearch.h"
 #include "utils/elog.h"
 #include "utils/memutils.h"
-#include "executor/execdebug.h"	/* for NDirectFileRead */
+#include "executor/execdebug.h"    /* for NDirectFileRead */
 #include "catalog/catalog.h"
 
 /*
  *  if BMTRACE is defined, we trace the last 200 buffer allocations and
  *  deallocations in a circular buffer in shared memory.
  */
-#ifdef	BMTRACE
+#ifdef    BMTRACE
 bmtrace	*TraceBuf;
 long	*CurTraceBuf;
 #define	BMT_LIMIT	200
 #endif /* BMTRACE */
 int ShowPinTrace = 0;
 
-int		NBuffers = NDBUFS;  /* NDBUFS defined in miscadmin.h */
-int		Data_Descriptors;
-int		Free_List_Descriptor;
-int		Lookup_List_Descriptor;
-int		Num_Descriptors;
+int NBuffers = NDBUFS;  /* NDBUFS defined in miscadmin.h */
+int Data_Descriptors;
+int Free_List_Descriptor;
+int Lookup_List_Descriptor;
+int Num_Descriptors;
 
-BufferDesc 	*BufferDescriptors;
-BufferBlock 	BufferBlocks;
+BufferDesc *BufferDescriptors;
+BufferBlock BufferBlocks;
 #ifndef HAS_TEST_AND_SET
-long	*NWaitIOBackendP;
+long *NWaitIOBackendP;
 #endif
 
-extern IpcSemaphoreId      WaitIOSemId;
+extern IpcSemaphoreId WaitIOSemId;
 
-long	*PrivateRefCount;	/* also used in freelist.c */
-long	*LastRefCount;  /* refcounts of last ExecMain level */
+long *PrivateRefCount;    /* also used in freelist.c */
+long *LastRefCount;  /* refcounts of last ExecMain level */
 
 /*
  * Data Structures:
@@ -131,97 +131,96 @@ int BufferFlushCount;
  * amount of available memory.
  */
 void
-InitBufferPool(IPCKey key)
-{
-    bool foundBufs,foundDescs;
+InitBufferPool(IPCKey key) {
+    bool foundBufs, foundDescs;
     int i;
-    
+
     Data_Descriptors = NBuffers;
     Free_List_Descriptor = Data_Descriptors;
     Lookup_List_Descriptor = Data_Descriptors + 1;
     Num_Descriptors = Data_Descriptors + 1;
-    
+
     SpinAcquire(BufMgrLock);
-    
+
 #ifdef BMTRACE
     CurTraceBuf = (long *) ShmemInitStruct("Buffer trace",
-					   (BMT_LIMIT * sizeof(bmtrace)) + sizeof(long),
-					   &foundDescs);
+                       (BMT_LIMIT * sizeof(bmtrace)) + sizeof(long),
+                       &foundDescs);
     if (!foundDescs)
-	memset(CurTraceBuf, 0, (BMT_LIMIT * sizeof(bmtrace)) + sizeof(long));
+    memset(CurTraceBuf, 0, (BMT_LIMIT * sizeof(bmtrace)) + sizeof(long));
     
     TraceBuf = (bmtrace *) &(CurTraceBuf[1]);
 #endif
-    
+
     BufferDescriptors = (BufferDesc *)
-	ShmemInitStruct("Buffer Descriptors",
-			Num_Descriptors*sizeof(BufferDesc),&foundDescs);
-    
+            ShmemInitStruct("Buffer Descriptors",
+                            Num_Descriptors * sizeof(BufferDesc), &foundDescs);
+
     BufferBlocks = (BufferBlock)
-	ShmemInitStruct("Buffer Blocks",
-			NBuffers*BLCKSZ,&foundBufs);
-    
+            ShmemInitStruct("Buffer Blocks",
+                            NBuffers * BLCKSZ, &foundBufs);
+
 #ifndef HAS_TEST_AND_SET
     {
-	bool foundNWaitIO;
-	
-	NWaitIOBackendP = (long *)ShmemInitStruct("#Backends Waiting IO",
-						  sizeof(long),
-						  &foundNWaitIO);
-	if (!foundNWaitIO)
-	    *NWaitIOBackendP = 0;
+        bool foundNWaitIO;
+
+        NWaitIOBackendP = (long *) ShmemInitStruct("#Backends Waiting IO",
+                                                   sizeof(long),
+                                                   &foundNWaitIO);
+        if (!foundNWaitIO)
+            *NWaitIOBackendP = 0;
     }
 #endif
-    
+
     if (foundDescs || foundBufs) {
-	
-	/* both should be present or neither */
-	Assert(foundDescs && foundBufs);
-	
+
+        /* both should be present or neither */
+        Assert(foundDescs && foundBufs);
+
     } else {
-	BufferDesc *buf;
-	unsigned long block;
-	
-	buf = BufferDescriptors;
-	block = (unsigned long) BufferBlocks;
-	
-	/*
-	 * link the buffers into a circular, doubly-linked list to
-	 * initialize free list.  Still don't know anything about
-	 * replacement strategy in this file.
-	 */
-	for (i = 0; i < Data_Descriptors; block+=BLCKSZ,buf++,i++) {
-	    Assert(ShmemIsValid((unsigned long)block));
-	    
-	    buf->freeNext = i+1;
-	    buf->freePrev = i-1;
-	    
-	    CLEAR_BUFFERTAG(&(buf->tag));
-	    buf->data = MAKE_OFFSET(block);
-	    buf->flags = (BM_DELETED | BM_FREE | BM_VALID);
-	    buf->refcount = 0;
-	    buf->buf_id = i;
+        BufferDesc *buf;
+        unsigned long block;
+
+        buf = BufferDescriptors;
+        block = (unsigned long) BufferBlocks;
+
+        /*
+         * link the buffers into a circular, doubly-linked list to
+         * initialize free list.  Still don't know anything about
+         * replacement strategy in this file.
+         */
+        for (i = 0; i < Data_Descriptors; block += BLCKSZ, buf++, i++) {
+            Assert(ShmemIsValid((unsigned long) block));
+
+            buf->freeNext = i + 1;
+            buf->freePrev = i - 1;
+
+            CLEAR_BUFFERTAG(&(buf->tag));
+            buf->data = MAKE_OFFSET(block);
+            buf->flags = (BM_DELETED | BM_FREE | BM_VALID);
+            buf->refcount = 0;
+            buf->buf_id = i;
 #ifdef HAS_TEST_AND_SET
-	    S_INIT_LOCK(&(buf->io_in_progress_lock));
+            S_INIT_LOCK(&(buf->io_in_progress_lock));
 #endif
-	}
-	
-	/* close the circular queue */
-	BufferDescriptors[0].freePrev = Data_Descriptors-1;
-	BufferDescriptors[Data_Descriptors-1].freeNext = 0;
+        }
+
+        /* close the circular queue */
+        BufferDescriptors[0].freePrev = Data_Descriptors - 1;
+        BufferDescriptors[Data_Descriptors - 1].freeNext = 0;
     }
-    
+
     /* Init the rest of the module */
     InitBufTable();
     InitFreeList(!foundDescs);
-    
+
     SpinRelease(BufMgrLock);
-    
+
 #ifndef HAS_TEST_AND_SET
     {
-	int status;
-	WaitIOSemId = IpcSemaphoreCreate(IPCKeyGetWaitIOSemaphoreKey(key),
-					 1, IPCProtection, 0, 1, &status);
+        int status;
+        WaitIOSemId = IpcSemaphoreCreate(IPCKeyGetWaitIOSemaphoreKey(key),
+                                         1, IPCProtection, 0, 1, &status);
     }
 #endif
     PrivateRefCount = (long *) calloc(NBuffers, sizeof(long));
@@ -236,41 +235,40 @@ InitBufferPool(IPCKey key)
  * ----------------------------------------------------
  */
 int
-BufferShmemSize()
-{
+BufferShmemSize() {
     int size = 0;
     int nbuckets;
     int nsegs;
     int tmp;
-    
-    nbuckets = 1 << (int)my_log2((NBuffers - 1) / DEF_FFACTOR + 1);
-    nsegs = 1 << (int)my_log2((nbuckets - 1) / DEF_SEGSIZE + 1);
-    
+
+    nbuckets = 1 << (int) my_log2((NBuffers - 1) / DEF_FFACTOR + 1);
+    nsegs = 1 << (int) my_log2((nbuckets - 1) / DEF_SEGSIZE + 1);
+
     /* size of shmem binding table */
     size += MAXALIGN(my_log2(BTABLE_SIZE) * sizeof(void *)); /* HTAB->dir */
-    size += MAXALIGN(sizeof(HHDR));			     /* HTAB->hctl */
+    size += MAXALIGN(sizeof(HHDR));                 /* HTAB->hctl */
     size += MAXALIGN(DEF_SEGSIZE * sizeof(SEGMENT));
-    size += BUCKET_ALLOC_INCR * 
-	(MAXALIGN(sizeof(BUCKET_INDEX)) +
-	 MAXALIGN(BTABLE_KEYSIZE) +
-	 MAXALIGN(BTABLE_DATASIZE));
-    
+    size += BUCKET_ALLOC_INCR *
+            (MAXALIGN(sizeof(BUCKET_INDEX)) +
+             MAXALIGN(BTABLE_KEYSIZE) +
+             MAXALIGN(BTABLE_DATASIZE));
+
     /* size of buffer descriptors */
     size += MAXALIGN((NBuffers + 1) * sizeof(BufferDesc));
-    
+
     /* size of data pages */
     size += NBuffers * MAXALIGN(BLCKSZ);
-    
+
     /* size of buffer hash table */
     size += MAXALIGN(my_log2(NBuffers) * sizeof(void *)); /* HTAB->dir */
-    size += MAXALIGN(sizeof(HHDR));			  /* HTAB->hctl */
+    size += MAXALIGN(sizeof(HHDR));              /* HTAB->hctl */
     size += nsegs * MAXALIGN(DEF_SEGSIZE * sizeof(SEGMENT));
-    tmp = (int)ceil((double)NBuffers/BUCKET_ALLOC_INCR);
-    size += tmp * BUCKET_ALLOC_INCR * 
-	(MAXALIGN(sizeof(BUCKET_INDEX)) +
-	 MAXALIGN(sizeof(BufferTag)) +
-	 MAXALIGN(sizeof(Buffer)));
-    
+    tmp = (int) ceil((double) NBuffers / BUCKET_ALLOC_INCR);
+    size += tmp * BUCKET_ALLOC_INCR *
+            (MAXALIGN(sizeof(BUCKET_INDEX)) +
+             MAXALIGN(sizeof(BufferTag)) +
+             MAXALIGN(sizeof(Buffer)));
+
 #ifdef BMTRACE
     size += (BMT_LIMIT * sizeof(bmtrace)) + sizeof(long);
 #endif

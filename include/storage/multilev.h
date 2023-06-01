@@ -17,24 +17,24 @@
 #include "storage/lock.h"
 #include "storage/lmgr.h"
 
-#define READ_LOCK  	2
-#define WRITE_LOCK 	1
+#define READ_LOCK    2
+#define WRITE_LOCK    1
 
 /* any time a small granularity READ/WRITE lock is set.  
  * Higher granularity READ_INTENT/WRITE_INTENT locks must
  * also be set.  A read intent lock is has value READ+INTENT.
  * in this implementation.
  */
-#define NO_LOCK		0
-#define INTENT		2
-#define READ_INTENT	(READ_LOCK+INTENT)
-#define WRITE_INTENT	(WRITE_LOCK+INTENT)
+#define NO_LOCK        0
+#define INTENT        2
+#define READ_INTENT    (READ_LOCK+INTENT)
+#define WRITE_INTENT    (WRITE_LOCK+INTENT)
 
-#define EXTEND_LOCK	5
+#define EXTEND_LOCK    5
 
-#define SHORT_TERM	1
-#define LONG_TERM	2
-#define UNLOCK		0
+#define SHORT_TERM    1
+#define LONG_TERM    2
+#define UNLOCK        0
 
 #define N_LEVELS 3
 #define RELN_LEVEL 0
@@ -51,14 +51,21 @@ extern LockTableId ShortTermTableId;
  * function prototypes
  */
 extern LockTableId InitMultiLevelLockm(void);
+
 extern bool MultiLockReln(LockInfo linfo, LOCKT lockt);
+
 extern bool MultiLockTuple(LockInfo linfo, ItemPointer tidPtr, LOCKT lockt);
+
 extern bool MultiLockPage(LockInfo linfo, ItemPointer tidPtr, LOCKT lockt);
+
 extern bool MultiAcquire(LockTableId tableId, LOCKTAG *tag, LOCKT lockt,
-			 LOCK_LEVEL level);
+                         LOCK_LEVEL level);
+
 extern bool MultiReleasePage(LockInfo linfo, ItemPointer tidPtr, LOCKT lockt);
+
 extern bool MultiReleaseReln(LockInfo linfo, LOCKT lockt);
+
 extern bool MultiRelease(LockTableId tableId, LOCKTAG *tag, LOCKT lockt,
-			 LOCK_LEVEL level);
+                         LOCK_LEVEL level);
 
 #endif /* MULTILEV_H */

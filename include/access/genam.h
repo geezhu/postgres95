@@ -10,7 +10,7 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	GENAM_H
+#ifndef    GENAM_H
 #define GENAM_H
 
 #include "postgres.h"
@@ -29,32 +29,48 @@
  * ----------------
  */
 extern Relation index_open(Oid relationId);
+
 extern Relation index_openr(char *relationName);
+
 extern void index_close(Relation relation);
+
 extern InsertIndexResult index_insert(Relation relation,
-				      IndexTuple indexTuple);
+                                      IndexTuple indexTuple);
+
 extern void index_delete(Relation relation, ItemPointer indexItem);
+
 extern IndexScanDesc index_beginscan(Relation relation, bool scanFromEnd,
-     uint16 numberOfKeys, ScanKey key);
+                                     uint16 numberOfKeys, ScanKey key);
+
 extern void index_rescan(IndexScanDesc scan, bool scanFromEnd, ScanKey key);
+
 extern void index_endscan(IndexScanDesc scan);
+
 extern void index_markpos(IndexScanDesc scan);
+
 extern void index_restrpos(IndexScanDesc scan);
+
 extern RetrieveIndexResult index_getnext(IndexScanDesc scan,
-					 ScanDirection direction);
+                                         ScanDirection direction);
+
 extern RegProcedure index_getprocid(Relation irel, AttrNumber attnum,
-				    uint16 procnum);
+                                    uint16 procnum);
+
 extern Datum GetIndexValue(HeapTuple tuple, TupleDesc hTupDesc,
-     int attOff, AttrNumber attrNums[], FuncIndexInfo *fInfo,
-     bool *attNull, Buffer buffer);
+                           int attOff, AttrNumber attrNums[], FuncIndexInfo *fInfo,
+                           bool *attNull, Buffer buffer);
 
 /* in genam.c */
 extern IndexScanDesc RelationGetIndexScan(Relation relation, bool scanFromEnd,
-					  uint16 numberOfKeys, ScanKey key);
+                                          uint16 numberOfKeys, ScanKey key);
+
 extern void IndexScanRestart(IndexScanDesc scan, bool scanFromEnd,
-			     ScanKey key);
+                             ScanKey key);
+
 extern void IndexScanEnd(IndexScanDesc scan);
+
 extern void IndexScanMarkPosition(IndexScanDesc scan);
+
 extern void IndexScanRestorePosition(IndexScanDesc scan);
 
-#endif	/* GENAM_H */
+#endif    /* GENAM_H */

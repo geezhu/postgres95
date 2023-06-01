@@ -31,10 +31,10 @@
 #endif /* ARR_TgString_INITIAL_SIZE */
 
 typedef struct Arr_TgString {
-  size_t num;
-  size_t size;
-  size_t valSize;
-  TgString *val;
+    size_t num;
+    size_t size;
+    size_t valSize;
+    TgString *val;
 } Arr_TgString;
 
 #define newArr_TgString() \
@@ -65,10 +65,10 @@ typedef struct Arr_TgString {
 #endif /* ARR_TgElementPtr_INITIAL_SIZE */
 
 typedef struct Arr_TgElementPtr {
-  size_t num;
-  size_t size;
-  size_t valSize;
-  TgElementPtr *val;
+    size_t num;
+    size_t size;
+    size_t valSize;
+    TgElementPtr *val;
 } Arr_TgElementPtr;
 
 #define newArr_TgElementPtr() \
@@ -99,10 +99,10 @@ typedef struct Arr_TgElementPtr {
 #endif /* ARR_TgNodePtr_INITIAL_SIZE */
 
 typedef struct Arr_TgNodePtr {
-  size_t num;
-  size_t size;
-  size_t valSize;
-  TgNodePtr *val;
+    size_t num;
+    size_t size;
+    size_t valSize;
+    TgNodePtr *val;
 } Arr_TgNodePtr;
 
 #define newArr_TgNodePtr() \

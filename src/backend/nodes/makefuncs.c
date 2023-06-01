@@ -29,11 +29,10 @@
  */
 Oper *
 makeOper(Oid opno,
-	 Oid opid,
-	 Oid opresulttype,
-	 int opsize,
-	 FunctionCachePtr op_fcache)
-{
+         Oid opid,
+         Oid opresulttype,
+         int opsize,
+         FunctionCachePtr op_fcache) {
     Oper *oper = makeNode(Oper);
 
     oper->opno = opno;
@@ -50,18 +49,17 @@ makeOper(Oid opno,
  *
  */
 Var *
-makeVar(Index varno, 
-	AttrNumber varattno,
-	Oid vartype,
-	Index varnoold,
-	AttrNumber varoattno)
-{
+makeVar(Index varno,
+        AttrNumber varattno,
+        Oid vartype,
+        Index varnoold,
+        AttrNumber varoattno) {
     Var *var = makeNode(Var);
 
-    var->varno =  varno;
+    var->varno = varno;
     var->varattno = varattno;
     var->vartype = vartype;
-    var->varnoold =  varnoold;
+    var->varnoold = varnoold;
     var->varoattno = varoattno;
 
     return var;
@@ -73,16 +71,15 @@ makeVar(Index varno,
  */
 Resdom *
 makeResdom(AttrNumber resno,
-	   Oid restype,
-	   int reslen,
-	   char *resname,
-	   Index reskey,
-	   Oid reskeyop,
-	   int resjunk)
-{
+           Oid restype,
+           int reslen,
+           char *resname,
+           Index reskey,
+           Oid reskeyop,
+           int resjunk) {
     Resdom *resdom = makeNode(Resdom);
 
-    resdom->resno = resno; 
+    resdom->resno = resno;
     resdom->restype = restype;
     resdom->reslen = reslen;
     resdom->resname = resname;
@@ -98,12 +95,11 @@ makeResdom(AttrNumber resno,
  */
 Const *
 makeConst(Oid consttype,
-	  Size constlen,
-	  Datum constvalue,
-	  bool constisnull,
-	  bool constbyval,
-	  bool constisset)
-{
+          Size constlen,
+          Datum constvalue,
+          bool constisnull,
+          bool constbyval,
+          bool constisset) {
     Const *cnst = makeNode(Const);
 
     cnst->consttype = consttype;

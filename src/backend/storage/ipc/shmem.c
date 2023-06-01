@@ -68,23 +68,23 @@
 
 /* shared memory global variables */
 
-unsigned long  ShmemBase = 0;	/* start and end address of
+unsigned long ShmemBase = 0;    /* start and end address of
 				 * shared memory
 				 */
-static unsigned long  ShmemEnd = 0;
-static unsigned long  ShmemSize = 0;	/* current size (and default) */
+static unsigned long ShmemEnd = 0;
+static unsigned long ShmemSize = 0;    /* current size (and default) */
 
-SPINLOCK      ShmemLock;	/* lock for shared memory allocation */
+SPINLOCK ShmemLock;    /* lock for shared memory allocation */
 
-SPINLOCK      BindingLock;	/* lock for binding table access */
+SPINLOCK BindingLock;    /* lock for binding table access */
 
-static unsigned long *ShmemFreeStart = NULL;	/* pointer to the OFFSET of
+static unsigned long *ShmemFreeStart = NULL;    /* pointer to the OFFSET of
 						 * first free shared memory
 						 */
 static unsigned long *ShmemBindingTabOffset = NULL; /* start of the binding
 						     * table (for bootstrap)
 						     */
-static int  ShmemBootstrap = FALSE;	/* flag becomes true when shared mem
+static int ShmemBootstrap = FALSE;    /* flag becomes true when shared mem
 					 * is created by POSTMASTER
 					 */
 
@@ -97,9 +97,8 @@ static HTAB *BindingTable = NULL;
  * ----------------------
  */
 void
-ShmemBindingTabReset()
-{
-    BindingTable = (HTAB *)NULL;
+ShmemBindingTabReset() {
+    BindingTable = (HTAB *) NULL;
 }
 
 /*
@@ -116,17 +115,16 @@ ShmemBindingTabReset()
 static IpcMemoryId ShmemId;
 
 void
-ShmemCreate(unsigned int key, unsigned int size)
-{
+ShmemCreate(unsigned int key, unsigned int size) {
     if (size)
-	ShmemSize = size;
+        ShmemSize = size;
     /* create shared mem region */
-    if ((ShmemId=IpcMemoryCreate(key,ShmemSize,IPCProtection))
-	==IpcMemCreationFailed) {
-	elog(FATAL,"ShmemCreate: cannot create region");
-	exit(1);
+    if ((ShmemId = IpcMemoryCreate(key, ShmemSize, IPCProtection))
+        == IpcMemCreationFailed) {
+        elog(FATAL, "ShmemCreate: cannot create region");
+        exit(1);
     }
-    
+
     /* ShmemBootstrap is true if shared memory has been
      * created, but not yet initialized.  Only the 
      * postmaster/creator-of-all-things should have
@@ -141,117 +139,116 @@ ShmemCreate(unsigned int key, unsigned int size)
  *
  */
 int
-InitShmem(unsigned int key, unsigned int size)
-{
-    Pointer 	sharedRegion;
+InitShmem(unsigned int key, unsigned int size) {
+    Pointer sharedRegion;
     unsigned long currFreeSpace;
-    
-    HASHCTL 	info;
-    int 		hash_flags;
-    BindingEnt *	result,item;
-    bool	found;
-    IpcMemoryId	shmid;
-    
+
+    HASHCTL info;
+    int hash_flags;
+    BindingEnt *result, item;
+    bool found;
+    IpcMemoryId shmid;
+
     /* if zero key, use default memory size */
     if (size)
-	ShmemSize = size;
-    
+        ShmemSize = size;
+
     /* default key is 0 */
-    
+
     /* attach to shared memory region (SysV or BSD OS specific) */
     if (ShmemBootstrap && key == PrivateIPCKey)
-	/* if we are running backend alone */
-	shmid = ShmemId;
+        /* if we are running backend alone */
+        shmid = ShmemId;
     else
-	shmid = IpcMemoryIdGet(IPCKeyGetBufferMemoryKey(key), ShmemSize);
+        shmid = IpcMemoryIdGet(IPCKeyGetBufferMemoryKey(key), ShmemSize);
     sharedRegion = IpcMemoryAttach(shmid);
     if (sharedRegion == NULL) {
-	elog(FATAL,"AttachSharedRegion: couldn't attach to shmem\n");
-	return(FALSE);
+        elog(FATAL, "AttachSharedRegion: couldn't attach to shmem\n");
+        return (FALSE);
     }
-    
+
     /* get pointers to the dimensions of shared memory */
     ShmemBase = (unsigned long) sharedRegion;
-    ShmemEnd  = (unsigned long) sharedRegion + ShmemSize;
+    ShmemEnd = (unsigned long) sharedRegion + ShmemSize;
     currFreeSpace = 0;
-    
+
     /* First long in shared memory is the count of available space */
     ShmemFreeStart = (unsigned long *) ShmemBase;
     /* next is a shmem pointer to the binding table */
     ShmemBindingTabOffset = ShmemFreeStart + 1;
-    
-    currFreeSpace += 
-	sizeof(ShmemFreeStart) + sizeof(ShmemBindingTabOffset);
-    
+
+    currFreeSpace +=
+            sizeof(ShmemFreeStart) + sizeof(ShmemBindingTabOffset);
+
     /* bootstrap initialize spin locks so we can start to use the
      * allocator and binding table.
      */
-    if (! InitSpinLocks(ShmemBootstrap, IPCKeyGetSpinLockSemaphoreKey(key))) {
-	return(FALSE);
+    if (!InitSpinLocks(ShmemBootstrap, IPCKeyGetSpinLockSemaphoreKey(key))) {
+        return (FALSE);
     }
-    
+
     /* We have just allocated additional space for two spinlocks.
      * Now setup the global free space count 
      */
     if (ShmemBootstrap) {
-	*ShmemFreeStart = currFreeSpace;
+        *ShmemFreeStart = currFreeSpace;
     }
-    
+
     /* if ShmemFreeStart is NULL, then the allocator won't work */
     Assert(*ShmemFreeStart);
-    
+
     /* create OR attach to the shared memory binding table */
     info.keysize = BTABLE_KEYSIZE;
     info.datasize = BTABLE_DATASIZE;
     hash_flags = (HASH_ELEM);
-    
+
     /* This will acquire the binding table lock, but not release it. */
     BindingTable = ShmemInitHash("BindingTable",
-				 BTABLE_SIZE,BTABLE_SIZE,
-				 &info,hash_flags);
-    
-    if (! BindingTable) {
-	elog(FATAL,"InitShmem: couldn't initialize Binding Table");
-	return(FALSE);
+                                 BTABLE_SIZE, BTABLE_SIZE,
+                                 &info, hash_flags);
+
+    if (!BindingTable) {
+        elog(FATAL, "InitShmem: couldn't initialize Binding Table");
+        return (FALSE);
     }
-    
+
     /* Now, check the binding table for an entry to the binding
      * table.  If there is an entry there, someone else created
      * the table.  Otherwise, we did and we have to initialize it.
      */
     memset(item.key, 0, BTABLE_KEYSIZE);
-    strncpy(item.key,"BindingTable",BTABLE_KEYSIZE);
-    
-    result = (BindingEnt *) 
-	hash_search(BindingTable,(char *) &item,HASH_ENTER, &found);
-    
-    
-    if (! result ) {
-	elog(FATAL,"InitShmem: corrupted binding table");
-	return(FALSE);
+    strncpy(item.key, "BindingTable", BTABLE_KEYSIZE);
+
+    result = (BindingEnt *)
+            hash_search(BindingTable, (char *) &item, HASH_ENTER, &found);
+
+
+    if (!result) {
+        elog(FATAL, "InitShmem: corrupted binding table");
+        return (FALSE);
     }
-    
-    if (! found) {
-	/* bootstrapping shmem: we have to initialize the 
-	 * binding table now.
-	 */
-	
-	Assert(ShmemBootstrap);
-	result->location = MAKE_OFFSET(BindingTable->hctl);
-	*ShmemBindingTabOffset = result->location;
-	result->size = BTABLE_SIZE;
-	
-	ShmemBootstrap = FALSE;
-	
-    }  else {
-	Assert(! ShmemBootstrap);
+
+    if (!found) {
+        /* bootstrapping shmem: we have to initialize the 
+         * binding table now.
+         */
+
+        Assert(ShmemBootstrap);
+        result->location = MAKE_OFFSET(BindingTable->hctl);
+        *ShmemBindingTabOffset = result->location;
+        result->size = BTABLE_SIZE;
+
+        ShmemBootstrap = FALSE;
+
+    } else {
+        Assert(!ShmemBootstrap);
     }
     /* now release the lock acquired in ShmemHashInit */
-    SpinRelease (BindingLock);
-    
+    SpinRelease(BindingLock);
+
     Assert (result->location == MAKE_OFFSET(BindingTable->hctl));
-    
-    return(TRUE);
+
+    return (TRUE);
 }
 
 /*
@@ -264,11 +261,10 @@ InitShmem(unsigned int key, unsigned int size)
  *  	to be compatable with malloc().
  */
 long *
-ShmemAlloc(unsigned long size)
-{
+ShmemAlloc(unsigned long size) {
     unsigned long tmpFree;
     long *newSpace;
-    
+
     /*
      * ensure space is word aligned.
      *
@@ -278,26 +274,26 @@ ShmemAlloc(unsigned long size)
      *                                                - ay 12/94
      */
     if (size % sizeof(double))
-	size += sizeof(double) - (size % sizeof(double));
-    
+        size += sizeof(double) - (size % sizeof(double));
+
     Assert(*ShmemFreeStart);
-    
+
     SpinAcquire(ShmemLock);
-    
+
     tmpFree = *ShmemFreeStart + size;
     if (tmpFree <= ShmemSize) {
-	newSpace = (long *)MAKE_PTR(*ShmemFreeStart);
-	*ShmemFreeStart += size;
+        newSpace = (long *) MAKE_PTR(*ShmemFreeStart);
+        *ShmemFreeStart += size;
     } else {
-	newSpace = NULL;
+        newSpace = NULL;
     }
-    
-    SpinRelease(ShmemLock); 
-    
-    if (! newSpace) {
-	elog(NOTICE,"ShmemAlloc: out of memory ");
+
+    SpinRelease(ShmemLock);
+
+    if (!newSpace) {
+        elog(NOTICE, "ShmemAlloc: out of memory ");
     }
-    return(newSpace);
+    return (newSpace);
 }
 
 /*
@@ -306,9 +302,8 @@ ShmemAlloc(unsigned long size)
  * Returns TRUE if the pointer is valid.
  */
 int
-ShmemIsValid(unsigned long addr)
-{
-    return ((addr<ShmemEnd) && (addr>=ShmemBase));
+ShmemIsValid(unsigned long addr) {
+    return ((addr < ShmemEnd) && (addr >= ShmemBase));
 }
 
 /*
@@ -323,15 +318,15 @@ ShmemIsValid(unsigned long addr)
  * for the structure before creating the structure itself.
  */
 HTAB *
-ShmemInitHash(char *name,	/* table string name for binding */
-	      long init_size, 	/* initial size */
-	      long max_size, 	/* max size of the table */
-	      HASHCTL *infoP,	/* info about key and bucket size */
-	      int hash_flags)	/* info about infoP */
+ShmemInitHash(char *name,    /* table string name for binding */
+              long init_size,    /* initial size */
+              long max_size,    /* max size of the table */
+              HASHCTL *infoP,    /* info about key and bucket size */
+              int hash_flags)    /* info about infoP */
 {
-    bool	found;
-    long  *	location;
-    
+    bool found;
+    long *location;
+
     /* shared memory hash tables have a fixed max size so that the
      * control structures don't try to grow.  The segbase is for
      * calculating pointer values.  The shared memory allocator
@@ -341,32 +336,32 @@ ShmemInitHash(char *name,	/* table string name for binding */
     infoP->alloc = ShmemAlloc;
     infoP->max_size = max_size;
     hash_flags |= HASH_SHARED_MEM;
-    
+
     /* look it up in the binding table */
-    location = 
-	ShmemInitStruct(name,my_log2(max_size) + sizeof(HHDR),&found);
-    
+    location =
+            ShmemInitStruct(name, my_log2(max_size) + sizeof(HHDR), &found);
+
     /* binding table is corrupted.  Let someone else give the 
      * error message since they have more information 
      */
     if (location == NULL) {
-	return(0);
+        return (0);
     }
-    
+
     /* it already exists, attach to it rather than allocate and
      * initialize new space 
      */
     if (found) {
-	hash_flags |= HASH_ATTACH;
+        hash_flags |= HASH_ATTACH;
     }
-    
+
     /* these structures were allocated or bound in ShmemInitStruct */
     /* control information and parameters */
     infoP->hctl = (long *) location;
     /* directory for hash lookup */
     infoP->dir = (long *) (location + sizeof(HHDR));
-    
-    return(hash_create(init_size, infoP, hash_flags));;
+
+    return (hash_create(init_size, infoP, hash_flags));;
 }
 
 /*
@@ -380,33 +375,32 @@ ShmemInitHash(char *name,	/* table string name for binding */
  *	locationPtr.
  */
 bool
-ShmemPIDLookup(int pid, SHMEM_OFFSET* locationPtr)
-{
-    BindingEnt *	result,item;
-    bool	found;
-    
+ShmemPIDLookup(int pid, SHMEM_OFFSET *locationPtr) {
+    BindingEnt *result, item;
+    bool found;
+
     Assert (BindingTable);
     memset(item.key, 0, BTABLE_KEYSIZE);
-    sprintf(item.key,"PID %d",pid);
-    
+    sprintf(item.key, "PID %d", pid);
+
     SpinAcquire(BindingLock);
-    result = (BindingEnt *) 
-	hash_search(BindingTable,(char *) &item, HASH_ENTER, &found);
-    
-    if (! result) {
-	
-	SpinRelease(BindingLock);
-	elog(WARN,"ShmemInitPID: BindingTable corrupted");
-	return(FALSE);
-	
-    } 
-    
-    if (found) {
-	*locationPtr = result->location;
-    } else {
-	result->location = *locationPtr;
+    result = (BindingEnt *)
+            hash_search(BindingTable, (char *) &item, HASH_ENTER, &found);
+
+    if (!result) {
+
+        SpinRelease(BindingLock);
+        elog(WARN, "ShmemInitPID: BindingTable corrupted");
+        return (FALSE);
+
     }
-    
+
+    if (found) {
+        *locationPtr = result->location;
+    } else {
+        result->location = *locationPtr;
+    }
+
     SpinRelease(BindingLock);
     return (TRUE);
 }
@@ -421,36 +415,35 @@ ShmemPIDLookup(int pid, SHMEM_OFFSET* locationPtr)
  * Side Effect: removes the entry from the binding table
  */
 SHMEM_OFFSET
-ShmemPIDDestroy(int pid)
-{
-    BindingEnt *	result,item;
-    bool	found;
-    SHMEM_OFFSET  location;
-    
+ShmemPIDDestroy(int pid) {
+    BindingEnt *result, item;
+    bool found;
+    SHMEM_OFFSET location;
+
     Assert(BindingTable);
-    
+
     memset(item.key, 0, BTABLE_KEYSIZE);
-    sprintf(item.key,"PID %d",pid);
-    
+    sprintf(item.key, "PID %d", pid);
+
     SpinAcquire(BindingLock);
-    result = (BindingEnt *) 
-	hash_search(BindingTable,(char *) &item, HASH_REMOVE, &found);
-    
+    result = (BindingEnt *)
+            hash_search(BindingTable, (char *) &item, HASH_REMOVE, &found);
+
     if (found)
-	location = result->location;
+        location = result->location;
     SpinRelease(BindingLock);
-    
-    if (! result) {
-	
-	elog(WARN,"ShmemPIDDestroy: PID table corrupted");
-	return(INVALID_OFFSET);
-	
-    } 
-    
+
+    if (!result) {
+
+        elog(WARN, "ShmemPIDDestroy: PID table corrupted");
+        return (INVALID_OFFSET);
+
+    }
+
     if (found)
-	return (location);
+        return (location);
     else {
-	return(INVALID_OFFSET);
+        return (INVALID_OFFSET);
     }
 }
 
@@ -469,92 +462,91 @@ ShmemPIDDestroy(int pid)
  *	initialized).
  */
 long *
-ShmemInitStruct(char *name, unsigned long size, bool *foundPtr)
-{
-    BindingEnt *	result,item;
-    long * structPtr;
+ShmemInitStruct(char *name, unsigned long size, bool *foundPtr) {
+    BindingEnt *result, item;
+    long *structPtr;
 
-    strncpy(item.key,name,BTABLE_KEYSIZE);
+    strncpy(item.key, name, BTABLE_KEYSIZE);
     item.location = BAD_LOCATION;
-    
+
     SpinAcquire(BindingLock);
-    
-    if (! BindingTable) {
-	/* Assert() is a macro now. substitutes inside quotes. */
-	char *strname = "BindingTable";
-	
-	/* If the binding table doesnt exist, we fake it.
-	 *
-	 * If we are creating the first binding table, then let 
-	 * shmemalloc() allocate the space for a new HTAB.  Otherwise,
-	 * find the old one and return that.  Notice that the
-	 * BindingLock is held until the binding table has been completely
-	 * initialized.
-	 */
-	Assert (! strcmp(name,strname)) ;
-	if (ShmemBootstrap) {
-	    /* in POSTMASTER/Single process */
-	    
-	    *foundPtr = FALSE;
-	    return((long *)ShmemAlloc(size));
-	    
-	} else {
-	    Assert (ShmemBindingTabOffset);
-	    
-	    *foundPtr = TRUE;
-	    return((long *)MAKE_PTR(*ShmemBindingTabOffset));
-	}
-	
-	
+
+    if (!BindingTable) {
+        /* Assert() is a macro now. substitutes inside quotes. */
+        char *strname = "BindingTable";
+
+        /* If the binding table doesnt exist, we fake it.
+         *
+         * If we are creating the first binding table, then let 
+         * shmemalloc() allocate the space for a new HTAB.  Otherwise,
+         * find the old one and return that.  Notice that the
+         * BindingLock is held until the binding table has been completely
+         * initialized.
+         */
+        Assert (!strcmp(name, strname));
+        if (ShmemBootstrap) {
+            /* in POSTMASTER/Single process */
+
+            *foundPtr = FALSE;
+            return ((long *) ShmemAlloc(size));
+
+        } else {
+            Assert (ShmemBindingTabOffset);
+
+            *foundPtr = TRUE;
+            return ((long *) MAKE_PTR(*ShmemBindingTabOffset));
+        }
+
+
     } else {
-	/* look it up in the bindint table */
-	result = (BindingEnt *) 
-	    hash_search(BindingTable,(char *) &item,HASH_ENTER, foundPtr);
+        /* look it up in the bindint table */
+        result = (BindingEnt *)
+                hash_search(BindingTable, (char *) &item, HASH_ENTER, foundPtr);
     }
-    
-    if (! result) {
-	
-	SpinRelease(BindingLock);
-	
-	elog(WARN,"ShmemInitStruct: Binding Table corrupted");
-	return(NULL);
-	
+
+    if (!result) {
+
+        SpinRelease(BindingLock);
+
+        elog(WARN, "ShmemInitStruct: Binding Table corrupted");
+        return (NULL);
+
     } else if (*foundPtr) {
-	/*
-	 * Structure is in the binding table so someone else has allocated 
-	 * it already.  The size better be the same as the size we are 
-	 * trying to initialize to or there is a name conflict (or worse).
-	 */
-	if (result->size != size) {
-	    SpinRelease(BindingLock);
-	    
-	    elog(NOTICE,"ShmemInitStruct: BindingTable entry size is wrong");
-	    /* let caller print its message too */
-	    return(NULL);
-	}
-	structPtr = (long *)MAKE_PTR(result->location);
+        /*
+         * Structure is in the binding table so someone else has allocated 
+         * it already.  The size better be the same as the size we are 
+         * trying to initialize to or there is a name conflict (or worse).
+         */
+        if (result->size != size) {
+            SpinRelease(BindingLock);
+
+            elog(NOTICE, "ShmemInitStruct: BindingTable entry size is wrong");
+            /* let caller print its message too */
+            return (NULL);
+        }
+        structPtr = (long *) MAKE_PTR(result->location);
     } else {
-	
-	/* It isn't in the table yet. allocate and initialize it */
-	structPtr = ShmemAlloc((long)size);
-	if (! structPtr) {
-	    /* out of memory */
-	    Assert (BindingTable);
-	    (void) hash_search(BindingTable,(char *) &item,HASH_REMOVE, foundPtr);
-	    SpinRelease(BindingLock);
-	    *foundPtr = FALSE;
-	    
-	    elog(NOTICE,"ShmemInitStruct: cannot allocate '%s'",
-		 name);
-	    return(NULL);
-	} 
-	result->size = size;
-	result->location = MAKE_OFFSET(structPtr);
+
+        /* It isn't in the table yet. allocate and initialize it */
+        structPtr = ShmemAlloc((long) size);
+        if (!structPtr) {
+            /* out of memory */
+            Assert (BindingTable);
+            (void) hash_search(BindingTable, (char *) &item, HASH_REMOVE, foundPtr);
+            SpinRelease(BindingLock);
+            *foundPtr = FALSE;
+
+            elog(NOTICE, "ShmemInitStruct: cannot allocate '%s'",
+                 name);
+            return (NULL);
+        }
+        result->size = size;
+        result->location = MAKE_OFFSET(structPtr);
     }
-    Assert (ShmemIsValid((unsigned long)structPtr));
-    
+    Assert (ShmemIsValid((unsigned long) structPtr));
+
     SpinRelease(BindingLock);
-    return(structPtr);
+    return (structPtr);
 }
 
 

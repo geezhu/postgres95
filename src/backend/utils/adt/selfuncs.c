@@ -20,30 +20,31 @@
 #include <string.h>
 
 #include "access/heapam.h"
-#include "utils/tqual.h"	/* for NowTimeQual */
+#include "utils/tqual.h"    /* for NowTimeQual */
 #include "fmgr.h"
-#include "utils/builtins.h"	/* for textout() prototype 
+#include "utils/builtins.h"    /* for textout() prototype 
 				  and where the declarations go */
 #include "utils/elog.h"
 #include "utils/palloc.h"
 
 #include "catalog/catname.h"
 #include "utils/syscache.h"
-#include "utils/lsyscache.h"	/* for get_oprrest() */
+#include "utils/lsyscache.h"    /* for get_oprrest() */
 #include "catalog/pg_statistic.h"
 
 
 /* N is not a valid var/constant or relation id */
-#define	NONVALUE(N)	((N) == -1)
+#define    NONVALUE(N)    ((N) == -1)
 
 /* 
  * generalize the test for functional index selectivity request
  */
-#define FunctionalSelectivity(nIndKeys,attNum) (attNum==InvalidAttrNumber)
+#define FunctionalSelectivity(nIndKeys, attNum) (attNum==InvalidAttrNumber)
 
 static int32 getattnvals(Oid relid, AttrNumber attnum);
+
 static void gethilokey(Oid relid, AttrNumber attnum, Oid opid,
-		       char **high, char **low);
+                       char **high, char **low);
 
 
 /*
@@ -54,22 +55,21 @@ eqsel(Oid opid,
       Oid relid,
       AttrNumber attno,
       char *value,
-      int32 flag)
-{
-    int32		nvals;
-    float64		result;
-    
+      int32 flag) {
+    int32 nvals;
+    float64 result;
+
     result = (float64) palloc(sizeof(float64data));
     if (NONVALUE(attno) || NONVALUE(relid))
-	*result = 0.1;
+        *result = 0.1;
     else {
-	nvals = getattnvals(relid, (int) attno);
-	if (nvals == 0)
-	    *result = 0.0;
-	else
-	    *result = 1.0 / nvals;
+        nvals = getattnvals(relid, (int) attno);
+        if (nvals == 0)
+            *result = 0.0;
+        else
+            *result = 1.0 / nvals;
     }
-    return(result);
+    return (result);
 }
 
 /*
@@ -80,13 +80,12 @@ neqsel(Oid opid,
        Oid relid,
        AttrNumber attno,
        char *value,
-       int32 flag)
-{
-    float64		result;
-    
+       int32 flag) {
+    float64 result;
+
     result = eqsel(opid, relid, attno, value, flag);
     *result = 1.0 - *result;
-    return(result);
+    return (result);
 }
 
 /*
@@ -95,54 +94,53 @@ neqsel(Oid opid,
  */
 float64
 intltsel(Oid opid,
-	 Oid relid,
-	 AttrNumber attno,
-	 int32 value,
-	 int32 flag)
-{
-    float64 	result;
-    char		*highchar, *lowchar;
-    long		val, high, low, top, bottom;
-    
+         Oid relid,
+         AttrNumber attno,
+         int32 value,
+         int32 flag) {
+    float64 result;
+    char *highchar, *lowchar;
+    long val, high, low, top, bottom;
+
     result = (float64) palloc(sizeof(float64data));
     if (NONVALUE(attno) || NONVALUE(relid))
-	*result = 1.0 / 3;
+        *result = 1.0 / 3;
     else {
-	/* XXX          val = atol(value);*/
-	val = value;
-	gethilokey(relid, (int) attno, opid, &highchar, &lowchar);
-	if (*highchar == 'n' || *lowchar == 'n') {
-	    *result = 1.0/3.0;
-	    return (result);
-	}
-	high = atol(highchar);
-	low = atol(lowchar);
-	if ((flag & SEL_RIGHT && val < low) ||
-	    (!(flag & SEL_RIGHT) && val > high)) {
-	    int nvals;
-	    nvals = getattnvals(relid, (int) attno);
-	    if (nvals == 0)
-		*result = 1.0 / 3.0;
-	    else
-		*result = 3.0 / nvals;
-	}else {
-	    bottom = high - low;
-	    if (bottom == 0)
-		++bottom;
-	    if (flag & SEL_RIGHT)
-		top = val - low;
-	    else
-		top = high - val;
-	    if (top > bottom)
-		*result = 1.0;
-	    else {
-		if (top == 0)
-		    ++top;
-		*result = ((1.0 * top) / bottom);
-	    }
-	}
+        /* XXX          val = atol(value);*/
+        val = value;
+        gethilokey(relid, (int) attno, opid, &highchar, &lowchar);
+        if (*highchar == 'n' || *lowchar == 'n') {
+            *result = 1.0 / 3.0;
+            return (result);
+        }
+        high = atol(highchar);
+        low = atol(lowchar);
+        if ((flag & SEL_RIGHT && val < low) ||
+            (!(flag & SEL_RIGHT) && val > high)) {
+            int nvals;
+            nvals = getattnvals(relid, (int) attno);
+            if (nvals == 0)
+                *result = 1.0 / 3.0;
+            else
+                *result = 3.0 / nvals;
+        } else {
+            bottom = high - low;
+            if (bottom == 0)
+                ++bottom;
+            if (flag & SEL_RIGHT)
+                top = val - low;
+            else
+                top = high - val;
+            if (top > bottom)
+                *result = 1.0;
+            else {
+                if (top == 0)
+                    ++top;
+                *result = ((1.0 * top) / bottom);
+            }
+        }
     }
-    return(result);
+    return (result);
 }
 
 /*
@@ -151,20 +149,19 @@ intltsel(Oid opid,
  */
 float64
 intgtsel(Oid opid,
-	 Oid relid,
-	 AttrNumber attno,
-	 int32 value,
-	 int32 flag)
-{
-    float64		result;
-    int		notflag;
-    
+         Oid relid,
+         AttrNumber attno,
+         int32 value,
+         int32 flag) {
+    float64 result;
+    int notflag;
+
     if (flag & 0)
-	notflag = flag & ~SEL_RIGHT;
+        notflag = flag & ~SEL_RIGHT;
     else
-	notflag = flag | SEL_RIGHT;
+        notflag = flag | SEL_RIGHT;
     result = intltsel(opid, relid, attno, value, (int32) notflag);
-    return(result);
+    return (result);
 }
 
 /*
@@ -172,28 +169,27 @@ intgtsel(Oid opid,
  */
 float64
 eqjoinsel(Oid opid,
-	  Oid relid1,
-	  AttrNumber attno1,
-	  Oid relid2,
-	  AttrNumber attno2)
-{
-    float64		result;
-    int32		num1, num2, max;
-    
+          Oid relid1,
+          AttrNumber attno1,
+          Oid relid2,
+          AttrNumber attno2) {
+    float64 result;
+    int32 num1, num2, max;
+
     result = (float64) palloc(sizeof(float64data));
     if (NONVALUE(attno1) || NONVALUE(relid1) ||
-	NONVALUE(attno2) || NONVALUE(relid2))
-	*result = 0.1;
+        NONVALUE(attno2) || NONVALUE(relid2))
+        *result = 0.1;
     else {
-	num1 = getattnvals(relid1, (int) attno1);
-	num2 = getattnvals(relid2, (int) attno2);
-	max = (num1 > num2) ? num1 : num2;
-	if (max == 0)
-	    *result = 1.0;
-	else
-	    *result = 1.0 / max;
+        num1 = getattnvals(relid1, (int) attno1);
+        num2 = getattnvals(relid2, (int) attno2);
+        max = (num1 > num2) ? num1 : num2;
+        if (max == 0)
+            *result = 1.0;
+        else
+            *result = 1.0 / max;
     }
-    return(result);
+    return (result);
 }
 
 /*
@@ -201,16 +197,15 @@ eqjoinsel(Oid opid,
  */
 float64
 neqjoinsel(Oid opid,
-	   Oid relid1,
-	   AttrNumber attno1,
-	   Oid relid2,
-	   AttrNumber attno2)
-{
-    float64		result;
-    
+           Oid relid1,
+           AttrNumber attno1,
+           Oid relid2,
+           AttrNumber attno2) {
+    float64 result;
+
     result = eqjoinsel(opid, relid1, attno1, relid2, attno2);
     *result = 1.0 - *result;
-    return(result);
+    return (result);
 }
 
 /*
@@ -218,16 +213,15 @@ neqjoinsel(Oid opid,
  */
 float64
 intltjoinsel(Oid opid,
-	     Oid relid1,
-	     AttrNumber attno1,
-	     Oid relid2,
-	     AttrNumber attno2)
-{
-    float64	result;
-    
+             Oid relid1,
+             AttrNumber attno1,
+             Oid relid2,
+             AttrNumber attno2) {
+    float64 result;
+
     result = (float64) palloc(sizeof(float64data));
     *result = 1.0 / 3.0;
-    return(result);
+    return (result);
 }
 
 /*
@@ -235,16 +229,15 @@ intltjoinsel(Oid opid,
  */
 float64
 intgtjoinsel(Oid opid,
-	     Oid relid1,
-	     AttrNumber attno1,
-	     Oid relid2,
-	     AttrNumber attno2)
-{
-    float64	result;
-    
+             Oid relid1,
+             AttrNumber attno1,
+             Oid relid2,
+             AttrNumber attno2) {
+    float64 result;
+
     result = (float64) palloc(sizeof(float64data));
     *result = 1.0 / 3.0;
-    return(result);
+    return (result);
 }
 
 /*
@@ -262,34 +255,33 @@ intgtjoinsel(Oid opid,
  *		for gethilokey which accesses stahikey in struct statistic.
  */
 static int32
-getattnvals(Oid relid, AttrNumber attnum)
-{
-    HeapTuple	atp;
-    int		nvals;
-    
-    atp = SearchSysCacheTuple(ATTNUM, 
-			      ObjectIdGetDatum(relid), 
-			      Int16GetDatum(attnum),
-			      0,0);
+getattnvals(Oid relid, AttrNumber attnum) {
+    HeapTuple atp;
+    int nvals;
+
+    atp = SearchSysCacheTuple(ATTNUM,
+                              ObjectIdGetDatum(relid),
+                              Int16GetDatum(attnum),
+                              0, 0);
     if (!HeapTupleIsValid(atp)) {
-	elog(WARN, "getattnvals: no attribute tuple %d %d",
-	     relid, attnum);
-	return(0);
+        elog(WARN, "getattnvals: no attribute tuple %d %d",
+             relid, attnum);
+        return (0);
     }
-    nvals = ((AttributeTupleForm ) GETSTRUCT(atp))->attnvals;
-    if (nvals > 0) return(nvals);
-    
+    nvals = ((AttributeTupleForm) GETSTRUCT(atp))->attnvals;
+    if (nvals > 0) return (nvals);
+
     atp = SearchSysCacheTuple(RELOID, ObjectIdGetDatum(relid),
-			      0,0,0);
+                              0, 0, 0);
     /* XXX -- use number of tuples as number of distinctive values
        just for now, in case number of distinctive values is
        not cached */
     if (!HeapTupleIsValid(atp)) {
-	elog(WARN, "getattnvals: no relation tuple %d", relid);
-	return(0);
+        elog(WARN, "getattnvals: no relation tuple %d", relid);
+        return (0);
     }
     nvals = ((Form_pg_class) GETSTRUCT(atp))->reltuples;
-    return(nvals);
+    return (nvals);
 }
 
 /*
@@ -306,21 +298,20 @@ getattnvals(Oid relid, AttrNumber attnum)
  */
 static void
 gethilokey(Oid relid,
-	   AttrNumber attnum,
-	   Oid opid,
-	   char **high,
-	   char **low)
-{
-    register Relation	rdesc;
-    register HeapScanDesc	sdesc;
-    static ScanKeyData	key[3] = {
-	{ 0, Anum_pg_statistic_starelid, F_OIDEQ },
-	{ 0, Anum_pg_statistic_staattnum, F_INT2EQ },
-	{ 0, Anum_pg_statistic_staop, F_OIDEQ }
+           AttrNumber attnum,
+           Oid opid,
+           char **high,
+           char **low) {
+    register Relation rdesc;
+    register HeapScanDesc sdesc;
+    static ScanKeyData key[3] = {
+            {0, Anum_pg_statistic_starelid,  F_OIDEQ},
+            {0, Anum_pg_statistic_staattnum, F_INT2EQ},
+            {0, Anum_pg_statistic_staop,     F_OIDEQ}
     };
-    bool		isnull;
-    HeapTuple		tuple;
-    
+    bool isnull;
+    HeapTuple tuple;
+
     rdesc = heap_openr(StatisticRelationName);
 
     key[0].sk_argument = ObjectIdGetDatum(relid);
@@ -329,232 +320,222 @@ gethilokey(Oid relid,
     sdesc = heap_beginscan(rdesc, 0, NowTimeQual, 3, key);
     tuple = heap_getnext(sdesc, 0, (Buffer *) NULL);
     if (!HeapTupleIsValid(tuple)) {
-	*high = "n";
-	*low = "n";
-	/* XXX 		elog(WARN, "gethilokey: statistic tuple not found");*/
-	return;
+        *high = "n";
+        *low = "n";
+        /* XXX 		elog(WARN, "gethilokey: statistic tuple not found");*/
+        return;
     }
     *high = textout((struct varlena *)
-		    heap_getattr(tuple,
-				 InvalidBuffer,
-				 Anum_pg_statistic_stahikey,
-				 RelationGetTupleDescriptor(rdesc),
-				 &isnull));
+                            heap_getattr(tuple,
+                                         InvalidBuffer,
+                                         Anum_pg_statistic_stahikey,
+                                         RelationGetTupleDescriptor(rdesc),
+                                         &isnull));
     if (isnull)
-	elog(DEBUG, "gethilokey: high key is null");
+        elog(DEBUG, "gethilokey: high key is null");
     *low = textout((struct varlena *)
-		   heap_getattr(tuple,
-				InvalidBuffer,
-				Anum_pg_statistic_stalokey,
-				RelationGetTupleDescriptor(rdesc),
-				&isnull));
+                           heap_getattr(tuple,
+                                        InvalidBuffer,
+                                        Anum_pg_statistic_stalokey,
+                                        RelationGetTupleDescriptor(rdesc),
+                                        &isnull));
     if (isnull)
-	elog(DEBUG, "gethilokey: low key is null");
+        elog(DEBUG, "gethilokey: low key is null");
     heap_endscan(sdesc);
     heap_close(rdesc);
 }
 
 float64
 btreesel(Oid operatorObjectId,
-	 Oid indrelid,
-	 AttrNumber attributeNumber,
-	 char *constValue,
-	 int32 constFlag,
-	 int32 nIndexKeys,
-	 Oid indexrelid)
-{
+         Oid indrelid,
+         AttrNumber attributeNumber,
+         char *constValue,
+         int32 constFlag,
+         int32 nIndexKeys,
+         Oid indexrelid) {
     float64 result;
     float64data resultData;
-    
+
     if (FunctionalSelectivity(nIndexKeys, attributeNumber)) {
-	/*
-	 * Need to call the functions selectivity
-	 * function here.  For now simply assume it's
-	 * 1/3 since functions don't currently
-	 * have selectivity functions
-	 */
-	resultData = 1.0 / 3.0;
-	result = &resultData;
+        /*
+         * Need to call the functions selectivity
+         * function here.  For now simply assume it's
+         * 1/3 since functions don't currently
+         * have selectivity functions
+         */
+        resultData = 1.0 / 3.0;
+        result = &resultData;
+    } else {
+        result = (float64) fmgr(get_oprrest(operatorObjectId),
+                                (char *) operatorObjectId,
+                                (char *) indrelid,
+                                (char *) attributeNumber,
+                                (char *) constValue,
+                                (char *) constFlag,
+                                NULL);
     }
-    else {
-	result = (float64)fmgr(get_oprrest (operatorObjectId),
-			       (char*)operatorObjectId,
-			       (char*)indrelid,
-			       (char*)attributeNumber,
-			       (char*)constValue,
-			       (char*)constFlag,
-			       NULL);
-    }
-    
+
     if (!PointerIsValid(result))
-	elog(WARN, "Btree Selectivity: bad pointer");
+        elog(WARN, "Btree Selectivity: bad pointer");
     if (*result < 0.0 || *result > 1.0)
-	elog(WARN, "Btree Selectivity: bad value %lf", *result);
-    
-    return(result);
+        elog(WARN, "Btree Selectivity: bad value %lf", *result);
+
+    return (result);
 }
 
 float64
 btreenpage(Oid operatorObjectId,
-	   Oid indrelid,
-	   AttrNumber attributeNumber,
-	   char *constValue,
-	   int32 constFlag,
-	   int32 nIndexKeys,
-	   Oid indexrelid)
-{
+           Oid indrelid,
+           AttrNumber attributeNumber,
+           char *constValue,
+           int32 constFlag,
+           int32 nIndexKeys,
+           Oid indexrelid) {
     float64 temp, result;
     float64data tempData;
     HeapTuple atp;
     int npage;
-    
+
     if (FunctionalSelectivity(nIndexKeys, attributeNumber)) {
-	/*
-	 * Need to call the functions selectivity
-	 * function here.  For now simply assume it's
-	 * 1/3 since functions don't currently
-	 * have selectivity functions
-	 */
-	tempData = 1.0 / 3.0;
-	temp = &tempData;
+        /*
+         * Need to call the functions selectivity
+         * function here.  For now simply assume it's
+         * 1/3 since functions don't currently
+         * have selectivity functions
+         */
+        tempData = 1.0 / 3.0;
+        temp = &tempData;
+    } else {
+        temp = (float64) fmgr(get_oprrest(operatorObjectId),
+                              (char *) operatorObjectId,
+                              (char *) indrelid,
+                              (char *) attributeNumber,
+                              (char *) constValue,
+                              (char *) constFlag,
+                              NULL);
     }
-    else {
-	temp = (float64)fmgr(get_oprrest (operatorObjectId),
-			     (char*)operatorObjectId,
-			     (char*)indrelid,
-			     (char*)attributeNumber,
-			     (char*)constValue,
-			     (char*)constFlag,
-			     NULL);
-    }
-    atp = SearchSysCacheTuple(RELOID, 
-			      ObjectIdGetDatum(indexrelid),
-			      0,0,0);
+    atp = SearchSysCacheTuple(RELOID,
+                              ObjectIdGetDatum(indexrelid),
+                              0, 0, 0);
     if (!HeapTupleIsValid(atp)) {
-	elog(WARN, "btreenpage: no index tuple %d", indexrelid);
-	return(0);
+        elog(WARN, "btreenpage: no index tuple %d", indexrelid);
+        return (0);
     }
-    
+
     npage = ((Form_pg_class) GETSTRUCT(atp))->relpages;
-    result = (float64)palloc(sizeof(float64data));
+    result = (float64) palloc(sizeof(float64data));
     *result = *temp * npage;
-    return(result);
+    return (result);
 }
 
 float64
 hashsel(Oid operatorObjectId,
-	Oid indrelid,
-	AttrNumber attributeNumber,
-	char *constValue,
-	int32 constFlag,
-	int32 nIndexKeys,
-	Oid indexrelid)
-{
-    
+        Oid indrelid,
+        AttrNumber attributeNumber,
+        char *constValue,
+        int32 constFlag,
+        int32 nIndexKeys,
+        Oid indexrelid) {
+
     float64 result;
     float64data resultData;
     HeapTuple atp;
     int ntuples;
-    
+
     if (FunctionalSelectivity(nIndexKeys, attributeNumber)) {
-	/*
-	 * Need to call the functions selectivity
-	 * function here.  For now simply use 1/Number of Tuples
-	 * since functions don't currently
-	 * have selectivity functions
-	 */
-	
-	atp = SearchSysCacheTuple(RELOID, ObjectIdGetDatum(indexrelid),
-				  0,0,0);
-	if (!HeapTupleIsValid(atp)) {
-	    elog(WARN, "hashsel: no index tuple %d", indexrelid);
-	    return(0);
-	}
-	ntuples = ((Form_pg_class) GETSTRUCT(atp))->reltuples;
-	if (ntuples > 0) {
-	    resultData =  1.0 / (float64data) ntuples;
-	}
-	else {
-	    resultData = (float64data) (1.0 / 100.0);
-	}
-	result = &resultData;
-	
+        /*
+         * Need to call the functions selectivity
+         * function here.  For now simply use 1/Number of Tuples
+         * since functions don't currently
+         * have selectivity functions
+         */
+
+        atp = SearchSysCacheTuple(RELOID, ObjectIdGetDatum(indexrelid),
+                                  0, 0, 0);
+        if (!HeapTupleIsValid(atp)) {
+            elog(WARN, "hashsel: no index tuple %d", indexrelid);
+            return (0);
+        }
+        ntuples = ((Form_pg_class) GETSTRUCT(atp))->reltuples;
+        if (ntuples > 0) {
+            resultData = 1.0 / (float64data) ntuples;
+        } else {
+            resultData = (float64data) (1.0 / 100.0);
+        }
+        result = &resultData;
+
+    } else {
+        result = (float64) fmgr(get_oprrest(operatorObjectId),
+                                (char *) operatorObjectId,
+                                (char *) indrelid,
+                                (char *) attributeNumber,
+                                (char *) constValue,
+                                (char *) constFlag,
+                                NULL);
     }
-    else {
-	result = (float64)fmgr(get_oprrest (operatorObjectId),
-			       (char*)operatorObjectId,
-			       (char*)indrelid,
-			       (char*)attributeNumber,
-			       (char*)constValue,
-			       (char*)constFlag,
-			       NULL);
-    }
-    
+
     if (!PointerIsValid(result))
-	elog(WARN, "Hash Table Selectivity: bad pointer");
+        elog(WARN, "Hash Table Selectivity: bad pointer");
     if (*result < 0.0 || *result > 1.0)
-	elog(WARN, "Hash Table Selectivity: bad value %lf", *result);
-    
-    return(result);
-    
-    
+        elog(WARN, "Hash Table Selectivity: bad value %lf", *result);
+
+    return (result);
+
+
 }
 
 float64
 hashnpage(Oid operatorObjectId,
-	  Oid indrelid,
-	  AttrNumber attributeNumber,
-	  char *constValue,
-	  int32 constFlag,
-	  int32 nIndexKeys,
-	  Oid indexrelid)
-{
+          Oid indrelid,
+          AttrNumber attributeNumber,
+          char *constValue,
+          int32 constFlag,
+          int32 nIndexKeys,
+          Oid indexrelid) {
     float64 temp, result;
     float64data tempData;
     HeapTuple atp;
     int npage;
     int ntuples;
-    
+
     atp = SearchSysCacheTuple(RELOID, ObjectIdGetDatum(indexrelid),
-			      0,0,0);
+                              0, 0, 0);
     if (!HeapTupleIsValid(atp)) {
-	elog(WARN, "hashsel: no index tuple %d", indexrelid);
-	return(0);
+        elog(WARN, "hashsel: no index tuple %d", indexrelid);
+        return (0);
     }
-    
-    
+
+
     if (FunctionalSelectivity(nIndexKeys, attributeNumber)) {
-	/*
-	 * Need to call the functions selectivity
-	 * function here.  For now, use 1/Number of Tuples
-	 * since functions don't currently
-	 * have selectivity functions
-	 */
-	
-	ntuples = ((Form_pg_class) GETSTRUCT(atp))->reltuples;
-	if (ntuples > 0) {
-	    tempData =  1.0 / (float64data) ntuples;
-	}
-	else {
-	    tempData = (float64data) (1.0 / 100.0);
-	}
-	temp = &tempData;
-	
+        /*
+         * Need to call the functions selectivity
+         * function here.  For now, use 1/Number of Tuples
+         * since functions don't currently
+         * have selectivity functions
+         */
+
+        ntuples = ((Form_pg_class) GETSTRUCT(atp))->reltuples;
+        if (ntuples > 0) {
+            tempData = 1.0 / (float64data) ntuples;
+        } else {
+            tempData = (float64data) (1.0 / 100.0);
+        }
+        temp = &tempData;
+
+    } else {
+        temp = (float64) fmgr(get_oprrest(operatorObjectId),
+                              (char *) operatorObjectId,
+                              (char *) indrelid,
+                              (char *) attributeNumber,
+                              (char *) constValue,
+                              (char *) constFlag,
+                              NULL);
     }
-    else {
-	temp = (float64)fmgr(get_oprrest (operatorObjectId),
-			     (char*)operatorObjectId,
-			     (char*)indrelid,
-			     (char*)attributeNumber,
-			     (char*)constValue,
-			     (char*)constFlag,
-			     NULL);
-    }
-    
+
     npage = ((Form_pg_class) GETSTRUCT(atp))->relpages;
-    result = (float64)palloc(sizeof(float64data));
+    result = (float64) palloc(sizeof(float64data));
     *result = *temp * npage;
-    return(result);
+    return (result);
 }
 
 
@@ -565,21 +546,19 @@ rtsel(Oid operatorObjectId,
       char *constValue,
       int32 constFlag,
       int32 nIndexKeys,
-      Oid indexrelid)
-{
+      Oid indexrelid) {
     return (btreesel(operatorObjectId, indrelid, attributeNumber,
-		     constValue, constFlag, nIndexKeys, indexrelid));
+                     constValue, constFlag, nIndexKeys, indexrelid));
 }
 
 float64
 rtnpage(Oid operatorObjectId,
-	Oid indrelid,
-	AttrNumber attributeNumber,
-	char *constValue,
-	int32 constFlag,
-	int32 nIndexKeys,
-	Oid indexrelid)
-{
+        Oid indrelid,
+        AttrNumber attributeNumber,
+        char *constValue,
+        int32 constFlag,
+        int32 nIndexKeys,
+        Oid indexrelid) {
     return (btreenpage(operatorObjectId, indrelid, attributeNumber,
-		       constValue, constFlag, nIndexKeys, indexrelid));
+                       constValue, constFlag, nIndexKeys, indexrelid));
 }

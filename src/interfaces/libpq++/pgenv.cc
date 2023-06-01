@@ -22,88 +22,84 @@
 #include <stdlib.h>
 #include "libpq++.H"
 
-#define DefaultAuth DEFAULT_CLIENT_AUTHSVC 
+#define DefaultAuth DEFAULT_CLIENT_AUTHSVC
 #define DefaultPort POSTPORT
 
 // default constructor for PGenv
 // checks the environment variables
-PGenv::PGenv()
-{
-  char* temp;
+PGenv::PGenv() {
+    char *temp;
 
-  pgauth = NULL;
-  pghost = NULL;
-  pgport = NULL;
-  pgoption = NULL;
-  pgtty = NULL;
+    pgauth = NULL;
+    pghost = NULL;
+    pgport = NULL;
+    pgoption = NULL;
+    pgtty = NULL;
 
-  setValues(getenv(ENV_DEFAULT_AUTH), getenv(ENV_DEFAULT_HOST),
-            getenv(ENV_DEFAULT_PORT), getenv(ENV_DEFAULT_OPTION),
-	    getenv(ENV_DEFAULT_TTY));
+    setValues(getenv(ENV_DEFAULT_AUTH), getenv(ENV_DEFAULT_HOST),
+              getenv(ENV_DEFAULT_PORT), getenv(ENV_DEFAULT_OPTION),
+              getenv(ENV_DEFAULT_TTY));
 }
 
 // constructor for given environment
-PGenv::PGenv(char* auth, char* host, char* port, char* option, char* tty)
-{
-  pgauth = NULL;
-  pghost = NULL;
-  pgport = NULL;
-  pgoption = NULL;
-  pgtty = NULL;
+PGenv::PGenv(char *auth, char *host, char *port, char *option, char *tty) {
+    pgauth = NULL;
+    pghost = NULL;
+    pgport = NULL;
+    pgoption = NULL;
+    pgtty = NULL;
 
-  setValues(auth, host, port, option, tty);
+    setValues(auth, host, port, option, tty);
 }
 
 // allocate memory and set internal structures to match
 // required environment
 void
-PGenv::setValues(char* auth, char* host, char* port, char* option, char* tty)
-{
-  char* temp;
+PGenv::setValues(char *auth, char *host, char *port, char *option, char *tty) {
+    char *temp;
 
-  temp = (auth) ? auth : DefaultAuth;
+    temp = (auth) ? auth : DefaultAuth;
 
-  if (pgauth)
-    free(pgauth);
-  pgauth = strdup(temp);
+    if (pgauth)
+        free(pgauth);
+    pgauth = strdup(temp);
 
-  temp = (host) ? host : DefaultHost;
+    temp = (host) ? host : DefaultHost;
 
-  if (pghost)
-    free(pghost);
-  pghost = strdup(temp);
+    if (pghost)
+        free(pghost);
+    pghost = strdup(temp);
 
-  temp = (port) ? port : DefaultPort;
+    temp = (port) ? port : DefaultPort;
 
-  if (pgport)
-    free(pgport);
-  pgport = strdup(temp);
-  
-  temp = (option) ? option : DefaultOption;
+    if (pgport)
+        free(pgport);
+    pgport = strdup(temp);
 
-  if (pgoption)
-    free(pgoption);
-  pgoption = strdup(temp);
+    temp = (option) ? option : DefaultOption;
 
-  temp = (tty) ? tty : DefaultTty;
+    if (pgoption)
+        free(pgoption);
+    pgoption = strdup(temp);
 
-  if (pgtty)
-    free(pgtty);
-  pgtty = strdup(temp);
+    temp = (tty) ? tty : DefaultTty;
+
+    if (pgtty)
+        free(pgtty);
+    pgtty = strdup(temp);
 }
 
 // default destrutor
 // frees allocated memory for internal structures
-PGenv::~PGenv()
-{
-  if (pgauth)
-    free(pgauth);
-  if (pghost)
-    free(pghost);
-  if (pgport)
-    free(pgport);
-  if (pgoption)
-    free(pgoption);
-  if (pgtty)
-    free(pgtty);
+PGenv::~PGenv() {
+    if (pgauth)
+        free(pgauth);
+    if (pghost)
+        free(pghost);
+    if (pgport)
+        free(pgport);
+    if (pgoption)
+        free(pgoption);
+    if (pgtty)
+        free(pgtty);
 }

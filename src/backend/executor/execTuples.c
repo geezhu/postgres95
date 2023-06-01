@@ -118,6 +118,7 @@
  */
 
 #include "executor/executor.h"
+
 #undef ExecStoreTuple
 
 #include "access/tupdesc.h"
@@ -141,40 +142,40 @@
  *	The table's address will be stored in the EState structure.
  * --------------------------------
  */
-TupleTable			/* return: address of table */
+TupleTable            /* return: address of table */
 ExecCreateTupleTable(int initialSize) /* initial number of slots in table */
 {
-    TupleTable	newtable;	/* newly allocated table */
-    TupleTableSlot* array;	/* newly allocated slot array */
-    
+    TupleTable newtable;    /* newly allocated table */
+    TupleTableSlot *array;    /* newly allocated slot array */
+
     /* ----------------
      *	sanity checks
      * ----------------
      */
     Assert(initialSize >= 1);
-    
+
     /* ----------------
      *	Now allocate our new table along with space for the pointers
      *	to the tuples.
      */
 
     newtable = (TupleTable) palloc(sizeof(TupleTableData));
-    array    = (TupleTableSlot*) palloc(initialSize * sizeof(TupleTableSlot));
-    
+    array = (TupleTableSlot *) palloc(initialSize * sizeof(TupleTableSlot));
+
     /* ----------------
      *	clean out the slots we just allocated
      * ----------------
      */
     memset(array, 0, initialSize * sizeof(TupleTableSlot));
-    
+
     /* ----------------
      *	initialize the new table and return it to the caller.
      * ----------------
      */
-    newtable->size =    initialSize;
-    newtable->next =    0;
-    newtable->array = 	array;
-    
+    newtable->size = initialSize;
+    newtable->next = 0;
+    newtable->array = array;
+
     return newtable;
 }
 
@@ -187,26 +188,26 @@ ExecCreateTupleTable(int initialSize) /* initial number of slots in table */
  * --------------------------------
  */
 void
-ExecDestroyTupleTable(TupleTable table,	/* tuple table */
-		      bool shouldFree) /* true if we should free slot contents */
+ExecDestroyTupleTable(TupleTable table,    /* tuple table */
+                      bool shouldFree) /* true if we should free slot contents */
 {
-    int		next;		/* next avaliable slot */
-    TupleTableSlot     *array;	/* start of table array */
-    int		i;		/* counter */
-    
+    int next;        /* next avaliable slot */
+    TupleTableSlot *array;    /* start of table array */
+    int i;        /* counter */
+
     /* ----------------
      *	sanity checks
      * ----------------
      */
     Assert(table != NULL);
-    
+
     /* ----------------
      *	get information from the table
      * ----------------
      */
     array = table->array;
-    next =  table->next;
-    
+    next = table->next;
+
     /* ----------------
      *	first free all the valid pointers in the tuple array
      *  if that's what the caller wants..
@@ -217,35 +218,35 @@ ExecDestroyTupleTable(TupleTable table,	/* tuple table */
      * ----------------
      */
     if (shouldFree)
-	for (i = 0; i < next; i++) {
-	    TupleTableSlot slot;
-	    HeapTuple	tuple;
-	    
-	    slot = array[i];
-	    tuple = slot.val;
+        for (i = 0; i < next; i++) {
+            TupleTableSlot slot;
+            HeapTuple tuple;
 
-	    if (tuple != NULL) {
-	       slot.val = (HeapTuple)NULL;
-		if (slot.ttc_shouldFree) {
-		    /* ----------------
-		     *	since a tuple may contain a pointer to
-		     *  lock information allocated along with the
-		     *  tuple, we have to be careful to free any
-		     *  rule locks also -cim 1/17/90
-		     * ----------------
-		     */
-		    pfree(tuple);
-		}
-	    }
-	}
-    
+            slot = array[i];
+            tuple = slot.val;
+
+            if (tuple != NULL) {
+                slot.val = (HeapTuple) NULL;
+                if (slot.ttc_shouldFree) {
+                    /* ----------------
+                     *	since a tuple may contain a pointer to
+                     *  lock information allocated along with the
+                     *  tuple, we have to be careful to free any
+                     *  rule locks also -cim 1/17/90
+                     * ----------------
+                     */
+                    pfree(tuple);
+                }
+            }
+        }
+
     /* ----------------
      *	finally free the tuple array and the table itself.
      * ----------------
      */
     pfree(array);
     pfree(table);
-    
+
 }
 
 
@@ -263,17 +264,16 @@ ExecDestroyTupleTable(TupleTable table,	/* tuple table */
  *	slots (some just pass tuples around).
  * --------------------------------
  */
-TupleTableSlot*		/* return: the slot allocated in the tuple table */
-ExecAllocTableSlot(TupleTable table)
-{
-    int	slotnum;		/* new slot number */
-    
+TupleTableSlot *        /* return: the slot allocated in the tuple table */
+ExecAllocTableSlot(TupleTable table) {
+    int slotnum;        /* new slot number */
+
     /* ----------------
      *	sanity checks
      * ----------------
      */
     Assert(table != NULL);
-    
+
     /* ----------------
      *	if our table is full we have to allocate a larger
      *	size table.  Since ExecAllocTableSlot() is only called
@@ -291,18 +291,18 @@ ExecAllocTableSlot(TupleTable table)
      * ----------------
      */
     if (table->next >= table->size) {
-	/*
-	 * int newsize = NewTableSize(table->size);
-	 *
-	 * pfree(table->array);
-	 * table->array = (Pointer) palloc(newsize * TableSlotSize);
-	 * bzero(table->array, newsize * TableSlotSize);
-	 * table->size =  newsize;
-	 */
-	elog(NOTICE, "Plan requires more slots than are available");
-	elog(WARN, "send mail to your local executor guru to fix this");
+        /*
+         * int newsize = NewTableSize(table->size);
+         *
+         * pfree(table->array);
+         * table->array = (Pointer) palloc(newsize * TableSlotSize);
+         * bzero(table->array, newsize * TableSlotSize);
+         * table->size =  newsize;
+         */
+        elog(NOTICE, "Plan requires more slots than are available");
+        elog(WARN, "send mail to your local executor guru to fix this");
     }
-    
+
     /* ----------------
      *	at this point, space in the table is guaranteed so we
      *  reserve the next slot, initialize and return it.
@@ -310,7 +310,7 @@ ExecAllocTableSlot(TupleTable table)
      */
     slotnum = table->next;
     table->next++;
-    
+
     table->array[slotnum].type = T_TupleTableSlot;
 
     return &(table->array[slotnum]);
@@ -332,18 +332,18 @@ ExecAllocTableSlot(TupleTable table)
  *	by amgetattr, which are actually pointers onto disk pages.
  * --------------------------------
  */
-TupleTableSlot*			/* return: slot passed */
-ExecStoreTuple(HeapTuple tuple,	/* tuple to store */
-	       TupleTableSlot* slot,	/* slot in which to store tuple */
-	       Buffer buffer,	/* buffer associated with tuple */
-	       bool shouldFree)	/* true if we call pfree() when we gc. */
+TupleTableSlot *            /* return: slot passed */
+ExecStoreTuple(HeapTuple tuple,    /* tuple to store */
+               TupleTableSlot *slot,    /* slot in which to store tuple */
+               Buffer buffer,    /* buffer associated with tuple */
+               bool shouldFree)    /* true if we call pfree() when we gc. */
 {
     /* ----------------
      *	sanity checks
      * ----------------
      */
     Assert(slot != NULL);
-    
+
     /* clear out the slot first */
     ExecClearTuple(slot);
 
@@ -355,7 +355,7 @@ ExecStoreTuple(HeapTuple tuple,	/* tuple to store */
     slot->val = tuple;
     slot->ttc_buffer = buffer;
     slot->ttc_shouldFree = shouldFree;
-    
+
     return slot;
 }
 
@@ -365,51 +365,51 @@ ExecStoreTuple(HeapTuple tuple,	/* tuple to store */
  *	This function is used to clear out a slot in the tuple table.
  * --------------------------------
  */
-TupleTableSlot* 			/* return: slot passed */
-ExecClearTuple(TupleTableSlot* slot)	/* slot in which to store tuple */
+TupleTableSlot *            /* return: slot passed */
+ExecClearTuple(TupleTableSlot *slot)    /* slot in which to store tuple */
 {
-    HeapTuple 	oldtuple;	/* prior contents of slot */
-    
+    HeapTuple oldtuple;    /* prior contents of slot */
+
     /* ----------------
      *	sanity checks
      * ----------------
      */
     Assert(slot != NULL);
-    
+
     /* ----------------
      *	get information from the tuple table
      * ----------------
      */
-    oldtuple = 	slot->val;
-    
+    oldtuple = slot->val;
+
     /* ----------------
      *	free the old contents of the specified slot if necessary.
      * ----------------
      */
     if (slot->ttc_shouldFree && oldtuple != NULL) {
-	/* ----------------
-	 *  since a tuple may contain a pointer to
-	 *  lock information allocated along with the
-	 *  tuple, we have to be careful to free any
-	 *  rule locks also -cim 1/17/90
-	 * ----------------
-	 */
-	pfree(oldtuple);
+        /* ----------------
+         *  since a tuple may contain a pointer to
+         *  lock information allocated along with the
+         *  tuple, we have to be careful to free any
+         *  rule locks also -cim 1/17/90
+         * ----------------
+         */
+        pfree(oldtuple);
     }
-    
+
     /* ----------------
      *	store NULL into the specified slot and return the slot.
      *  - also set buffer to InvalidBuffer -cim 3/14/91
      * ----------------
      */
-    slot->val = (HeapTuple)NULL;
-    
+    slot->val = (HeapTuple) NULL;
+
     if (BufferIsValid(slot->ttc_buffer))
-	ReleaseBuffer(slot->ttc_buffer);
-    
+        ReleaseBuffer(slot->ttc_buffer);
+
     slot->ttc_buffer = InvalidBuffer;
     slot->ttc_shouldFree = true;
-    
+
     return slot;
 }
 
@@ -423,8 +423,8 @@ ExecClearTuple(TupleTableSlot* slot)	/* slot in which to store tuple */
  *	merge joins that you need to diddle the slot policy.
  * --------------------------------
  */
-bool				/* return: slot policy */
-ExecSlotPolicy(TupleTableSlot* slot)	/* slot to inspect */
+bool                /* return: slot policy */
+ExecSlotPolicy(TupleTableSlot *slot)    /* slot to inspect */
 {
     return slot->ttc_shouldFree;
 }
@@ -438,11 +438,11 @@ ExecSlotPolicy(TupleTableSlot* slot)	/* slot to inspect */
  *	merge joins that you need to diddle the slot policy.
  * --------------------------------
  */
-bool				/* return: old slot policy */
-ExecSetSlotPolicy(TupleTableSlot* slot,		/* slot to change */
-		  bool shouldFree) 	/* true if we call pfree() when we gc. */
+bool                /* return: old slot policy */
+ExecSetSlotPolicy(TupleTableSlot *slot,        /* slot to change */
+                  bool shouldFree)    /* true if we call pfree() when we gc. */
 {
-    bool old_shouldFree =  slot->ttc_shouldFree;
+    bool old_shouldFree = slot->ttc_shouldFree;
     slot->ttc_shouldFree = shouldFree;
 
     return old_shouldFree;
@@ -465,9 +465,9 @@ ExecSetSlotPolicy(TupleTableSlot* slot,		/* slot to change */
  *	with the slot's tuple.
  * --------------------------------
  */
-TupleDesc			/* return: old slot tuple descriptor */
-ExecSetSlotDescriptor(TupleTableSlot *slot,	/* slot to change */
-		      TupleDesc tupdesc)	/* tuple descriptor */
+TupleDesc            /* return: old slot tuple descriptor */
+ExecSetSlotDescriptor(TupleTableSlot *slot,    /* slot to change */
+                      TupleDesc tupdesc)    /* tuple descriptor */
 {
     TupleDesc old_tupdesc = slot->ttc_tupleDescriptor;
 
@@ -483,7 +483,7 @@ ExecSetSlotDescriptor(TupleTableSlot *slot,	/* slot to change */
  */
 void
 ExecSetSlotDescriptorIsNew(TupleTableSlot *slot,/* slot to change */
-			   bool	isNew)		/* "isNew" setting */
+                           bool isNew)        /* "isNew" setting */
 {
     slot->ttc_descIsNew = isNew;
 }
@@ -495,14 +495,14 @@ ExecSetSlotDescriptorIsNew(TupleTableSlot *slot,/* slot to change */
  *	with the slot's tuple, and set the "isNew" flag at the same time.
  * --------------------------------
  */
-TupleDesc			/* return: old slot tuple descriptor */
-ExecSetNewSlotDescriptor(TupleTableSlot *slot,	/* slot to change */
-			 TupleDesc tupdesc) /* tuple descriptor */
+TupleDesc            /* return: old slot tuple descriptor */
+ExecSetNewSlotDescriptor(TupleTableSlot *slot,    /* slot to change */
+                         TupleDesc tupdesc) /* tuple descriptor */
 {
     TupleDesc old_tupdesc = slot->ttc_tupleDescriptor;
     slot->ttc_tupleDescriptor = tupdesc;
     slot->ttc_descIsNew = true;
-    
+
     return old_tupdesc;
 }
 
@@ -527,13 +527,13 @@ ExecSetNewSlotDescriptor(TupleTableSlot *slot,	/* slot to change */
  *	also use ExecIncrSlotBufferRefcnt().
  * --------------------------------
  */
-Buffer				/* return: old slot buffer */
-ExecSetSlotBuffer(TupleTableSlot *slot,	/* slot to change */
-		  Buffer  b)		/* tuple descriptor */
+Buffer                /* return: old slot buffer */
+ExecSetSlotBuffer(TupleTableSlot *slot,    /* slot to change */
+                  Buffer b)        /* tuple descriptor */
 {
     Buffer oldb = slot->ttc_buffer;
     slot->ttc_buffer = b;
-    
+
     return oldb;
 }
 
@@ -546,12 +546,12 @@ ExecSetSlotBuffer(TupleTableSlot *slot,	/* slot to change */
  * --------------------------------
  */
 void
-ExecIncrSlotBufferRefcnt(TupleTableSlot *slot)	/* slot to bump refcnt */
+ExecIncrSlotBufferRefcnt(TupleTableSlot *slot)    /* slot to bump refcnt */
 {
 /*    Buffer b = SlotBuffer((TupleTableSlot*) slot); */
     Buffer b = slot->ttc_buffer;
     if (BufferIsValid(b))
-	IncrBufferRefCount(b);
+        IncrBufferRefCount(b);
 }
 
 /* ----------------------------------------------------------------
@@ -566,27 +566,27 @@ ExecIncrSlotBufferRefcnt(TupleTableSlot *slot)	/* slot to bump refcnt */
  *	tuples to process. 
  * ----------------
  */
-bool				/* return: true if tuple in slot is NULL */
-TupIsNull(TupleTableSlot* slot)		/* slot to check */
+bool                /* return: true if tuple in slot is NULL */
+TupIsNull(TupleTableSlot *slot)        /* slot to check */
 {
-    HeapTuple	tuple;		/* contents of slot (returned) */
-    
+    HeapTuple tuple;        /* contents of slot (returned) */
+
     /* ----------------
      *	if the slot itself is null then we return true
      * ----------------
      */
     if (slot == NULL)
-	return true;
-    
+        return true;
+
     /* ----------------
      *	get information from the slot and return true or
      *  false depending on the contents of the slot.
      * ----------------
      */
-    tuple = 	slot->val;
-    
+    tuple = slot->val;
+
     return
-	(tuple == NULL ? true : false);
+            (tuple == NULL ? true : false);
 }
 
 /* --------------------------------
@@ -597,12 +597,12 @@ TupIsNull(TupleTableSlot* slot)		/* slot to check */
  *	now storing a new type of tuple in this slot
  * --------------------------------
  */
-bool				/* return: descriptor "is new" */
-ExecSlotDescriptorIsNew(TupleTableSlot *slot)	/* slot to inspect */
+bool                /* return: descriptor "is new" */
+ExecSlotDescriptorIsNew(TupleTableSlot *slot)    /* slot to inspect */
 {
 /*    bool isNew = SlotTupleDescriptorIsNew((TupleTableSlot*) slot); 
     return isNew; */
-  return slot->ttc_descIsNew;
+    return slot->ttc_descIsNew;
 }
 
 /* ----------------------------------------------------------------
@@ -619,7 +619,7 @@ ExecSlotDescriptorIsNew(TupleTableSlot *slot)	/* slot to inspect */
 #define INIT_SLOT_DEFS \
     TupleTable     tupleTable; \
     TupleTableSlot*   slot
-    
+
 #define INIT_SLOT_ALLOC \
     tupleTable = (TupleTable) estate->es_tupleTable; \
     slot =       ExecAllocTableSlot(tupleTable); \
@@ -634,8 +634,7 @@ ExecSlotDescriptorIsNew(TupleTableSlot *slot)	/* slot to inspect */
  * ----------------
  */
 void
-ExecInitResultTupleSlot(EState *estate, CommonState *commonstate)
-{
+ExecInitResultTupleSlot(EState *estate, CommonState *commonstate) {
     INIT_SLOT_DEFS;
     INIT_SLOT_ALLOC;
     commonstate->cs_ResultTupleSlot = (TupleTableSlot *) slot;
@@ -646,11 +645,10 @@ ExecInitResultTupleSlot(EState *estate, CommonState *commonstate)
  * ----------------
  */
 void
-ExecInitScanTupleSlot(EState *estate, CommonScanState *commonscanstate)
-{
+ExecInitScanTupleSlot(EState *estate, CommonScanState *commonscanstate) {
     INIT_SLOT_DEFS;
     INIT_SLOT_ALLOC;
-    commonscanstate->css_ScanTupleSlot = (TupleTableSlot *)slot;
+    commonscanstate->css_ScanTupleSlot = (TupleTableSlot *) slot;
 }
 
 /* ----------------
@@ -658,8 +656,7 @@ ExecInitScanTupleSlot(EState *estate, CommonScanState *commonscanstate)
  * ----------------
  */
 void
-ExecInitMarkedTupleSlot(EState *estate, MergeJoinState *mergestate)
-{
+ExecInitMarkedTupleSlot(EState *estate, MergeJoinState *mergestate) {
     INIT_SLOT_DEFS;
     INIT_SLOT_ALLOC;
     mergestate->mj_MarkedTupleSlot = (TupleTableSlot *) slot;
@@ -670,11 +667,10 @@ ExecInitMarkedTupleSlot(EState *estate, MergeJoinState *mergestate)
  * ----------------
  */
 void
-ExecInitOuterTupleSlot(EState *estate, HashJoinState *hashstate)
-{
+ExecInitOuterTupleSlot(EState *estate, HashJoinState *hashstate) {
     INIT_SLOT_DEFS;
     INIT_SLOT_ALLOC;
-    hashstate->hj_OuterTupleSlot =  slot;
+    hashstate->hj_OuterTupleSlot = slot;
 }
 
 /* ----------------
@@ -682,137 +678,121 @@ ExecInitOuterTupleSlot(EState *estate, HashJoinState *hashstate)
  * ----------------
  */
 void
-ExecInitHashTupleSlot(EState *estate, HashJoinState *hashstate)
-{
+ExecInitHashTupleSlot(EState *estate, HashJoinState *hashstate) {
     INIT_SLOT_DEFS;
     INIT_SLOT_ALLOC;
     hashstate->hj_HashTupleSlot = slot;
 }
 
 TupleTableSlot *
-NodeGetResultTupleSlot(Plan *node)
-{
+NodeGetResultTupleSlot(Plan *node) {
     TupleTableSlot *slot;
-    
-    switch(nodeTag(node)) {
-	
-    case T_Result:
-	{
-	    ResultState *resstate = ((Result *)node)->resstate;
-	    slot = resstate->cstate.cs_ResultTupleSlot;
-	}
-	break;
-	
-    case T_SeqScan:
-	{
-	    CommonScanState *scanstate = ((SeqScan *)node)->scanstate;
-	    slot = scanstate->cstate.cs_ResultTupleSlot;
-	}
-	break;
-	
-    case T_NestLoop:
-	{
-	    NestLoopState  	*nlstate = ((NestLoop *)node)->nlstate;
-	    slot = nlstate->jstate.cs_ResultTupleSlot;
-	}
-	break;
-	
-    case T_Append:
-	{
-	    Append		*n = (Append *)node;
-	    AppendState 	*unionstate;
-	    List 		*unionplans;
-	    int  		whichplan;
-	    Plan 		*subplan;
-	    
-	    unionstate = 	n->unionstate;
-	    unionplans = 	n->unionplans;
-	    whichplan = 	unionstate->as_whichplan;
-	    
-	    subplan = (Plan*) nth(whichplan, unionplans);
-	    slot = NodeGetResultTupleSlot(subplan);
-	    break;
-	}
-	
-    case T_IndexScan:
-	{
-	    CommonScanState *scanstate = ((IndexScan *)node)->scan.scanstate;
-	    slot = scanstate->cstate.cs_ResultTupleSlot;
-	}
-	break;
-	
-    case T_Material:
-	{
-	    MaterialState *matstate = ((Material *)node)->matstate;
-	    slot = matstate->csstate.css_ScanTupleSlot;
-	}
-	break;
-	
-    case T_Sort:
-	{
-	    SortState *sortstate = ((Sort *)node)->sortstate;
-	    slot = sortstate->csstate.css_ScanTupleSlot; 
-	}
-	break;
-        
-    case T_Agg:
-	{
-	    AggState *aggstate = ((Agg *)node)->aggstate;
-	    slot = aggstate->csstate.cstate.cs_ResultTupleSlot;
-	}
-	break;
-	
-    case T_Group:
-	{
-	    GroupState *grpstate = ((Group *)node)->grpstate;
-	    slot = grpstate->csstate.cstate.cs_ResultTupleSlot;
-	}
-	break;
-	
-    case T_Hash:
-	{
-	    HashState *hashstate = ((Hash *)node)->hashstate;
-	    slot = hashstate->cstate.cs_ResultTupleSlot;
-	}
-	break;
-        
-    case T_Unique:
-	{
-	    UniqueState *uniquestate = ((Unique *)node)->uniquestate;
-	    slot = uniquestate->cs_ResultTupleSlot;
-	}
-	break;
-	
-    case T_MergeJoin:
-	{
-	    MergeJoinState *mergestate = ((MergeJoin *)node)->mergestate;
-	    slot = mergestate->jstate.cs_ResultTupleSlot;
-	}
-	break;
-	
-    case T_HashJoin:
-	{
-	    HashJoinState *hashjoinstate = ((HashJoin *)node)->hashjoinstate;
-	    slot = hashjoinstate->jstate.cs_ResultTupleSlot;
-	}
-	break;
-	
-   case T_Tee:
-        {
-	    TeeState *teestate = ((Tee*)node)->teestate;
-	    slot = teestate->cstate.cs_ResultTupleSlot;
-        }
-	break;
 
-    default:
-	/* ----------------
-	 *    should never get here
-	 * ----------------
-	 */
-	elog(WARN, "NodeGetResultTupleSlot: node not yet supported: %d ",
-	     nodeTag(node));
-	
-	return NULL;
+    switch (nodeTag(node)) {
+
+        case T_Result: {
+            ResultState *resstate = ((Result *) node)->resstate;
+            slot = resstate->cstate.cs_ResultTupleSlot;
+        }
+            break;
+
+        case T_SeqScan: {
+            CommonScanState *scanstate = ((SeqScan *) node)->scanstate;
+            slot = scanstate->cstate.cs_ResultTupleSlot;
+        }
+            break;
+
+        case T_NestLoop: {
+            NestLoopState *nlstate = ((NestLoop *) node)->nlstate;
+            slot = nlstate->jstate.cs_ResultTupleSlot;
+        }
+            break;
+
+        case T_Append: {
+            Append *n = (Append *) node;
+            AppendState *unionstate;
+            List *unionplans;
+            int whichplan;
+            Plan *subplan;
+
+            unionstate = n->unionstate;
+            unionplans = n->unionplans;
+            whichplan = unionstate->as_whichplan;
+
+            subplan = (Plan *) nth(whichplan, unionplans);
+            slot = NodeGetResultTupleSlot(subplan);
+            break;
+        }
+
+        case T_IndexScan: {
+            CommonScanState *scanstate = ((IndexScan *) node)->scan.scanstate;
+            slot = scanstate->cstate.cs_ResultTupleSlot;
+        }
+            break;
+
+        case T_Material: {
+            MaterialState *matstate = ((Material *) node)->matstate;
+            slot = matstate->csstate.css_ScanTupleSlot;
+        }
+            break;
+
+        case T_Sort: {
+            SortState *sortstate = ((Sort *) node)->sortstate;
+            slot = sortstate->csstate.css_ScanTupleSlot;
+        }
+            break;
+
+        case T_Agg: {
+            AggState *aggstate = ((Agg *) node)->aggstate;
+            slot = aggstate->csstate.cstate.cs_ResultTupleSlot;
+        }
+            break;
+
+        case T_Group: {
+            GroupState *grpstate = ((Group *) node)->grpstate;
+            slot = grpstate->csstate.cstate.cs_ResultTupleSlot;
+        }
+            break;
+
+        case T_Hash: {
+            HashState *hashstate = ((Hash *) node)->hashstate;
+            slot = hashstate->cstate.cs_ResultTupleSlot;
+        }
+            break;
+
+        case T_Unique: {
+            UniqueState *uniquestate = ((Unique *) node)->uniquestate;
+            slot = uniquestate->cs_ResultTupleSlot;
+        }
+            break;
+
+        case T_MergeJoin: {
+            MergeJoinState *mergestate = ((MergeJoin *) node)->mergestate;
+            slot = mergestate->jstate.cs_ResultTupleSlot;
+        }
+            break;
+
+        case T_HashJoin: {
+            HashJoinState *hashjoinstate = ((HashJoin *) node)->hashjoinstate;
+            slot = hashjoinstate->jstate.cs_ResultTupleSlot;
+        }
+            break;
+
+        case T_Tee: {
+            TeeState *teestate = ((Tee *) node)->teestate;
+            slot = teestate->cstate.cs_ResultTupleSlot;
+        }
+            break;
+
+        default:
+            /* ----------------
+             *    should never get here
+             * ----------------
+             */
+            elog(WARN, "NodeGetResultTupleSlot: node not yet supported: %d ",
+                 nodeTag(node));
+
+            return NULL;
     }
     return slot;
 }
@@ -844,14 +824,13 @@ NodeGetResultTupleSlot(Plan *node)
  */
 
 TupleDesc
-ExecGetTupType(Plan *node) 
-{
-    TupleTableSlot    *slot;
-    TupleDesc   tupType;
-    
+ExecGetTupType(Plan *node) {
+    TupleTableSlot *slot;
+    TupleDesc tupType;
+
     if (node == NULL)
-	return NULL;
-    
+        return NULL;
+
     slot = NodeGetResultTupleSlot(node);
     tupType = slot->ttc_tupleDescriptor;
     return tupType;
@@ -896,29 +875,28 @@ ExecCopyTupType(TupleDesc td, int natts)
  * ----------------------------------------------------------------
  */
 TupleDesc
-ExecTypeFromTL(List *targetList)
-{
-    List 	*tlcdr;
-    TupleDesc 	typeInfo;
-    Resdom   	*resdom;
-    Oid     	restype;
-    int 	len;
-    
+ExecTypeFromTL(List *targetList) {
+    List *tlcdr;
+    TupleDesc typeInfo;
+    Resdom *resdom;
+    Oid restype;
+    int len;
+
     /* ----------------
      *  examine targetlist - if empty then return NULL
      * ----------------
      */
     len = ExecTargetListLength(targetList);
-    
+
     if (len == 0)
-	return NULL;
-    
+        return NULL;
+
     /* ----------------
      *  allocate a new typeInfo
      * ----------------
      */
     typeInfo = CreateTemplateTupleDesc(len);
-    
+
     /* ----------------
      * notes: get resdom from (resdom expr)
      *        get_typbyval comes from src/lib/l-lisp/lsyscache.c
@@ -926,17 +904,17 @@ ExecTypeFromTL(List *targetList)
      */
     tlcdr = targetList;
     while (tlcdr != NIL) {
-	TargetEntry *tle = lfirst(tlcdr);
-	if (tle->resdom != NULL) {
-	    resdom =  tle->resdom;
-	    restype = resdom->restype;
-	    
-	    TupleDescInitEntry(typeInfo,
-			       resdom->resno,
-			       resdom->resname,
-			       get_id_typname(restype),
-			       0,
-			       false);
+        TargetEntry *tle = lfirst(tlcdr);
+        if (tle->resdom != NULL) {
+            resdom = tle->resdom;
+            restype = resdom->restype;
+
+            TupleDescInitEntry(typeInfo,
+                               resdom->resno,
+                               resdom->resname,
+                               get_id_typname(restype),
+                               0,
+                               false);
 
 /*
 	    ExecSetTypeInfo(resdom->resno - 1,
@@ -948,26 +926,25 @@ ExecTypeFromTL(List *targetList)
 			    get_typbyval(restype),
 			    get_typalign(restype));
 */
-	}
-	else {
-	    Resdom *fjRes;
-	    List  *fjTlistP;
-	    List  *fjList = lfirst(tlcdr);
+        } else {
+            Resdom *fjRes;
+            List *fjTlistP;
+            List *fjList = lfirst(tlcdr);
 #ifdef SETS_FIXED
-	    TargetEntry *tle; 
-	    Fjoin *fjNode = ((TargetEntry *)lfirst(fjList))->fjoin;
-
-	    tle = fjNode->fj_innerNode;	/* ??? */
+            TargetEntry *tle; 
+            Fjoin *fjNode = ((TargetEntry *)lfirst(fjList))->fjoin;
+    
+            tle = fjNode->fj_innerNode;	/* ??? */
 #endif
-	    fjRes = tle->resdom;
-	    restype = fjRes->restype;
-	    
-	    TupleDescInitEntry(typeInfo,
-			       fjRes->resno,
-			       fjRes->resname,
-			       get_id_typname(restype),
-			       0,
-			       false);
+            fjRes = tle->resdom;
+            restype = fjRes->restype;
+
+            TupleDescInitEntry(typeInfo,
+                               fjRes->resno,
+                               fjRes->resname,
+                               get_id_typname(restype),
+                               0,
+                               false);
 /*
 	    ExecSetTypeInfo(fjRes->resno - 1,
 			    typeInfo,    
@@ -978,19 +955,19 @@ ExecTypeFromTL(List *targetList)
 			    get_typbyval(restype),
 			    get_typalign(restype));
 */
-	    
-	    foreach(fjTlistP, lnext(fjList)) {
-		TargetEntry *fjTle = lfirst(fjTlistP);
-		
-		fjRes = fjTle->resdom;
 
-		TupleDescInitEntry(typeInfo,
-				   fjRes->resno,
-				   fjRes->resname,
-				   get_id_typname(restype),
-				   0,
-				   false);
-		
+            foreach(fjTlistP, lnext(fjList)) {
+                TargetEntry *fjTle = lfirst(fjTlistP);
+
+                fjRes = fjTle->resdom;
+
+                TupleDescInitEntry(typeInfo,
+                                   fjRes->resno,
+                                   fjRes->resname,
+                                   get_id_typname(restype),
+                                   0,
+                                   false);
+
 /*
 		ExecSetTypeInfo(fjRes->resno - 1,
 				typeInfo, 
@@ -1001,12 +978,12 @@ ExecTypeFromTL(List *targetList)
 				get_typbyval(fjRes->restype),
 				get_typalign(fjRes->restype));
 */
-	    }
-	}
-	
-	tlcdr = lnext(tlcdr);
+            }
+        }
+
+        tlcdr = lnext(tlcdr);
     }
-    
+
     return typeInfo;
 }
 

@@ -28,34 +28,33 @@
  * ----------------
  */
 HeapAccessStatistics heap_access_stats = (HeapAccessStatistics) NULL;
-     
+
 void
-InitHeapAccessStatistics()    
-{
-    MemoryContext    oldContext;
+InitHeapAccessStatistics() {
+    MemoryContext oldContext;
     HeapAccessStatistics stats;
-    
+
     /* ----------------
      *  make sure we don't initialize things twice
      * ----------------
      */
     if (heap_access_stats != NULL)
         return;
-    
+
     /* ----------------
      *  allocate statistics structure from the top memory context
      * ----------------
      */
     oldContext = MemoryContextSwitchTo(TopMemoryContext);
-    
+
     stats = (HeapAccessStatistics)
-        palloc(sizeof(HeapAccessStatisticsData));
-    
+            palloc(sizeof(HeapAccessStatisticsData));
+
     /* ----------------
      *  initialize fields to default values
      * ----------------
      */
-    stats->global_open = 0;			
+    stats->global_open = 0;
     stats->global_openr = 0;
     stats->global_close = 0;
     stats->global_beginscan = 0;
@@ -75,7 +74,7 @@ InitHeapAccessStatistics()
     stats->global_heapgettup = 0;
     stats->global_RelationPutHeapTuple = 0;
     stats->global_RelationPutLongHeapTuple = 0;
-    
+
     stats->local_open = 0;
     stats->local_openr = 0;
     stats->local_close = 0;
@@ -98,7 +97,7 @@ InitHeapAccessStatistics()
     stats->local_RelationPutLongHeapTuple = 0;
     stats->local_RelationNameGetRelation = 0;
     stats->global_RelationNameGetRelation = 0;
-    
+
     /* ----------------
      *  record init times
      * ----------------
@@ -106,13 +105,13 @@ InitHeapAccessStatistics()
     time(&stats->init_global_timestamp);
     time(&stats->local_reset_timestamp);
     time(&stats->last_request_timestamp);
-    
+
     /* ----------------
      *  return to old memory context
      * ----------------
      */
     (void) MemoryContextSwitchTo(oldContext);
-    
+
     heap_access_stats = stats;
 }
 
@@ -121,19 +120,18 @@ InitHeapAccessStatistics()
  * ----------------
  */
 void
-ResetHeapAccessStatistics()    
-{
+ResetHeapAccessStatistics() {
     HeapAccessStatistics stats;
-    
+
     /* ----------------
      *  do nothing if stats aren't initialized
      * ----------------
      */
     if (heap_access_stats == NULL)
         return;
-    
+
     stats = heap_access_stats;
-    
+
     /* ----------------
      *  reset local counts
      * ----------------
@@ -158,7 +156,7 @@ ResetHeapAccessStatistics()
     stats->local_heapgettup = 0;
     stats->local_RelationPutHeapTuple = 0;
     stats->local_RelationPutLongHeapTuple = 0;
-    
+
     /* ----------------
      *  reset local timestamps
      * ----------------
@@ -171,34 +169,33 @@ ResetHeapAccessStatistics()
  *      GetHeapAccessStatistics
  * ----------------
  */
-HeapAccessStatistics GetHeapAccessStatistics()    
-{
+HeapAccessStatistics GetHeapAccessStatistics() {
     HeapAccessStatistics stats;
-    
+
     /* ----------------
      *  return nothing if stats aren't initialized
      * ----------------
      */
     if (heap_access_stats == NULL)
         return NULL;
-    
+
     /* ----------------
      *  record the current request time
      * ----------------
      */
     time(&heap_access_stats->last_request_timestamp);
-    
+
     /* ----------------
      *  allocate a copy of the stats and return it to the caller.
      * ----------------
      */
     stats = (HeapAccessStatistics)
-        palloc(sizeof(HeapAccessStatisticsData));
-    
-     memmove(stats,
-	     heap_access_stats,
-	     sizeof(HeapAccessStatisticsData)); 
-    
+            palloc(sizeof(HeapAccessStatisticsData));
+
+    memmove(stats,
+            heap_access_stats,
+            sizeof(HeapAccessStatisticsData));
+
     return stats;
 }
 
@@ -207,94 +204,93 @@ HeapAccessStatistics GetHeapAccessStatistics()
  * ----------------
  */
 void
-PrintHeapAccessStatistics(HeapAccessStatistics stats)
-{
+PrintHeapAccessStatistics(HeapAccessStatistics stats) {
     /* ----------------
      *  return nothing if stats aren't valid
      * ----------------
      */
     if (stats == NULL)
         return;
-    
+
     printf("======== heap am statistics ========\n");
     printf("init_global_timestamp:      %s",
            ctime(&(stats->init_global_timestamp)));
-    
+
     printf("local_reset_timestamp:      %s",
            ctime(&(stats->local_reset_timestamp)));
-    
+
     printf("last_request_timestamp:     %s",
            ctime(&(stats->last_request_timestamp)));
-    
+
     printf("local/global_open:                        %6d/%6d\n",
            stats->local_open, stats->global_open);
-    
+
     printf("local/global_openr:                       %6d/%6d\n",
            stats->local_openr, stats->global_openr);
-    
+
     printf("local/global_close:                       %6d/%6d\n",
            stats->local_close, stats->global_close);
-    
+
     printf("local/global_beginscan:                   %6d/%6d\n",
            stats->local_beginscan, stats->global_beginscan);
-    
+
     printf("local/global_rescan:                      %6d/%6d\n",
            stats->local_rescan, stats->global_rescan);
-    
+
     printf("local/global_endscan:                     %6d/%6d\n",
            stats->local_endscan, stats->global_endscan);
-    
+
     printf("local/global_getnext:                     %6d/%6d\n",
            stats->local_getnext, stats->global_getnext);
-    
+
     printf("local/global_fetch:                       %6d/%6d\n",
            stats->local_fetch, stats->global_fetch);
-    
+
     printf("local/global_insert:                      %6d/%6d\n",
            stats->local_insert, stats->global_insert);
-    
+
     printf("local/global_delete:                      %6d/%6d\n",
            stats->local_delete, stats->global_delete);
-    
+
     printf("local/global_replace:                     %6d/%6d\n",
            stats->local_replace, stats->global_replace);
-    
+
     printf("local/global_markpos:                     %6d/%6d\n",
            stats->local_markpos, stats->global_markpos);
-    
+
     printf("local/global_restrpos:                    %6d/%6d\n",
            stats->local_restrpos, stats->global_restrpos);
-    
+
     printf("================\n");
-    
+
     printf("local/global_BufferGetRelation:             %6d/%6d\n",
            stats->local_BufferGetRelation,
            stats->global_BufferGetRelation);
-    
+
     printf("local/global_RelationIdGetRelation:         %6d/%6d\n",
            stats->local_RelationIdGetRelation,
            stats->global_RelationIdGetRelation);
-    
+
     printf("local/global_RelationIdGetRelation_Buf:     %6d/%6d\n",
            stats->local_RelationIdGetRelation_Buf,
            stats->global_RelationIdGetRelation_Buf);
-    
+
     printf("local/global_getreldesc:                    %6d/%6d\n",
            stats->local_getreldesc, stats->global_getreldesc);
-    
+
     printf("local/global_heapgettup:                    %6d/%6d\n",
            stats->local_heapgettup, stats->global_heapgettup);
-    
+
     printf("local/global_RelationPutHeapTuple:          %6d/%6d\n",
            stats->local_RelationPutHeapTuple,
            stats->global_RelationPutHeapTuple);
-    
+
     printf("local/global_RelationPutLongHeapTuple:      %6d/%6d\n",
            stats->local_RelationPutLongHeapTuple,
            stats->global_RelationPutLongHeapTuple);
-    
+
     printf("===================================\n");
-    
+
     printf("\n");
 }
 
@@ -303,11 +299,10 @@ PrintHeapAccessStatistics(HeapAccessStatistics stats)
  * ----------------
  */
 void
-PrintAndFreeHeapAccessStatistics(HeapAccessStatistics stats)
-{
+PrintAndFreeHeapAccessStatistics(HeapAccessStatistics stats) {
     PrintHeapAccessStatistics(stats);
     if (stats != NULL)
-	pfree(stats);
+        pfree(stats);
 }
 
 /* ----------------------------------------------------------------
@@ -319,8 +314,7 @@ PrintAndFreeHeapAccessStatistics(HeapAccessStatistics stats)
  * ----------------
  */
 void
-initam()
-{
+initam() {
     /* ----------------
      *	initialize heap statistics.
      * ----------------

@@ -17,11 +17,10 @@ int Noversion = 0;
 char *DataDir = (char *) NULL;
 
 int
-main(int argc, char **argv)
-{
+main(int argc, char **argv) {
     if (argc < 2) {
-	fprintf(stderr, "pg_version: missing argument\n");
-	exit(1);
+        fprintf(stderr, "pg_version: missing argument\n");
+        exit(1);
     }
     SetPgVersion(argv[1]);
     exit(0);
@@ -29,7 +28,6 @@ main(int argc, char **argv)
 
 elog() {}
 
-GetDataHome()
-{
-	return(NULL);
+GetDataHome() {
+    return (NULL);
 }

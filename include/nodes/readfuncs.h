@@ -10,13 +10,14 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	READFUNCS_H
-#define	READFUNCS_H
+#ifndef    READFUNCS_H
+#define    READFUNCS_H
 
 /*
  * prototypes for functions in read.c (the lisp token parser)
  */
 extern char *lsptok(char *string, int *length);
+
 extern void *nodeRead(bool read_car_only);
 
 /*
@@ -24,4 +25,4 @@ extern void *nodeRead(bool read_car_only);
  */
 extern Node *parsePlanString();
 
-#endif	/* READFUNCS_H */
+#endif    /* READFUNCS_H */

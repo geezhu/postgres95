@@ -32,16 +32,25 @@
 #include "optimizer/tlist.h"
 
 static void set_join_tlist_references(Join *join);
+
 static void set_tempscan_tlist_references(SeqScan *tempscan);
+
 static void set_temp_tlist_references(Temp *temp);
+
 static List *replace_clause_joinvar_refs(Expr *clause,
-			     List *outer_tlist, List *inner_tlist);
+                                         List *outer_tlist, List *inner_tlist);
+
 static List *replace_subclause_joinvar_refs(List *clauses,
-				List *outer_tlist, List *inner_tlist);
+                                            List *outer_tlist, List *inner_tlist);
+
 static Var *replace_joinvar_refs(Var *var, List *outer_tlist, List *inner_tlist);
+
 static List *tlist_temp_references(Oid tempid, List *tlist);
+
 static void replace_result_clause(List *clause, List *subplanTargetList);
+
 static bool OperandIsInner(Node *opnd, int inner_relid);
+
 static void replace_agg_clause(Node *expr, List *targetlist);
 
 /*****************************************************************************
@@ -62,27 +71,26 @@ static void replace_agg_clause(Node *expr, List *targetlist);
  *    
  */
 void
-set_tlist_references(Plan *plan)
-{
-    if(plan==NULL)
-	return;
+set_tlist_references(Plan *plan) {
+    if (plan == NULL)
+        return;
 
-    if (IsA_Join(plan))  {
-	set_join_tlist_references((Join*)plan);
-    } else if (IsA(plan,SeqScan) && plan->lefttree && 
-	       IsA_Temp(plan->lefttree)) {
-	set_tempscan_tlist_references((SeqScan*)plan);
-    } else if (IsA(plan,Sort)) {
-	set_temp_tlist_references ((Temp*)plan);
-    } else if (IsA(plan,Result)) {
-	set_result_tlist_references((Result*)plan);
-    } else if (IsA(plan,Hash)) {
-	set_tlist_references(plan->lefttree);
-    } else if (IsA(plan,Choose)) {
-	List *x;
-	foreach (x, ((Choose*)plan)->chooseplanlist) {
-	    set_tlist_references((Plan*)lfirst(x));
-	}
+    if (IsA_Join(plan)) {
+        set_join_tlist_references((Join *) plan);
+    } else if (IsA(plan, SeqScan) && plan->lefttree &&
+               IsA_Temp(plan->lefttree)) {
+        set_tempscan_tlist_references((SeqScan *) plan);
+    } else if (IsA(plan, Sort)) {
+        set_temp_tlist_references((Temp *) plan);
+    } else if (IsA(plan, Result)) {
+        set_result_tlist_references((Result *) plan);
+    } else if (IsA(plan, Hash)) {
+        set_tlist_references(plan->lefttree);
+    } else if (IsA(plan, Choose)) {
+        List *x;
+        foreach (x, ((Choose *) plan)->chooseplanlist) {
+            set_tlist_references((Plan *) lfirst(x));
+        }
     }
 }
 
@@ -103,37 +111,36 @@ set_tlist_references(Plan *plan)
  *    
  */
 static void
-set_join_tlist_references(Join *join)
-{
-    Plan 	*outer = ((Plan*)join)->lefttree;
-    Plan	*inner = ((Plan*)join)->righttree;
-    List 	*new_join_targetlist = NIL;
-    TargetEntry *temp = (TargetEntry *)NULL;
-    List  	*entry = NIL;
-    List	*inner_tlist = NULL;
-    List	*outer_tlist = NULL;
-    TargetEntry *xtl = 	(TargetEntry *)NULL;
-    List	*qptlist = ((Plan*)join)->targetlist;
+set_join_tlist_references(Join *join) {
+    Plan *outer = ((Plan *) join)->lefttree;
+    Plan *inner = ((Plan *) join)->righttree;
+    List *new_join_targetlist = NIL;
+    TargetEntry *temp = (TargetEntry *) NULL;
+    List *entry = NIL;
+    List *inner_tlist = NULL;
+    List *outer_tlist = NULL;
+    TargetEntry *xtl = (TargetEntry *) NULL;
+    List *qptlist = ((Plan *) join)->targetlist;
 
     foreach(entry, qptlist) {
-	List *joinvar;
+        List *joinvar;
 
-	xtl = (TargetEntry *)lfirst(entry);
-	inner_tlist = ((inner==NULL) ? NIL : inner->targetlist);
-	outer_tlist = ((outer==NULL) ? NIL : outer->targetlist);
-	joinvar = replace_clause_joinvar_refs((Expr*)get_expr(xtl),
-					      outer_tlist,
-					      inner_tlist);
+        xtl = (TargetEntry *) lfirst(entry);
+        inner_tlist = ((inner == NULL) ? NIL : inner->targetlist);
+        outer_tlist = ((outer == NULL) ? NIL : outer->targetlist);
+        joinvar = replace_clause_joinvar_refs((Expr *) get_expr(xtl),
+                                              outer_tlist,
+                                              inner_tlist);
 
-	temp = MakeTLE(xtl->resdom, (Node*)joinvar);
-	new_join_targetlist = lappend(new_join_targetlist,temp);
+        temp = MakeTLE(xtl->resdom, (Node *) joinvar);
+        new_join_targetlist = lappend(new_join_targetlist, temp);
     }
-	
-    ((Plan*)join)->targetlist = new_join_targetlist;
-    if (outer!=NULL)
-	set_tlist_references(outer);
-    if (inner!=NULL)
-	set_tlist_references(inner);
+
+    ((Plan *) join)->targetlist = new_join_targetlist;
+    if (outer != NULL)
+        set_tlist_references(outer);
+    if (inner != NULL)
+        set_tlist_references(inner);
 }
 
 /*    
@@ -147,13 +154,12 @@ set_join_tlist_references(Join *join)
  *    
  */
 static void
-set_tempscan_tlist_references(SeqScan *tempscan)
-{
-    Temp *temp = (Temp*)((Plan*)tempscan)->lefttree;
+set_tempscan_tlist_references(SeqScan *tempscan) {
+    Temp *temp = (Temp *) ((Plan *) tempscan)->lefttree;
 
-    ((Plan*)tempscan)->targetlist =
-	tlist_temp_references(temp->tempid,
-			      ((Plan*)tempscan)->targetlist);
+    ((Plan *) tempscan)->targetlist =
+            tlist_temp_references(temp->tempid,
+                                  ((Plan *) tempscan)->targetlist);
     set_temp_tlist_references(temp);
 }
 
@@ -169,17 +175,16 @@ set_tempscan_tlist_references(SeqScan *tempscan)
  *    
  */
 static void
-set_temp_tlist_references(Temp *temp)
-{
-    Plan *source = ((Plan*)temp)->lefttree;
+set_temp_tlist_references(Temp *temp) {
+    Plan *source = ((Plan *) temp)->lefttree;
 
-    if (source!=NULL) {
-	set_tlist_references(source);
-	((Plan*)temp)->targetlist =
-	    copy_vars(((Plan*)temp)->targetlist ,
-		      (source)->targetlist);
+    if (source != NULL) {
+        set_tlist_references(source);
+        ((Plan *) temp)->targetlist =
+                copy_vars(((Plan *) temp)->targetlist,
+                          (source)->targetlist);
     } else {
-	elog(WARN, "calling set_temp_tlist_references with empty lefttree");
+        elog(WARN, "calling set_temp_tlist_references with empty lefttree");
     }
 }
 
@@ -198,12 +203,11 @@ set_temp_tlist_references(Temp *temp)
  */
 List *
 join_references(List *clauses,
-		List *outer_tlist,
-		List *inner_tlist)
-{
+                List *outer_tlist,
+                List *inner_tlist) {
     return (replace_subclause_joinvar_refs(clauses,
-					   outer_tlist,
-					   inner_tlist));
+                                           outer_tlist,
+                                           inner_tlist));
 }
 
 /*    
@@ -224,42 +228,41 @@ join_references(List *clauses,
  */
 List *
 index_outerjoin_references(List *inner_indxqual,
-			   List *outer_tlist,
-			   Index inner_relid)
-{
+                           List *outer_tlist,
+                           Index inner_relid) {
     List *t_list = NIL;
     Expr *temp = NULL;
     List *t_clause = NIL;
     Expr *clause = NULL;
 
-    foreach (t_clause,inner_indxqual) {
-	clause = lfirst(t_clause);
-	/*
-	 * if inner scan on the right.
-	 */
-	if (OperandIsInner((Node*)get_rightop(clause), inner_relid)) {
-	    Var *joinvar = (Var*)
-		replace_clause_joinvar_refs((Expr*)get_leftop(clause),
-					    outer_tlist,
-					    NIL);
-	    temp = make_opclause(replace_opid((Oper*)((Expr*)clause)->oper),
-				 joinvar,
-				 get_rightop(clause));
-	    t_list = lappend(t_list,temp);
-	} else {
-	    /* inner scan on left */
-	    Var *joinvar = (Var*)
-		replace_clause_joinvar_refs((Expr*)get_rightop(clause),
-					    outer_tlist,
-					    NIL);
-	    temp = make_opclause(replace_opid((Oper*)((Expr*)clause)->oper),
-				 joinvar,
-				 get_leftop(clause));
-	    t_list = lappend(t_list,temp);
-	} 
-	
+    foreach (t_clause, inner_indxqual) {
+        clause = lfirst(t_clause);
+        /*
+         * if inner scan on the right.
+         */
+        if (OperandIsInner((Node *) get_rightop(clause), inner_relid)) {
+            Var *joinvar = (Var *)
+                    replace_clause_joinvar_refs((Expr *) get_leftop(clause),
+                                                outer_tlist,
+                                                NIL);
+            temp = make_opclause(replace_opid((Oper *) ((Expr *) clause)->oper),
+                                 joinvar,
+                                 get_rightop(clause));
+            t_list = lappend(t_list, temp);
+        } else {
+            /* inner scan on left */
+            Var *joinvar = (Var *)
+                    replace_clause_joinvar_refs((Expr *) get_rightop(clause),
+                                                outer_tlist,
+                                                NIL);
+            temp = make_opclause(replace_opid((Oper *) ((Expr *) clause)->oper),
+                                 joinvar,
+                                 get_leftop(clause));
+            t_list = lappend(t_list, temp);
+        }
+
     }
-    return(t_list);
+    return (t_list);
 }
 
 /*    
@@ -280,78 +283,76 @@ index_outerjoin_references(List *inner_indxqual,
  */
 static List *
 replace_clause_joinvar_refs(Expr *clause,
-			    List *outer_tlist,
-			    List *inner_tlist)
-{
+                            List *outer_tlist,
+                            List *inner_tlist) {
     List *temp = NULL;
 
-    if(IsA (clause,Var)) {
-	temp = (List*)replace_joinvar_refs((Var*)clause,
-					   outer_tlist,inner_tlist);
-	if(temp)
-	    return(temp);
-	else
-	    if (clause != NULL)
-		return((List*)clause);
-	    else
-		return(NIL);
-    } else if (single_node((Node*)clause)) {
-	return ((List*)clause);
-    } else if (or_clause((Node*)clause)) {
-	List *orclause =
-	    replace_subclause_joinvar_refs(((Expr*)clause)->args,
-					   outer_tlist,
-					   inner_tlist);
-	return ((List*)make_orclause(orclause));
-    } else if (IsA(clause,ArrayRef)) {
-	ArrayRef *aref = (ArrayRef *)clause;
+    if (IsA (clause, Var)) {
+        temp = (List *) replace_joinvar_refs((Var *) clause,
+                                             outer_tlist, inner_tlist);
+        if (temp)
+            return (temp);
+        else if (clause != NULL)
+            return ((List *) clause);
+        else
+            return (NIL);
+    } else if (single_node((Node *) clause)) {
+        return ((List *) clause);
+    } else if (or_clause((Node *) clause)) {
+        List *orclause =
+                replace_subclause_joinvar_refs(((Expr *) clause)->args,
+                                               outer_tlist,
+                                               inner_tlist);
+        return ((List *) make_orclause(orclause));
+    } else if (IsA(clause, ArrayRef)) {
+        ArrayRef *aref = (ArrayRef *) clause;
 
-	temp = replace_subclause_joinvar_refs(aref->refupperindexpr,
-					      outer_tlist,
-					      inner_tlist);
-	aref->refupperindexpr = (List*)temp;
-	temp = replace_subclause_joinvar_refs(aref->reflowerindexpr,
-					      outer_tlist,
-					      inner_tlist);
-	aref->reflowerindexpr = (List*)temp;
-	temp = replace_clause_joinvar_refs((Expr*)aref->refexpr,
-					   outer_tlist,
-					   inner_tlist);
-	aref->refexpr = (Node*)temp;
+        temp = replace_subclause_joinvar_refs(aref->refupperindexpr,
+                                              outer_tlist,
+                                              inner_tlist);
+        aref->refupperindexpr = (List *) temp;
+        temp = replace_subclause_joinvar_refs(aref->reflowerindexpr,
+                                              outer_tlist,
+                                              inner_tlist);
+        aref->reflowerindexpr = (List *) temp;
+        temp = replace_clause_joinvar_refs((Expr *) aref->refexpr,
+                                           outer_tlist,
+                                           inner_tlist);
+        aref->refexpr = (Node *) temp;
 
-	/*
-	 *  no need to set refassgnexpr.  we only set that in the
-	 *  target list on replaces, and this is an array reference
-	 *  in the qualification.  if we got this far, it's 0x0 in
-	 *  the ArrayRef structure 'clause'.
-	 */
+        /*
+         *  no need to set refassgnexpr.  we only set that in the
+         *  target list on replaces, and this is an array reference
+         *  in the qualification.  if we got this far, it's 0x0 in
+         *  the ArrayRef structure 'clause'.
+         */
 
-	return((List*)clause);
-    } else if (is_funcclause((Node*)clause)) {
-	List *funcclause =
-	    replace_subclause_joinvar_refs(((Expr*)clause)->args,
-					   outer_tlist,
-					   inner_tlist);
-	return ((List*)make_funcclause((Func*)((Expr*)clause)->oper,
-				       funcclause));
-    } else if (not_clause((Node*)clause)) {
-	List *notclause =
-	    replace_clause_joinvar_refs(get_notclausearg(clause),
-					outer_tlist,
-					inner_tlist);
-	return ((List*)make_notclause((Expr*)notclause));
-    } else if (is_opclause((Node*)clause)) {
-	Var *leftvar =
-	    (Var*)replace_clause_joinvar_refs((Expr*)get_leftop(clause),
-					     outer_tlist,
-					     inner_tlist);
-	Var *rightvar =
-	    (Var*)replace_clause_joinvar_refs((Expr*)get_rightop(clause),
-					     outer_tlist,
-					     inner_tlist);
-	return ((List*)make_opclause(replace_opid((Oper*)((Expr*)clause)->oper),
-				     leftvar,
-				     rightvar));
+        return ((List *) clause);
+    } else if (is_funcclause((Node *) clause)) {
+        List *funcclause =
+                replace_subclause_joinvar_refs(((Expr *) clause)->args,
+                                               outer_tlist,
+                                               inner_tlist);
+        return ((List *) make_funcclause((Func *) ((Expr *) clause)->oper,
+                                         funcclause));
+    } else if (not_clause((Node *) clause)) {
+        List *notclause =
+                replace_clause_joinvar_refs(get_notclausearg(clause),
+                                            outer_tlist,
+                                            inner_tlist);
+        return ((List *) make_notclause((Expr *) notclause));
+    } else if (is_opclause((Node *) clause)) {
+        Var *leftvar =
+                (Var *) replace_clause_joinvar_refs((Expr *) get_leftop(clause),
+                                                    outer_tlist,
+                                                    inner_tlist);
+        Var *rightvar =
+                (Var *) replace_clause_joinvar_refs((Expr *) get_rightop(clause),
+                                                    outer_tlist,
+                                                    inner_tlist);
+        return ((List *) make_opclause(replace_opid((Oper *) ((Expr *) clause)->oper),
+                                       leftvar,
+                                       rightvar));
     }
     /* shouldn't reach here */
     return NULL;
@@ -359,47 +360,45 @@ replace_clause_joinvar_refs(Expr *clause,
 
 static List *
 replace_subclause_joinvar_refs(List *clauses,
-			       List *outer_tlist,
-			       List *inner_tlist)
-{
+                               List *outer_tlist,
+                               List *inner_tlist) {
     List *t_list = NIL;
     List *temp = NIL;
     List *clause = NIL;
 
-    foreach (clause,clauses) {
-	temp = replace_clause_joinvar_refs(lfirst(clause),
-					   outer_tlist,
-					   inner_tlist);
-	t_list = lappend(t_list,temp);
+    foreach (clause, clauses) {
+        temp = replace_clause_joinvar_refs(lfirst(clause),
+                                           outer_tlist,
+                                           inner_tlist);
+        t_list = lappend(t_list, temp);
     }
-    return(t_list);
+    return (t_list);
 }
 
 static Var *
-replace_joinvar_refs(Var *var, List *outer_tlist, List *inner_tlist)
-{
-    Resdom *outer_resdom =(Resdom*)NULL;
+replace_joinvar_refs(Var *var, List *outer_tlist, List *inner_tlist) {
+    Resdom *outer_resdom = (Resdom *) NULL;
 
-    outer_resdom= tlist_member(var,outer_tlist);
+    outer_resdom = tlist_member(var, outer_tlist);
 
-    if (outer_resdom!=NULL && IsA (outer_resdom,Resdom) ) {
-	return (makeVar (OUTER,
-			 outer_resdom->resno,
-			 var->vartype,
-			 var->varnoold,
-			 var->varoattno));
+    if (outer_resdom != NULL && IsA (outer_resdom, Resdom)) {
+        return (makeVar(OUTER,
+                        outer_resdom->resno,
+                        var->vartype,
+                        var->varnoold,
+                        var->varoattno));
     } else {
-	Resdom *inner_resdom;
-	inner_resdom = tlist_member(var,inner_tlist);
-	if ( inner_resdom!=NULL && IsA (inner_resdom,Resdom) ) {
-	    return (makeVar (INNER,
-			     inner_resdom->resno,
-			     var->vartype,
-			     var->varnoold,
-			     var->varoattno));
-	} 
-    } 
-    return (Var*)NULL;
+        Resdom *inner_resdom;
+        inner_resdom = tlist_member(var, inner_tlist);
+        if (inner_resdom != NULL && IsA (inner_resdom, Resdom)) {
+            return (makeVar(INNER,
+                            inner_resdom->resno,
+                            var->vartype,
+                            var->varnoold,
+                            var->varoattno));
+        }
+    }
+    return (Var *) NULL;
 }
 
 /*    
@@ -417,33 +416,32 @@ replace_joinvar_refs(Var *var, List *outer_tlist, List *inner_tlist)
  *    
  */
 static List *
-tlist_temp_references(Oid tempid, 
-		      List *tlist)
-{
+tlist_temp_references(Oid tempid,
+                      List *tlist) {
     List *t_list = NIL;
-    TargetEntry *temp = (TargetEntry *)NULL;
+    TargetEntry *temp = (TargetEntry *) NULL;
     TargetEntry *xtl = NULL;
     List *entry;
-     
-    foreach (entry, tlist) {
-	AttrNumber oattno;
 
-	xtl = lfirst(entry);
-	if (IsA(get_expr(xtl), Var))
-	    oattno = ((Var*)xtl->expr)->varoattno;
-	else
-	    oattno = 0;
-	 
-	temp = MakeTLE(xtl->resdom,
-		       (Node*)makeVar(tempid,
-				      xtl->resdom->resno,
-				      xtl->resdom->restype,
-				      tempid,
-				      oattno));
-	 
-	t_list = lappend(t_list,temp);
+    foreach (entry, tlist) {
+        AttrNumber oattno;
+
+        xtl = lfirst(entry);
+        if (IsA(get_expr(xtl), Var))
+            oattno = ((Var *) xtl->expr)->varoattno;
+        else
+            oattno = 0;
+
+        temp = MakeTLE(xtl->resdom,
+                       (Node *) makeVar(tempid,
+                                        xtl->resdom->resno,
+                                        xtl->resdom->restype,
+                                        tempid,
+                                        oattno));
+
+        t_list = lappend(t_list, temp);
     }
-    return(t_list);
+    return (t_list);
 }
 
 /*---------------------------------------------------------
@@ -460,8 +458,7 @@ tlist_temp_references(Oid tempid,
  *     fields....
  */
 void
-set_result_tlist_references(Result *resultNode)
-{
+set_result_tlist_references(Result *resultNode) {
     Plan *subplan;
     List *resultTargetList;
     List *subplanTargetList;
@@ -469,17 +466,17 @@ set_result_tlist_references(Result *resultNode)
     TargetEntry *entry;
     Expr *expr;
 
-    resultTargetList= ((Plan*)resultNode)->targetlist;
+    resultTargetList = ((Plan *) resultNode)->targetlist;
 
     /*
      * NOTE: we only consider the left tree subplan.
      * This is usually a seq scan.
      */
-    subplan = ((Plan*)resultNode)->lefttree;
+    subplan = ((Plan *) resultNode)->lefttree;
     if (subplan != NULL) {
-	subplanTargetList = subplan->targetlist;
+        subplanTargetList = subplan->targetlist;
     } else {
-	subplanTargetList = NIL;
+        subplanTargetList = NIL;
     }
 
     /*
@@ -489,9 +486,9 @@ set_result_tlist_references(Result *resultNode)
      * to appropriatelly change all the Var nodes.
      */
     foreach (t, resultTargetList) {
-	entry = (TargetEntry *)lfirst(t);
-	expr = (Expr*) get_expr(entry);
-	replace_result_clause((List*)expr, subplanTargetList);
+        entry = (TargetEntry *) lfirst(t);
+        expr = (Expr *) get_expr(entry);
+        replace_result_clause((List *) expr, subplanTargetList);
     }
 }
 
@@ -506,95 +503,91 @@ set_result_tlist_references(Result *resultNode)
  */
 static void
 replace_result_clause(List *clause,
-		      List *subplanTargetList) /* target list of the
+                      List *subplanTargetList) /* target list of the
 						  subplan */
 {
     List *t;
     List *subClause;
     TargetEntry *subplanVar;
 
-    if (IsA(clause,Var)) {
-	/*
-	 * Ha! A Var node!
-	 */
-	subplanVar = match_varid((Var*)clause, subplanTargetList);
-	/*
-	 * Change the varno & varattno fields of the
-	 * var node.
-	 *
-	 */
-	((Var*)clause)->varno = (Index)OUTER;
-	((Var*)clause)->varattno = subplanVar->resdom->resno;
-    } else if (is_funcclause((Node*)clause)) {
-	/*
-	 * This is a function. Recursively call this routine
-	 * for its arguments...
-	 */
-	subClause = ((Expr*)clause)->args;
-	foreach (t, subClause) {
-	    replace_result_clause(lfirst(t),subplanTargetList);
-	   }
-    } else if (IsA(clause,ArrayRef)) {
-	ArrayRef *aref = (ArrayRef *)clause;
-	/*
-	 * This is an arrayref. Recursively call this routine
-	 * for its expression and its index expression...
-	 */
-	subClause = aref->refupperindexpr;
-	foreach (t, subClause) {
-	    replace_result_clause(lfirst(t),subplanTargetList);
-	}
-	subClause = aref->reflowerindexpr;
-	foreach (t, subClause) {
-	    replace_result_clause(lfirst(t),subplanTargetList);
-	}
-	replace_result_clause((List*)aref->refexpr,
-			      subplanTargetList);
-	replace_result_clause((List*)aref->refassgnexpr,
-			      subplanTargetList);
-    } else if (is_opclause((Node*)clause)) {
-	/*
-	 * This is an operator. Recursively call this routine
-	 * for both its left and right operands
-	 */
-	subClause = (List*)get_leftop((Expr*)clause);
-	replace_result_clause(subClause,subplanTargetList);
-	subClause = (List*)get_rightop((Expr*)clause);
-	replace_result_clause(subClause,subplanTargetList);
-    } else if (IsA(clause,Param) || IsA(clause,Const)) {
-	/* do nothing! */
+    if (IsA(clause, Var)) {
+        /*
+         * Ha! A Var node!
+         */
+        subplanVar = match_varid((Var *) clause, subplanTargetList);
+        /*
+         * Change the varno & varattno fields of the
+         * var node.
+         *
+         */
+        ((Var *) clause)->varno = (Index) OUTER;
+        ((Var *) clause)->varattno = subplanVar->resdom->resno;
+    } else if (is_funcclause((Node *) clause)) {
+        /*
+         * This is a function. Recursively call this routine
+         * for its arguments...
+         */
+        subClause = ((Expr *) clause)->args;
+        foreach (t, subClause) {
+            replace_result_clause(lfirst(t), subplanTargetList);
+        }
+    } else if (IsA(clause, ArrayRef)) {
+        ArrayRef *aref = (ArrayRef *) clause;
+        /*
+         * This is an arrayref. Recursively call this routine
+         * for its expression and its index expression...
+         */
+        subClause = aref->refupperindexpr;
+        foreach (t, subClause) {
+            replace_result_clause(lfirst(t), subplanTargetList);
+        }
+        subClause = aref->reflowerindexpr;
+        foreach (t, subClause) {
+            replace_result_clause(lfirst(t), subplanTargetList);
+        }
+        replace_result_clause((List *) aref->refexpr,
+                              subplanTargetList);
+        replace_result_clause((List *) aref->refassgnexpr,
+                              subplanTargetList);
+    } else if (is_opclause((Node *) clause)) {
+        /*
+         * This is an operator. Recursively call this routine
+         * for both its left and right operands
+         */
+        subClause = (List *) get_leftop((Expr *) clause);
+        replace_result_clause(subClause, subplanTargetList);
+        subClause = (List *) get_rightop((Expr *) clause);
+        replace_result_clause(subClause, subplanTargetList);
+    } else if (IsA(clause, Param) || IsA(clause, Const)) {
+        /* do nothing! */
     } else {
-	/*
-	 * Ooops! we can not handle that!
-	 */
-	elog(WARN,"replace_result_clause: Can not handle this tlist!\n");
+        /*
+         * Ooops! we can not handle that!
+         */
+        elog(WARN, "replace_result_clause: Can not handle this tlist!\n");
     }
 }
 
 static
-bool OperandIsInner(Node *opnd, int inner_relid)
-{
+bool OperandIsInner(Node *opnd, int inner_relid) {
     /*
      * Can be the inner scan if its a varnode or a function and the
      * inner_relid is equal to the varnode's var number or in the 
      * case of a function the first argument's var number (all args
      * in a functional index are from the same relation).
      */
-    if ( IsA (opnd,Var) && 
-	(inner_relid == ((Var*)opnd)->varno) )
-	{
-	    return true;
-	}
-    if (is_funcclause(opnd))
-	{
-	    List *firstArg = lfirst(((Expr*)opnd)->args);
+    if (IsA (opnd, Var) &&
+        (inner_relid == ((Var *) opnd)->varno)) {
+        return true;
+    }
+    if (is_funcclause(opnd)) {
+        List *firstArg = lfirst(((Expr *) opnd)->args);
 
-	    if ( IsA (firstArg,Var) &&
-		(inner_relid == ((Var*)firstArg)->varno) )
-		{
-		    return true;
-		}
-	}
+        if (IsA (firstArg, Var) &&
+            (inner_relid == ((Var *) firstArg)->varno)) {
+            return true;
+        }
+    }
     return false;
 }
 
@@ -610,8 +603,7 @@ bool OperandIsInner(Node *opnd, int inner_relid)
  *
  */
 void
-set_agg_tlist_references(Agg *aggNode)
-{
+set_agg_tlist_references(Agg *aggNode) {
     List *aggTargetList;
     List *subplanTargetList;
     List *tl;
@@ -620,15 +612,14 @@ set_agg_tlist_references(Agg *aggNode)
     subplanTargetList = aggNode->plan.lefttree->targetlist;
 
     foreach (tl, aggTargetList) {
-	TargetEntry *tle = lfirst(tl);
+        TargetEntry *tle = lfirst(tl);
 
-	replace_agg_clause(tle->expr, subplanTargetList);
+        replace_agg_clause(tle->expr, subplanTargetList);
     }
 }
 
 void
-set_agg_agglist_references(Agg *aggNode)
-{
+set_agg_agglist_references(Agg *aggNode) {
     List *subplanTargetList;
     Aggreg **aggs;
     int i;
@@ -637,68 +628,67 @@ set_agg_agglist_references(Agg *aggNode)
     subplanTargetList = aggNode->plan.lefttree->targetlist;
 
     for (i = 0; i < aggNode->numAgg; i++) {
-	replace_agg_clause(aggs[i]->target, subplanTargetList);
+        replace_agg_clause(aggs[i]->target, subplanTargetList);
     }
 }
 
 static void
-replace_agg_clause(Node *clause, List *subplanTargetList)
-{
+replace_agg_clause(Node *clause, List *subplanTargetList) {
     List *t;
     TargetEntry *subplanVar;
 
-    if (IsA(clause,Var)) {
-	/*
-	 * Ha! A Var node!
-	 */
-	subplanVar = match_varid((Var*)clause, subplanTargetList);
-	/*
-	 * Change the varno & varattno fields of the
-	 * var node.
-	 *
-	 */
-	((Var*)clause)->varattno = subplanVar->resdom->resno;
+    if (IsA(clause, Var)) {
+        /*
+         * Ha! A Var node!
+         */
+        subplanVar = match_varid((Var *) clause, subplanTargetList);
+        /*
+         * Change the varno & varattno fields of the
+         * var node.
+         *
+         */
+        ((Var *) clause)->varattno = subplanVar->resdom->resno;
     } else if (is_funcclause(clause)) {
-	/*
-	 * This is a function. Recursively call this routine
-	 * for its arguments...
-	 */
-	foreach (t, ((Expr*)clause)->args) {
-	    replace_agg_clause(lfirst(t), subplanTargetList);
-	   }
-    } else if (IsA(clause,Aggreg)) {
-	replace_agg_clause(((Aggreg*)clause)->target, subplanTargetList);
-    } else if (IsA(clause,ArrayRef)) {
-	ArrayRef *aref = (ArrayRef *)clause;
+        /*
+         * This is a function. Recursively call this routine
+         * for its arguments...
+         */
+        foreach (t, ((Expr *) clause)->args) {
+            replace_agg_clause(lfirst(t), subplanTargetList);
+        }
+    } else if (IsA(clause, Aggreg)) {
+        replace_agg_clause(((Aggreg *) clause)->target, subplanTargetList);
+    } else if (IsA(clause, ArrayRef)) {
+        ArrayRef *aref = (ArrayRef *) clause;
 
-	/*
-	 * This is an arrayref. Recursively call this routine
-	 * for its expression and its index expression...
-	 */
-	foreach (t, aref->refupperindexpr) {
-	    replace_agg_clause(lfirst(t),subplanTargetList);
-	}
-	foreach (t, aref->reflowerindexpr) {
-	    replace_agg_clause(lfirst(t),subplanTargetList);
-	}
-	replace_agg_clause(aref->refexpr, subplanTargetList);
-	replace_agg_clause(aref->refassgnexpr, subplanTargetList);
+        /*
+         * This is an arrayref. Recursively call this routine
+         * for its expression and its index expression...
+         */
+        foreach (t, aref->refupperindexpr) {
+            replace_agg_clause(lfirst(t), subplanTargetList);
+        }
+        foreach (t, aref->reflowerindexpr) {
+            replace_agg_clause(lfirst(t), subplanTargetList);
+        }
+        replace_agg_clause(aref->refexpr, subplanTargetList);
+        replace_agg_clause(aref->refassgnexpr, subplanTargetList);
     } else if (is_opclause(clause)) {
-	/*
-	 * This is an operator. Recursively call this routine
-	 * for both its left and right operands
-	 */
-	replace_agg_clause((Node*)get_leftop((Expr*)clause),
-			   subplanTargetList);
-	replace_agg_clause((Node*)get_rightop((Expr*)clause),
-			   subplanTargetList);
-    } else if (IsA(clause,Param) || IsA(clause,Const)) {
-	/* do nothing! */
+        /*
+         * This is an operator. Recursively call this routine
+         * for both its left and right operands
+         */
+        replace_agg_clause((Node *) get_leftop((Expr *) clause),
+                           subplanTargetList);
+        replace_agg_clause((Node *) get_rightop((Expr *) clause),
+                           subplanTargetList);
+    } else if (IsA(clause, Param) || IsA(clause, Const)) {
+        /* do nothing! */
     } else {
-	/*
-	 * Ooops! we can not handle that!
-	 */
-	elog(WARN,"replace_agg_clause: Can not handle this tlist!\n");
+        /*
+         * Ooops! we can not handle that!
+         */
+        elog(WARN, "replace_agg_clause: Can not handle this tlist!\n");
     }
 
 }

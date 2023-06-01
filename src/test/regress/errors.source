@@ -2,7 +2,7 @@
 -- errors.source
 --
 -- $Header: /cvsroot/pgsql/src/test/regress/Attic/errors.source,v 1.1.1.1 1996/07/09 06:22:24 scrappy Exp $
- 
+
 
 -- bad in postquel, but ok in postsql
 select 1
@@ -10,7 +10,7 @@ select 1
 
 --
 -- UNSUPPORTED STUFF
- 
+
 -- doesn't work 
 -- attachas nonesuch
 --
@@ -20,43 +20,55 @@ select 1
 
 --
 -- RETRIEVE
- 
+
 -- missing relation name 
 select
 
 -- no such relation 
-select * from nonesuch;
+select *
+from nonesuch;
 
 -- bad name in target list
-select nonesuch from pg_database;
+select nonesuch
+from pg_database;
 -- bad attribute name on lhs of operator
-select * from pg_database where nonesuch = pg_database.datname;
+select *
+from pg_database
+where nonesuch = pg_database.datname;
 
 -- bad attribute name on rhs of operator
-select * from pg_database where pg_database.datname = nonesuch;
+select *
+from pg_database
+where pg_database.datname = nonesuch;
 
 
 -- bad select distinct on  syntax,  distinct attribute missing
-select distinct on foobar from pg_database;
+select distinct
+on foobar
+from pg_database;
 
 
 -- bad select distinct on syntax, distinct attribute not in target list
-select distinct on foobar * from pg_database;
+select distinct
+on foobar *
+from pg_database;
 
 
 --
 -- DELETE
- 
+
 -- missing relation name (this had better not wildcard!) 
-delete from;
+delete
+from;
 
 -- no such relation 
-delete from nonesuch;
+delete
+from nonesuch;
 
 
 --
 -- DESTROY
- 
+
 -- missing relation name (this had better not wildcard!) 
 drop table;
 
@@ -66,7 +78,7 @@ drop table nonesuch;
 
 --
 -- RENAME
- 
+
 
 -- relation renaming 
 
@@ -106,7 +118,7 @@ alter table emp rename column salary to oid;
 
 --
 -- TRANSACTION STUFF
- 
+
 -- not in a xact 
 abort;
 
@@ -118,7 +130,8 @@ end;
 -- DEFINE AGGREGATE
  
 -- left out finalfunc 
-create aggregate newavg1 (sfunc1 = int4pl,
+create
+aggregate newavg1 (sfunc1 = int4pl,
 			  basetype = int4,
 			  stype1 = int4,
 			  sfunc2 = int4inc,
@@ -127,7 +140,8 @@ create aggregate newavg1 (sfunc1 = int4pl,
 			  initcond2 = '0');
 
 -- sfunc return type disagreement 
-create aggregate newavg2 (sfunc1 = int4pl,
+create
+aggregate newavg2 (sfunc1 = int4pl,
 			  basetype = int4,
 			  stype1 = int4,
 			  sfunc2 = int2inc,
@@ -137,7 +151,8 @@ create aggregate newavg2 (sfunc1 = int4pl,
 			  initcond2 = '0');
 
 -- sfunc/finalfunc type disagreement 
-create aggregate newavg3 (sfunc1 = int4pl,
+create
+aggregate newavg3 (sfunc1 = int4pl,
 			  basetype = int4,
 			  stype1 = int4,
 			  sfunc2 = int4inc,
@@ -147,12 +162,14 @@ create aggregate newavg3 (sfunc1 = int4pl,
 			  initcond2 = '0');
 
 -- left out basetype
-create aggregate newcnt1 (sfunc2 = int4inc,
+create
+aggregate newcnt1 (sfunc2 = int4inc,
 			  stype2 = int4,
 			initcond2 = '0');
 
 -- left out initcond2 (for sfunc2) 
-create aggregate newcnt1 (sfunc2 = int4inc,
+create
+aggregate newcnt1 (sfunc2 = int4inc,
 			  basetype = int4,
 			  stype2 = int4);
 
@@ -172,25 +189,30 @@ drop index nonesuch;
 
 --
 -- REMOVE AGGREGATE
- 
+
 -- missing aggregate name 
-drop aggregate;
+drop
+aggregate;
 
 -- bad aggregate name 
-drop aggregate 314159;
+drop
+aggregate 314159;
 
 -- no such aggregate 
-drop aggregate nonesuch;
+drop
+aggregate nonesuch;
 
 
 --
 -- REMOVE FUNCTION
  
 -- missing function name 
-drop function ();
+drop function
+();
 
 -- bad function name 
-drop function 314159();
+drop function
+314159();
 
 -- no such function 
 drop function nonesuch();
@@ -198,7 +220,7 @@ drop function nonesuch();
 
 --
 -- REMOVE TYPE
- 
+
 -- missing type name 
 drop type;
 
@@ -211,65 +233,84 @@ drop type nonesuch;
 
 --
 -- DROP OPERATOR
- 
+
 -- missing everything 
-drop operator;
+drop
+operator;
 
 -- bad operator name 
-drop operator equals;
+drop
+operator equals;
 
 -- missing type list 
-drop operator ===;
+drop
+operator ===;
 
 -- missing parentheses 
-drop operator int4, int4;
+drop
+operator int4, int4;
 
 -- missing operator name 
-drop operator (int4, int4);
+drop
+operator (int4, int4);
 
 -- missing type list contents 
-drop operator === ();
+drop
+operator === ();
 
 -- no such operator 
-drop operator === (int4);
+drop
+operator === (int4);
 
 -- no such operator by that name 
-drop operator === (int4, int4);
+drop
+operator === (int4, int4);
 
 -- no such type1 
-drop operator = (nonesuch);
+drop
+operator = (nonesuch);
 
 -- no such type1 
-drop operator = ( , int4);
+drop
+operator = ( , int4);
 
 -- no such type1 
-drop operator = (nonesuch, int4);
+drop
+operator = (nonesuch, int4);
 
 -- no such type2 
-drop operator = (int4, nonesuch);
+drop
+operator = (int4, nonesuch);
 
 -- no such type2 
-drop operator = (int4, );
+drop
+operator = (int4, );
 
 
 --
 -- DROP RULE
  
 -- missing rule name 
-drop rule;
+drop
+rule;
 
 -- bad rule name 
-drop rule 314159;
+drop
+rule 314159;
 
 -- no such rule 
-drop rule nonesuch;
+drop
+rule nonesuch;
 
 -- bad keyword 
-drop tuple rule nonesuch;
+drop
+tuple rule nonesuch;
 
 -- no such rule 
-drop instance rule nonesuch;
+drop instance
+rule nonesuch;
 
 -- no such rule 
-drop rewrite rule nonesuch;
+drop
+rewrite rule nonesuch;
 

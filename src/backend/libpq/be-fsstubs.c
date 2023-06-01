@@ -28,7 +28,7 @@
 #include "utils/mcxt.h"
 #include "utils/palloc.h"
 
-#include "storage/fd.h"		/* for O_ */
+#include "storage/fd.h"        /* for O_ */
 #include "storage/large_object.h"
 
 #include "utils/elog.h"
@@ -37,12 +37,13 @@
 /*#define FSDB 1*/
 #define MAX_LOBJ_FDS 256
 
-static LargeObjectDesc  *cookies[MAX_LOBJ_FDS];
+static LargeObjectDesc *cookies[MAX_LOBJ_FDS];
 
 static GlobalMemory fscxt = NULL;
 
 
 static int newLOfd(LargeObjectDesc *lobjCookie);
+
 static void deleteLOfd(int fd);
 
 
@@ -51,31 +52,30 @@ static void deleteLOfd(int fd);
  *****************************************************************************/
 
 int
-lo_open(Oid lobjId, int mode)
-{
+lo_open(Oid lobjId, int mode) {
     LargeObjectDesc *lobjDesc;
     int fd;
     MemoryContext currentContext;
-    
+
 #if FSDB
     elog(NOTICE,"LOopen(%d,%d)",lobjId,mode);
 #endif
 
     if (fscxt == NULL) {
-	fscxt = CreateGlobalMemory("Filesystem");
+        fscxt = CreateGlobalMemory("Filesystem");
     }
-    currentContext = MemoryContextSwitchTo((MemoryContext)fscxt);
+    currentContext = MemoryContextSwitchTo((MemoryContext) fscxt);
 
     lobjDesc = inv_open(lobjId, mode);
-    
+
     if (lobjDesc == NULL) { /* lookup failed */
-	MemoryContextSwitchTo(currentContext);
-#if FSDB	
-	elog(NOTICE,"cannot open large object %d", lobjId);
+        MemoryContextSwitchTo(currentContext);
+#if FSDB
+        elog(NOTICE,"cannot open large object %d", lobjId);
 #endif
-	return -1;
+        return -1;
     }
-    
+
     fd = newLOfd(lobjDesc);
 
     /* switch context back to orig. */
@@ -85,24 +85,23 @@ lo_open(Oid lobjId, int mode)
 }
 
 int
-lo_close(int fd)
-{
+lo_close(int fd) {
     MemoryContext currentContext;
 
     if (fd >= MAX_LOBJ_FDS) {
-	elog(WARN,"lo_close: large obj descriptor (%d) out of range", fd);
-	return -2;
+        elog(WARN, "lo_close: large obj descriptor (%d) out of range", fd);
+        return -2;
     }
     if (cookies[fd] == NULL) {
-	elog(WARN,"lo_close: invalid large obj descriptor (%d)", fd);
-	return -3;
+        elog(WARN, "lo_close: invalid large obj descriptor (%d)", fd);
+        return -3;
     }
 #if FSDB
-    elog(NOTICE,"LOclose(%d)",fd);
+        elog(NOTICE,"LOclose(%d)",fd);
 #endif
 
     Assert(fscxt != NULL);
-    currentContext = MemoryContextSwitchTo((MemoryContext)fscxt);
+    currentContext = MemoryContextSwitchTo((MemoryContext) fscxt);
 
     inv_close(cookies[fd]);
 
@@ -117,77 +116,71 @@ lo_close(int fd)
  *  that our work is easier.
  */
 int
-lo_read(int fd, char *buf, int len)
-{
-    Assert(cookies[fd]!=NULL);
+lo_read(int fd, char *buf, int len) {
+    Assert(cookies[fd] != NULL);
     return inv_read(cookies[fd], buf, len);
 }
 
 int
-lo_write(int fd, char *buf, int len)
-{
-    Assert(cookies[fd]!=NULL);
+lo_write(int fd, char *buf, int len) {
+    Assert(cookies[fd] != NULL);
     return inv_write(cookies[fd], buf, len);
 }
 
 
 int
-lo_lseek(int fd, int offset, int whence)
-{
+lo_lseek(int fd, int offset, int whence) {
     if (fd >= MAX_LOBJ_FDS) {
-	elog(WARN,"lo_seek: large obj descriptor (%d) out of range", fd);
-	return -2;
+        elog(WARN, "lo_seek: large obj descriptor (%d) out of range", fd);
+        return -2;
     }
     return inv_seek(cookies[fd], offset, whence);
 }
 
 Oid
-lo_creat(int mode)
-{
+lo_creat(int mode) {
     LargeObjectDesc *lobjDesc;
     MemoryContext currentContext;
     Oid lobjId;
-    
+
     if (fscxt == NULL) {
-	fscxt = CreateGlobalMemory("Filesystem");
+        fscxt = CreateGlobalMemory("Filesystem");
     }
-    
-    currentContext = MemoryContextSwitchTo((MemoryContext)fscxt);
-    
+
+    currentContext = MemoryContextSwitchTo((MemoryContext) fscxt);
+
     lobjDesc = inv_create(mode);
-    
+
     if (lobjDesc == NULL) {
-	MemoryContextSwitchTo(currentContext);
-	return InvalidOid;
+        MemoryContextSwitchTo(currentContext);
+        return InvalidOid;
     }
 
     lobjId = lobjDesc->heap_r->rd_id;
-    
+
     inv_close(lobjDesc);
-    
+
     /* switch context back to original memory context */
     MemoryContextSwitchTo(currentContext);
-    
+
     return lobjId;
 }
 
 int
-lo_tell(int fd)
-{
+lo_tell(int fd) {
     if (fd >= MAX_LOBJ_FDS) {
-	elog(WARN,"lo_tell: large object descriptor (%d) out of range",fd);
-	return -2;
+        elog(WARN, "lo_tell: large object descriptor (%d) out of range", fd);
+        return -2;
     }
     if (cookies[fd] == NULL) {
-	elog(WARN,"lo_tell: invalid large object descriptor (%d)",fd);
-	return -3;
+        elog(WARN, "lo_tell: invalid large object descriptor (%d)", fd);
+        return -3;
     }
     return inv_tell(cookies[fd]);
 }
 
 int
-lo_unlink(Oid lobjId)
-{
+lo_unlink(Oid lobjId) {
     return (inv_destroy(lobjId));
 }
 
@@ -196,23 +189,21 @@ lo_unlink(Oid lobjId)
  *****************************************************************************/
 
 struct varlena *
-LOread(int fd, int len)
-{
+LOread(int fd, int len) {
     struct varlena *retval;
     int totalread = 0;
-    
-    retval = (struct varlena *)palloc(sizeof(int32) + len);
+
+    retval = (struct varlena *) palloc(sizeof(int32) + len);
     totalread = lo_read(fd, VARDATA(retval), len);
     VARSIZE(retval) = totalread + sizeof(int32);
-    
+
     return retval;
 }
 
-int LOwrite(int fd, struct varlena *wbuf)
-{
+int LOwrite(int fd, struct varlena *wbuf) {
     int totalwritten;
     int bytestowrite;
-    
+
     bytestowrite = VARSIZE(wbuf) - sizeof(int32);
     totalwritten = lo_write(fd, VARDATA(wbuf), bytestowrite);
     return totalwritten;
@@ -227,30 +218,29 @@ int LOwrite(int fd, struct varlena *wbuf)
  *    imports a file as an (inversion) large object.
  */
 Oid
-lo_import(text *filename)
-{
+lo_import(text *filename) {
     int fd;
     int nbytes, tmp;
 #define BUFSIZE        1024
     char buf[BUFSIZE];
     LargeObjectDesc *lobj;
     Oid lobjOid;
-    
+
     /*
      * open the file to be read in
      */
     fd = open(VARDATA(filename), O_RDONLY, 0666);
-    if (fd < 0)  {   /* error */
-	elog(WARN, "lo_import: can't open unix file\"%s\"\n", filename);
+    if (fd < 0) {   /* error */
+        elog(WARN, "lo_import: can't open unix file\"%s\"\n", filename);
     }
 
     /*
      * create an inversion "object"
      */
-    lobj = inv_create(INV_READ|INV_WRITE);
+    lobj = inv_create(INV_READ | INV_WRITE);
     if (lobj == NULL) {
-	elog(WARN, "lo_import: can't create inv object for \"%s\"",
-	     VARDATA(filename));
+        elog(WARN, "lo_import: can't create inv object for \"%s\"",
+             VARDATA(filename));
     }
 
     /*
@@ -258,16 +248,16 @@ lo_import(text *filename)
      * XInv??? which contains the data.
      */
     lobjOid = lobj->heap_r->rd_id;
-	
+
     /*
      * read in from the Unix file and write to the inversion file
      */
     while ((nbytes = read(fd, buf, BUFSIZE)) > 0) {
-	tmp = inv_write(lobj, buf, nbytes);
+        tmp = inv_write(lobj, buf, nbytes);
         if (tmp < nbytes) {
-	    elog(WARN, "lo_import: error while reading \"%s\"",
-		 VARDATA(filename));
-	}
+            elog(WARN, "lo_import: error while reading \"%s\"",
+                 VARDATA(filename));
+        }
     }
 
     (void) close(fd);
@@ -281,8 +271,7 @@ lo_import(text *filename)
  *    exports an (inversion) large object.
  */
 int4
-lo_export(Oid lobjId, text *filename)
-{
+lo_export(Oid lobjId, text *filename) {
     int fd;
     int nbytes, tmp;
 #define BUFSIZE        1024
@@ -294,28 +283,28 @@ lo_export(Oid lobjId, text *filename)
      */
     lobj = inv_open(lobjId, INV_READ);
     if (lobj == NULL) {
-	elog(WARN, "lo_export: can't open inv object %d",
-	     lobjId);
+        elog(WARN, "lo_export: can't open inv object %d",
+             lobjId);
     }
 
     /*
      * open the file to be written to
      */
-    fd = open(VARDATA(filename), O_CREAT|O_WRONLY, 0666);
-    if (fd < 0)  {   /* error */
-	elog(WARN, "lo_export: can't open unix file\"%s\"",
-	     VARDATA(filename));
+    fd = open(VARDATA(filename), O_CREAT | O_WRONLY, 0666);
+    if (fd < 0) {   /* error */
+        elog(WARN, "lo_export: can't open unix file\"%s\"",
+             VARDATA(filename));
     }
 
     /*
      * read in from the Unix file and write to the inversion file
      */
     while ((nbytes = inv_read(lobj, buf, BUFSIZE)) > 0) {
-	tmp = write(fd, buf, nbytes);
+        tmp = write(fd, buf, nbytes);
         if (tmp < nbytes) {
-	    elog(WARN, "lo_export: error while writing \"%s\"",
-		 VARDATA(filename));
-	}
+            elog(WARN, "lo_export: error while writing \"%s\"",
+                 VARDATA(filename));
+        }
     }
 
     (void) inv_close(lobj);
@@ -330,22 +319,20 @@ lo_export(Oid lobjId, text *filename)
  *****************************************************************************/
 
 static int
-newLOfd(LargeObjectDesc *lobjCookie)
-{
+newLOfd(LargeObjectDesc *lobjCookie) {
     int i;
-    
+
     for (i = 0; i < MAX_LOBJ_FDS; i++) {
-	
-	if (cookies[i] == NULL) {
-	    cookies[i] = lobjCookie;
-	    return i;
-	}
+
+        if (cookies[i] == NULL) {
+            cookies[i] = lobjCookie;
+            return i;
+        }
     }
     return -1;
 }
 
-static void 
-deleteLOfd(int fd)
-{
+static void
+deleteLOfd(int fd) {
     cookies[fd] = NULL;
 }

@@ -17,9 +17,12 @@
 #include <sys/file.h>
 #include <sys/stat.h>
 
-#include <fcntl.h>		/* for O_ on some */
+#include <fcntl.h>        /* for O_ on some */
+
 #ifndef WIN32
-#include <unistd.h>		/* for SEEK_ on most */
+
+#include <unistd.h>        /* for SEEK_ on most */
+
 #endif /* WIN32 */
 #ifndef SEEK_SET
 #include <stdio.h>		/* for SEEK_ on others */
@@ -33,9 +36,9 @@
 #endif /* MAXNAMLEN */
 
 struct pgdirent {
-	unsigned long d_ino;
-	unsigned short d_namlen;
-	char d_name[MAXNAMLEN+1];
+    unsigned long d_ino;
+    unsigned short d_namlen;
+    char d_name[MAXNAMLEN + 1];
 };
 
 /*
@@ -45,10 +48,10 @@ struct pgdirent {
  */
 #ifdef SYSV_DIRENT
 #define	D_NAMLEN(dp) \
-	((dp)->d_reclen - offsetof(struct dirent, d_name[0]))
+    ((dp)->d_reclen - offsetof(struct dirent, d_name[0]))
 #else /* SYSV_DIRENT */
-#define	D_NAMLEN(dp) \
-	((dp)->d_namlen)
+#define    D_NAMLEN(dp) \
+    ((dp)->d_namlen)
 #endif /* SYSV_DIRENT */
 
 /* for stat(2) */
@@ -99,10 +102,10 @@ struct pgdirent {
  *  manager to be used, and the high sixteen bits for flags.
  */
 
-#define INV_SMGRMASK	0x0000ffff
-#define	INV_ARCHIVE	0x00010000
-#define	INV_WRITE	0x00020000
-#define	INV_READ	0x00040000
+#define INV_SMGRMASK    0x0000ffff
+#define    INV_ARCHIVE    0x00010000
+#define    INV_WRITE    0x00020000
+#define    INV_READ    0x00040000
 
 /* Error values for p_errno */
 #define PEPERM           1               /* Not owner */
@@ -116,4 +119,4 @@ struct pgdirent {
 #define PENOTEMPTY       66              /* Directory not empty */
 #define PEPGIO           99              /* postgres backend had problems */
 
-#endif	/* LIBPQ_FS_H */
+#endif    /* LIBPQ_FS_H */

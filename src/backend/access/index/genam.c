@@ -103,21 +103,20 @@
  */
 IndexScanDesc
 RelationGetIndexScan(Relation relation,
-		     bool scanFromEnd,
-		     uint16 numberOfKeys,
-		     ScanKey key)
-{
-    IndexScanDesc	scan;
-    
-    if (! RelationIsValid(relation))
-	elog(WARN, "RelationGetIndexScan: relation invalid");
-    
+                     bool scanFromEnd,
+                     uint16 numberOfKeys,
+                     ScanKey key) {
+    IndexScanDesc scan;
+
+    if (!RelationIsValid(relation))
+        elog(WARN, "RelationGetIndexScan: relation invalid");
+
     scan = (IndexScanDesc) palloc(sizeof(IndexScanDescData));
-    
+
     scan->relation = relation;
     scan->opaque = NULL;
     scan->numberOfKeys = numberOfKeys;
-    
+
     ItemPointerSetInvalid(&scan->previousItemData);
     ItemPointerSetInvalid(&scan->currentItemData);
     ItemPointerSetInvalid(&scan->nextItemData);
@@ -126,13 +125,13 @@ RelationGetIndexScan(Relation relation,
     ItemPointerSetInvalid(&scan->nextMarkData);
 
     if (numberOfKeys > 0) {
-	scan->keyData = (ScanKey) palloc(sizeof(ScanKeyData) * numberOfKeys);
+        scan->keyData = (ScanKey) palloc(sizeof(ScanKeyData) * numberOfKeys);
     } else {
-	scan->keyData = NULL;
+        scan->keyData = NULL;
     }
 
     index_rescan(scan, scanFromEnd, key);
-    
+
     return (scan);
 }
 
@@ -151,29 +150,28 @@ RelationGetIndexScan(Relation relation,
  */
 void
 IndexScanRestart(IndexScanDesc scan,
-		 bool scanFromEnd,
-		 ScanKey key)
-{
-    if (! IndexScanIsValid(scan))
-	elog(WARN, "IndexScanRestart: invalid scan");
-    
+                 bool scanFromEnd,
+                 ScanKey key) {
+    if (!IndexScanIsValid(scan))
+        elog(WARN, "IndexScanRestart: invalid scan");
+
     ItemPointerSetInvalid(&scan->previousItemData);
     ItemPointerSetInvalid(&scan->currentItemData);
     ItemPointerSetInvalid(&scan->nextItemData);
-    
-    if (RelationGetNumberOfBlocks(scan->relation) == 0) 
-	scan->flags = ScanUnmarked;
+
+    if (RelationGetNumberOfBlocks(scan->relation) == 0)
+        scan->flags = ScanUnmarked;
     else if (scanFromEnd)
-	scan->flags = ScanUnmarked | ScanUncheckedPrevious;
+        scan->flags = ScanUnmarked | ScanUncheckedPrevious;
     else
-	scan->flags = ScanUnmarked | ScanUncheckedNext;
-    
+        scan->flags = ScanUnmarked | ScanUncheckedNext;
+
     scan->scanFromEnd = (bool) scanFromEnd;
-    
+
     if (scan->numberOfKeys > 0)
-	memmove(scan->keyData,
-		key,
-		scan->numberOfKeys * sizeof(ScanKeyData));
+        memmove(scan->keyData,
+                key,
+                scan->numberOfKeys * sizeof(ScanKeyData));
 }
 
 /* ----------------
@@ -190,11 +188,10 @@ IndexScanRestart(IndexScanDesc scan,
  * ----------------
  */
 void
-IndexScanEnd(IndexScanDesc scan)
-{
-    if (! IndexScanIsValid(scan))
-	elog(WARN, "IndexScanEnd: invalid scan");
-    
+IndexScanEnd(IndexScanDesc scan) {
+    if (!IndexScanIsValid(scan))
+        elog(WARN, "IndexScanEnd: invalid scan");
+
     pfree(scan);
 }
 
@@ -214,36 +211,35 @@ IndexScanEnd(IndexScanDesc scan)
  * ----------------
  */
 void
-IndexScanMarkPosition(IndexScanDesc scan)
-{
-    RetrieveIndexResult	result;
-    
+IndexScanMarkPosition(IndexScanDesc scan) {
+    RetrieveIndexResult result;
+
     if (scan->flags & ScanUncheckedPrevious) {
-	result = 
-	    index_getnext(scan, BackwardScanDirection);
-	
-	if (result != NULL) {
-	    scan->previousItemData = result->index_iptr;
-	} else {
-	    ItemPointerSetInvalid(&scan->previousItemData);
-	}
-	
+        result =
+                index_getnext(scan, BackwardScanDirection);
+
+        if (result != NULL) {
+            scan->previousItemData = result->index_iptr;
+        } else {
+            ItemPointerSetInvalid(&scan->previousItemData);
+        }
+
     } else if (scan->flags & ScanUncheckedNext) {
-	result = (RetrieveIndexResult)
-	    index_getnext(scan, ForwardScanDirection);
-	
-	if (result != NULL) {
-	    scan->nextItemData = result->index_iptr;
-	} else {
-	    ItemPointerSetInvalid(&scan->nextItemData);
-	}
+        result = (RetrieveIndexResult)
+                index_getnext(scan, ForwardScanDirection);
+
+        if (result != NULL) {
+            scan->nextItemData = result->index_iptr;
+        } else {
+            ItemPointerSetInvalid(&scan->nextItemData);
+        }
     }
-    
+
     scan->previousMarkData = scan->previousItemData;
     scan->currentMarkData = scan->currentItemData;
     scan->nextMarkData = scan->nextItemData;
-    
-    scan->flags = 0x0;	/* XXX should have a symbolic name */
+
+    scan->flags = 0x0;    /* XXX should have a symbolic name */
 }
 
 /* ----------------
@@ -262,14 +258,13 @@ IndexScanMarkPosition(IndexScanDesc scan)
  * ----------------
  */
 void
-IndexScanRestorePosition(IndexScanDesc scan)
-{	
-    if (scan->flags & ScanUnmarked) 
-	elog(WARN, "IndexScanRestorePosition: no mark to restore");
-    
+IndexScanRestorePosition(IndexScanDesc scan) {
+    if (scan->flags & ScanUnmarked)
+        elog(WARN, "IndexScanRestorePosition: no mark to restore");
+
     scan->previousItemData = scan->previousMarkData;
     scan->currentItemData = scan->currentMarkData;
     scan->nextItemData = scan->nextMarkData;
-    
-    scan->flags = 0x0;	/* XXX should have a symbolic name */
+
+    scan->flags = 0x0;    /* XXX should have a symbolic name */
 }

@@ -26,7 +26,7 @@
  *	ExecCreatR	function to create temporary relations
  *
  */
-#include <stdio.h>	/* for sprintf() */
+#include <stdio.h>    /* for sprintf() */
 #include "executor/executor.h"
 #include "storage/smgr.h"
 #include "executor/nodeSeqscan.h"
@@ -53,17 +53,17 @@
  */
 void
 ExecOpenScanR(Oid relOid,
-	      int nkeys,
-	      ScanKey skeys,
-	      bool isindex,
-	      ScanDirection dir,
-	      TimeQual timeRange,
-	      Relation *returnRelation,		/* return */
-	      Pointer *returnScanDesc) 		/* return */
+              int nkeys,
+              ScanKey skeys,
+              bool isindex,
+              ScanDirection dir,
+              TimeQual timeRange,
+              Relation *returnRelation,        /* return */
+              Pointer *returnScanDesc)        /* return */
 {
     Relation relation;
-    Pointer  scanDesc;
-    
+    Pointer scanDesc;
+
     /* ----------------
      *	note: scanDesc returned by ExecBeginScan can be either
      *	      a HeapScanDesc or an IndexScanDesc so for now we
@@ -73,18 +73,18 @@ ExecOpenScanR(Oid relOid,
      */
     relation = ExecOpenR(relOid, isindex);
     scanDesc = ExecBeginScan(relation,
-			     nkeys,
-			     skeys,
-			     isindex,
-			     dir,
-			     timeRange);
-    
+                             nkeys,
+                             skeys,
+                             isindex,
+                             dir,
+                             timeRange);
+
     if (returnRelation != NULL)
-	*returnRelation = relation;
+        *returnRelation = relation;
     if (scanDesc != NULL)
-	*returnScanDesc = scanDesc;
+        *returnScanDesc = scanDesc;
 }
- 
+
 /* ----------------------------------------------------------------
  *	ExecOpenR
  *
@@ -92,8 +92,7 @@ ExecOpenScanR(Oid relOid,
  * ----------------------------------------------------------------
  */
 Relation
-ExecOpenR(Oid relationOid, bool isindex)
-{
+ExecOpenR(Oid relationOid, bool isindex) {
     Relation relation;
     relation = (Relation) NULL;
 
@@ -103,16 +102,16 @@ ExecOpenR(Oid relationOid, bool isindex)
      * ----------------
      */
     if (isindex) {
-	relation = index_open(relationOid);
+        relation = index_open(relationOid);
     } else
-	relation = heap_open(relationOid);
-	
+        relation = heap_open(relationOid);
+
     if (relation == NULL)
-	elog(DEBUG, "ExecOpenR: relation == NULL, heap_open failed.");
+        elog(DEBUG, "ExecOpenR: relation == NULL, heap_open failed.");
 
     return relation;
 }
- 
+
 /* ----------------------------------------------------------------
  *   	ExecBeginScan
  *
@@ -127,15 +126,14 @@ ExecOpenR(Oid relationOid, bool isindex)
  */
 Pointer
 ExecBeginScan(Relation relation,
-	      int nkeys,
-	      ScanKey skeys,
-	      bool isindex,
-	      ScanDirection dir,
-	      TimeQual time_range)
-{
-    Pointer  scanDesc;
-    
-    scanDesc =   NULL;
+              int nkeys,
+              ScanKey skeys,
+              bool isindex,
+              ScanDirection dir,
+              TimeQual time_range) {
+    Pointer scanDesc;
+
+    scanDesc = NULL;
 
     /* ----------------
      *	open the appropriate type of scan.
@@ -146,25 +144,25 @@ ExecBeginScan(Relation relation,
      * ----------------
      */
     if (isindex) {
-	scanDesc = (Pointer) index_beginscan(relation,
-					     false,	/* see above comment */
-					     nkeys,
-					     skeys);
+        scanDesc = (Pointer) index_beginscan(relation,
+                                             false,    /* see above comment */
+                                             nkeys,
+                                             skeys);
     } else {
-	scanDesc = (Pointer) heap_beginscan(relation,
-					    ScanDirectionIsBackward(dir),
-					    time_range,
-					    nkeys,
-					    skeys);
+        scanDesc = (Pointer) heap_beginscan(relation,
+                                            ScanDirectionIsBackward(dir),
+                                            time_range,
+                                            nkeys,
+                                            skeys);
     }
-   
+
     if (scanDesc == NULL)
-	elog(DEBUG, "ExecBeginScan: scanDesc = NULL, heap_beginscan failed.");
-    
-    
+        elog(DEBUG, "ExecBeginScan: scanDesc = NULL, heap_beginscan failed.");
+
+
     return scanDesc;
 }
- 
+
 /* ----------------------------------------------------------------
  *   	ExecCloseR
  *
@@ -176,85 +174,84 @@ ExecBeginScan(Relation relation,
  * ----------------------------------------------------------------
  */
 void
-ExecCloseR(Plan *node)
-{
+ExecCloseR(Plan *node) {
     CommonScanState *state;
-    Relation	 relation;
+    Relation relation;
     HeapScanDesc scanDesc;
-    
+
     /* ----------------
      *  shut down the heap scan and close the heap relation
      * ----------------
      */
     switch (nodeTag(node)) {
-	
-    case T_SeqScan:
-	state =  ((SeqScan *)node)->scanstate;
-	break;
 
-    case T_IndexScan:
-	state = ((IndexScan *)node)->scan.scanstate;
-	break;
-	
-    case T_Material:
-	state = &(((Material *)node)->matstate->csstate);
-	break;
-	
-    case T_Sort:
-	state =  &(((Sort *)node)->sortstate->csstate);
-	break;
+        case T_SeqScan:
+            state = ((SeqScan *) node)->scanstate;
+            break;
 
-    case T_Agg:
-	state = &(((Agg *)node)->aggstate->csstate);
-	break;
+        case T_IndexScan:
+            state = ((IndexScan *) node)->scan.scanstate;
+            break;
 
-    default:
-	elog(DEBUG, "ExecCloseR: not a scan, material, or sort node!");
-	return;
+        case T_Material:
+            state = &(((Material *) node)->matstate->csstate);
+            break;
+
+        case T_Sort:
+            state = &(((Sort *) node)->sortstate->csstate);
+            break;
+
+        case T_Agg:
+            state = &(((Agg *) node)->aggstate->csstate);
+            break;
+
+        default:
+            elog(DEBUG, "ExecCloseR: not a scan, material, or sort node!");
+            return;
     }
-    
+
     relation = state->css_currentRelation;
     scanDesc = state->css_currentScanDesc;
-    
+
     if (scanDesc != NULL)
-	heap_endscan(scanDesc);
-    
+        heap_endscan(scanDesc);
+
     if (relation != NULL)
-	heap_close(relation);
-    
+        heap_close(relation);
+
     /* ----------------
      *	if this is an index scan then we have to take care
      *  of the index relations as well..
      * ----------------
      */
     if (nodeTag(node) == T_IndexScan) {
-	IndexScan	 *iscan= (IndexScan *)node;
-	IndexScanState	 *indexstate;
-	int		 numIndices;
-	RelationPtr	 indexRelationDescs;
-	IndexScanDescPtr indexScanDescs;
-	int		 i;
-	
-	indexstate = 	     iscan->indxstate;
-	numIndices =         indexstate->iss_NumIndices;
-	indexRelationDescs = indexstate->iss_RelationDescs;
-	indexScanDescs =     indexstate->iss_ScanDescs;
-	
-	for (i = 0; i<numIndices; i++) {
-	    /* ----------------
-	     *	shut down each of the scans and
-	     *  close each of the index relations
-	     * ----------------
-	     */
-	    if (indexScanDescs[i] != NULL)
-		index_endscan(indexScanDescs[i]);
-	    
-	    if (indexRelationDescs[i] != NULL)
-		index_close(indexRelationDescs[i]);
-	}
+        IndexScan *iscan = (IndexScan *) node;
+        IndexScanState *indexstate;
+        int numIndices;
+        RelationPtr indexRelationDescs;
+        IndexScanDescPtr indexScanDescs;
+        int i;
+
+        indexstate = iscan->indxstate;
+        numIndices = indexstate->iss_NumIndices;
+        indexRelationDescs = indexstate->iss_RelationDescs;
+        indexScanDescs = indexstate->iss_ScanDescs;
+
+        for (i = 0; i < numIndices; i++) {
+            /* ----------------
+             *	shut down each of the scans and
+             *  close each of the index relations
+             * ----------------
+             */
+            if (indexScanDescs[i] != NULL)
+                index_endscan(indexScanDescs[i]);
+
+            if (indexRelationDescs[i] != NULL)
+                index_close(indexRelationDescs[i]);
+        }
     }
 }
- 
+
 /* ----------------------------------------------------------------
  *   	ExecReScan
  *
@@ -266,36 +263,35 @@ ExecCloseR(Plan *node)
  * ----------------------------------------------------------------
  */
 void
-ExecReScan(Plan *node, ExprContext *exprCtxt, Plan *parent)
-{
-    switch(nodeTag(node)) {
-    case T_SeqScan:
-	ExecSeqReScan((SeqScan *) node, exprCtxt, parent);
-	return;
-    
-    case T_IndexScan:
-	ExecIndexReScan((IndexScan *) node, exprCtxt, parent);
-	return;
+ExecReScan(Plan *node, ExprContext *exprCtxt, Plan *parent) {
+    switch (nodeTag(node)) {
+        case T_SeqScan:
+            ExecSeqReScan((SeqScan *) node, exprCtxt, parent);
+            return;
 
-    case T_Material:
-	/* the first call to ExecReScan should have no effect because
-	 * everything is initialized properly already.  the following
-	 * calls will be handled by ExecSeqReScan() because the nodes
-	 * below the Material node have already been materialized into
-	 * a temp relation.
-	 */
-	return;
+        case T_IndexScan:
+            ExecIndexReScan((IndexScan *) node, exprCtxt, parent);
+            return;
 
-    case T_Tee:
-	ExecTeeReScan((Tee*) node, exprCtxt, parent);
-	break;
+        case T_Material:
+            /* the first call to ExecReScan should have no effect because
+             * everything is initialized properly already.  the following
+             * calls will be handled by ExecSeqReScan() because the nodes
+             * below the Material node have already been materialized into
+             * a temp relation.
+             */
+            return;
 
-    default:
-	elog(WARN, "ExecReScan: not a seqscan or indexscan node.");
-	return;
+        case T_Tee:
+            ExecTeeReScan((Tee *) node, exprCtxt, parent);
+            break;
+
+        default:
+            elog(WARN, "ExecReScan: not a seqscan or indexscan node.");
+            return;
     }
 }
- 
+
 /* ----------------------------------------------------------------
  *   	ExecReScanR
  *
@@ -303,20 +299,19 @@ ExecReScan(Plan *node, ExprContext *exprCtxt, Plan *parent)
  * ----------------------------------------------------------------
  */
 HeapScanDesc
-ExecReScanR(Relation relDesc,	/* LLL relDesc unused  */
-	    HeapScanDesc scanDesc,
-	    ScanDirection direction,
-	    int nkeys,		/* LLL nkeys unused  */
-	    ScanKey skeys)
-{
+ExecReScanR(Relation relDesc,    /* LLL relDesc unused  */
+            HeapScanDesc scanDesc,
+            ScanDirection direction,
+            int nkeys,        /* LLL nkeys unused  */
+            ScanKey skeys) {
     if (scanDesc != NULL)
-	heap_rescan(scanDesc,			/* scan desc */
-		    ScanDirectionIsBackward(direction), /* backward flag */
-		    skeys);			/* scan keys */
-    
+        heap_rescan(scanDesc,            /* scan desc */
+                    ScanDirectionIsBackward(direction), /* backward flag */
+                    skeys);            /* scan keys */
+
     return scanDesc;
 }
- 
+
 /* ----------------------------------------------------------------
  *   	ExecMarkPos
  *
@@ -326,28 +321,27 @@ ExecReScanR(Relation relDesc,	/* LLL relDesc unused  */
  * ----------------------------------------------------------------
  */
 void
-ExecMarkPos(Plan *node)
-{
-    switch(nodeTag(node)) {
-    case T_SeqScan:
-	ExecSeqMarkPos((SeqScan *) node);
-	break;
+ExecMarkPos(Plan *node) {
+    switch (nodeTag(node)) {
+        case T_SeqScan:
+            ExecSeqMarkPos((SeqScan *) node);
+            break;
 
-    case T_IndexScan:
-	ExecIndexMarkPos((IndexScan *) node);
-	break;
+        case T_IndexScan:
+            ExecIndexMarkPos((IndexScan *) node);
+            break;
 
-    case T_Sort:
-	ExecSortMarkPos((Sort *) node);
-	break;
+        case T_Sort:
+            ExecSortMarkPos((Sort *) node);
+            break;
 
-    default:
-	/* elog(DEBUG, "ExecMarkPos: unsupported node type"); */
-	break;
+        default:
+            /* elog(DEBUG, "ExecMarkPos: unsupported node type"); */
+            break;
     }
     return;
 }
- 
+
 /* ----------------------------------------------------------------
  *   	ExecRestrPos
  *
@@ -355,27 +349,26 @@ ExecMarkPos(Plan *node)
  * ----------------------------------------------------------------
  */
 void
-ExecRestrPos(Plan *node)
-{
-    switch(nodeTag(node)) {
-    case T_SeqScan:
-	ExecSeqRestrPos((SeqScan *) node);
-	return;
-    
-    case T_IndexScan:
-	ExecIndexRestrPos((IndexScan *) node);
-	return;
-    
-    case T_Sort:
-	ExecSortRestrPos((Sort *) node);
-	return;
+ExecRestrPos(Plan *node) {
+    switch (nodeTag(node)) {
+        case T_SeqScan:
+            ExecSeqRestrPos((SeqScan *) node);
+            return;
 
-    default:
-	/* elog(DEBUG, "ExecRestrPos: node type not supported"); */
-	return;
+        case T_IndexScan:
+            ExecIndexRestrPos((IndexScan *) node);
+            return;
+
+        case T_Sort:
+            ExecSortRestrPos((Sort *) node);
+            return;
+
+        default:
+            /* elog(DEBUG, "ExecRestrPos: node type not supported"); */
+            return;
     }
 }
- 
+
 /* ----------------------------------------------------------------
  *   	ExecCreatR
  *
@@ -393,47 +386,46 @@ ExecRestrPos(Plan *node)
 
 Relation
 ExecCreatR(TupleDesc tupType,
-	   Oid relationOid)
-{
-    Relation 	relDesc;
+           Oid relationOid) {
+    Relation relDesc;
 
     EU4_printf("ExecCreatR: %s numatts=%d type=%d oid=%d\n",
-	       "entering: ", numberAttributes, tupType, relationOid);
+               "entering: ", numberAttributes, tupType, relationOid);
     CXT1_printf("ExecCreatR: context is %d\n", CurrentMemoryContext);
-    
+
     relDesc = NULL;
-    
-    if (relationOid == _TEMP_RELATION_ID_ ) {
-	/* ----------------
-	 *   create a temporary relation
-	 *   (currently the planner always puts a _TEMP_RELATION_ID
-	 *   in the relation argument so we expect this to be the case although
-	 *   it's possible that someday we'll get the name from
-	 *   from the range table.. -cim 10/12/89)
-	 * ----------------
-	 */
+
+    if (relationOid == _TEMP_RELATION_ID_) {
+        /* ----------------
+         *   create a temporary relation
+         *   (currently the planner always puts a _TEMP_RELATION_ID
+         *   in the relation argument so we expect this to be the case although
+         *   it's possible that someday we'll get the name from
+         *   from the range table.. -cim 10/12/89)
+         * ----------------
+         */
 /*
 	sprintf(tempname, "temp_%d.%d", getpid(), tmpcnt++);
 	EU1_printf("ExecCreatR: attempting to create %s\n", tempname);
 */
-      /* heap_creatr creates a name if the argument to heap_creatr is '\0 ' */
-	relDesc = heap_creatr("",
-			      DEFAULT_SMGR,
-			      tupType);
+        /* heap_creatr creates a name if the argument to heap_creatr is '\0 ' */
+        relDesc = heap_creatr("",
+                              DEFAULT_SMGR,
+                              tupType);
     } else {
-	/* ----------------
-	 *	use a relation from the range table
-	 * ----------------
-	 */
-	elog(DEBUG, "ExecCreatR: %s",
-	     "stuff using range table id's is not functional");
+        /* ----------------
+         *	use a relation from the range table
+         * ----------------
+         */
+        elog(DEBUG, "ExecCreatR: %s",
+             "stuff using range table id's is not functional");
     }
-    
+
     if (relDesc == NULL)
-	elog(DEBUG, "ExecCreatR: failed to create relation.");
-    
+        elog(DEBUG, "ExecCreatR: failed to create relation.");
+
     EU1_printf("ExecCreatR: returning relDesc=%d\n", relDesc);
-    
+
     return relDesc;
 }
  

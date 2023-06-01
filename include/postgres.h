@@ -43,24 +43,24 @@
  * ----------------------------------------------------------------
  */
 
-typedef	int16	int2;
-typedef int32	int4;
-typedef float	float4;
-typedef double	float8;
+typedef int16 int2;
+typedef int32 int4;
+typedef float float4;
+typedef double float8;
 
 typedef int4 aclitem;
 
 
-typedef uint32	Oid;
-#define InvalidOid	0
+typedef uint32 Oid;
+#define InvalidOid    0
 #define OidIsValid(objectId)  ((bool) (objectId != InvalidOid))
 
 /* unfortunately, both regproc and RegProcedure are used */
-typedef Oid regproc; 
+typedef Oid regproc;
 typedef Oid RegProcedure;
 
 /* ptr to func returning (char *) */
-typedef char *	((*func_ptr)());	
+typedef char *((*func_ptr)());
 
 
 #define RegProcedureIsValid(p)  OidIsValid(p)
@@ -74,19 +74,19 @@ typedef char *	((*func_ptr)());
  * ----------------
  */
 struct varlena {
-	int32	vl_len;
-	char	vl_dat[1];
+    int32 vl_len;
+    char vl_dat[1];
 };
 
-#define	VARSIZE(PTR)	(((struct varlena *)(PTR))->vl_len)
-#define	VARDATA(PTR)    (((struct varlena *)(PTR))->vl_dat)
-#define	VARHDRSZ	sizeof(int32)
+#define    VARSIZE(PTR)    (((struct varlena *)(PTR))->vl_len)
+#define    VARDATA(PTR)    (((struct varlena *)(PTR))->vl_dat)
+#define    VARHDRSZ    sizeof(int32)
 
 typedef struct varlena bytea;
 typedef struct varlena text;
 
 typedef struct char8 {
-	char	data[8];
+    char data[8];
 } char8;
 
 /* ----------------
@@ -94,10 +94,10 @@ typedef struct char8 {
  * ----------------
  */
 typedef struct char16 {
-	char	data[16];
+    char data[16];
 } char16;
 
-typedef char16	*Char16;
+typedef char16 *Char16;
 
 typedef int2 int28[8];
 typedef Oid oid8[8];
@@ -109,8 +109,8 @@ typedef Oid oid8[8];
    to be less than 8K 
 */
 
- /* NAMEDATALEN is the maximum string length (counting terminating null) 
-    of a Name */ 
+/* NAMEDATALEN is the maximum string length (counting terminating null) 
+   of a Name */
 /* defined in Makefile.global */
 /* if you change the value of NAMEDATALEN, you may need to change the
     alignment of the 'name' type in pg_type.h */
@@ -125,7 +125,7 @@ typedef Oid oid8[8];
 typedef struct nameData {
     char data[NAMEDATALEN];
 } NameData;
-typedef NameData	*Name;
+typedef NameData *Name;
 
 /* ----------------
  *	oidint4
@@ -134,11 +134,11 @@ typedef NameData	*Name;
  * ----------------
  */
 typedef struct OidInt4Data {
-	Oid	oi_oid;
-	int32		oi_int4;
+    Oid oi_oid;
+    int32 oi_int4;
 } OidInt4Data;
 
-typedef struct OidInt4Data	*OidInt4;
+typedef struct OidInt4Data *OidInt4;
 
 /* ----------------
  *	oidint2
@@ -147,11 +147,11 @@ typedef struct OidInt4Data	*OidInt4;
  * ----------------
  */
 typedef struct OidInt2Data {
-	Oid	oi_oid;
-	int16		oi_int2;
+    Oid oi_oid;
+    int16 oi_int2;
 } OidInt2Data;
 
-typedef struct OidInt2Data	*OidInt2;
+typedef struct OidInt2Data *OidInt2;
 
 /* ----------------
  *	oidname
@@ -160,21 +160,21 @@ typedef struct OidInt2Data	*OidInt2;
  * ----------------
  */
 typedef struct OidNameData {
-	Oid	id;
-	NameData name;
+    Oid id;
+    NameData name;
 } OidNameData;
 
-typedef struct OidNameData	*OidName;
+typedef struct OidNameData *OidName;
 
 /* ----------------------------------------------------------------
  *		Section 3: TransactionId and CommandId
  * ----------------------------------------------------------------
  */
 
-typedef uint32			TransactionId;
-#define InvalidTransactionId	0
-typedef uint16			CommandId;
-#define FirstCommandId	0
+typedef uint32 TransactionId;
+#define InvalidTransactionId    0
+typedef uint16 CommandId;
+#define FirstCommandId    0
 
 /* ----------------------------------------------------------------
  *		Section 4: genbki macros used by the
@@ -200,16 +200,16 @@ typedef uint16			CommandId;
  */
 
 /* msb for int/unsigned */
-#define	SIGNBIT	(0x8000)
+#define    SIGNBIT    (0x8000)
 
 /* msb for char */
-#define	CSIGNBIT (1 << 7)
+#define    CSIGNBIT (1 << 7)
 
 /* ----------------
  *	global variables which should probably go someplace else.
  * ----------------
  */
-#define	MAXPGPATH	128
+#define    MAXPGPATH    128
 
 #define STATUS_OK               (0)
 #define STATUS_ERROR            (-1)
@@ -217,8 +217,8 @@ typedef uint16			CommandId;
 #define STATUS_INVALID          (-3)
 #define STATUS_UNCATALOGUED     (-4)
 #define STATUS_REPLACED         (-5)
-#define STATUS_NOT_DONE		(-6)
-#define STATUS_BAD_PACKET	(-7)
+#define STATUS_NOT_DONE        (-6)
+#define STATUS_BAD_PACKET    (-7)
 #define STATUS_FOUND            (1)
 
 #endif /* POSTGRES_H */

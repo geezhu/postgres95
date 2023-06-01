@@ -11,7 +11,7 @@
  *-------------------------------------------------------------------------
  */
 #ifndef NODES_H
-#define	NODES_H
+#define    NODES_H
 
 #include "c.h"
 
@@ -138,7 +138,7 @@ typedef enum NodeTag {
     T_Float,
     T_String,
     T_Null,
-    
+
     /*---------------------
      * TAGS FOR PARSE TREE NODES (parsenode.h)
      *---------------------
@@ -211,15 +211,15 @@ typedef enum NodeTag {
  * debugging.
  */
 typedef struct Node {
-    NodeTag	type;	
+    NodeTag type;
 } Node;
 
-#define	nodeTag(_node_)		((Node*)_node_)->type
+#define    nodeTag(_node_)        ((Node*)_node_)->type
 
-#define	makeNode(_node_)	(_node_*)newNode(sizeof(_node_),T_##_node_)
-#define NodeSetTag(n, t)	((Node *)n)->type = t
+#define    makeNode(_node_)    (_node_*)newNode(sizeof(_node_),T_##_node_)
+#define NodeSetTag(n, t)    ((Node *)n)->type = t
 
-#define IsA(_node_,_tag_)	(nodeTag(_node_) == T_##_tag_)
+#define IsA(_node_, _tag_)    (nodeTag(_node_) == T_##_tag_)
 
 /* ----------------------------------------------------------------
  *		      IsA functions (no inheritence any more)
@@ -250,9 +250,10 @@ extern Node *newNode(Size size, NodeTag tag);
 /*
  * nodes/{outfuncs.c,print.c}
  */
-#define nodeDisplay	print
+#define nodeDisplay    print
 
 extern char *nodeToString(void *obj);
+
 extern void print(void *obj);
 
 /*
@@ -287,13 +288,13 @@ typedef float Cost;
  */
 typedef enum CmdType {
     CMD_UNKNOWN,
-    CMD_SELECT,		/* select stmt (formerly retrieve) */
-    CMD_UPDATE,		/* update stmt (formerly replace) */
-    CMD_INSERT,		/* insert stmt (formerly append) */
+    CMD_SELECT,        /* select stmt (formerly retrieve) */
+    CMD_UPDATE,        /* update stmt (formerly replace) */
+    CMD_INSERT,        /* insert stmt (formerly append) */
     CMD_DELETE,
-    CMD_NOTIFY, 
+    CMD_NOTIFY,
     CMD_UTILITY /* cmds like create, destroy, copy, vacuum, etc. */
 } CmdType;
-    
+
 
 #endif /* NODES_H */

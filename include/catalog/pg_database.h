@@ -30,11 +30,11 @@
  *	pg_database definition.  cpp turns this into
  *	typedef struct FormData_pg_database
  * ----------------
- */ 
+ */
 CATALOG(pg_database) BOOTSTRAP {
-    NameData 	datname;
-    Oid 	datdba;
-    text 	datpath;	/* VARIABLE LENGTH FIELD */
+    NameData datname;
+    Oid datdba;
+    text datpath;    /* VARIABLE LENGTH FIELD */
 } FormData_pg_database;
 
 /* ----------------
@@ -42,16 +42,16 @@ CATALOG(pg_database) BOOTSTRAP {
  *	the format of pg_database relation.
  * ----------------
  */
-typedef FormData_pg_database	*Form_pg_database;
+typedef FormData_pg_database *Form_pg_database;
 
 /* ----------------
  *	compiler constants for pg_database
  * ----------------
  */
-#define Natts_pg_database		3
-#define Anum_pg_database_datname	1
-#define Anum_pg_database_datdba		2
-#define Anum_pg_database_datpath	3
+#define Natts_pg_database        3
+#define Anum_pg_database_datname    1
+#define Anum_pg_database_datdba        2
+#define Anum_pg_database_datpath    3
 
 
 #endif /* PG_DATABASE_H */

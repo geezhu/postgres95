@@ -10,7 +10,7 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	SPIN_H
+#ifndef    SPIN_H
 #define SPIN_H
 
 #include "ipc.h"
@@ -28,11 +28,15 @@
 typedef int SPINLOCK;
 
 extern bool CreateSpinlocks(IPCKey key);
+
 extern bool AttachSpinLocks(IPCKey key);
+
 extern bool InitSpinLocks(int init, IPCKey key);
 
 extern void SpinAcquire(SPINLOCK lock);
+
 extern void SpinRelease(SPINLOCK lock);
+
 extern bool SpinIsLocked(SPINLOCK lock);
 
-#endif	/* SPIN_H */
+#endif    /* SPIN_H */

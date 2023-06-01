@@ -57,7 +57,7 @@
 #include "executor/nodeAppend.h"
 #include "executor/nodeIndexscan.h"
 #include "utils/palloc.h"
-#include "parser/parsetree.h"		/* for rt_store() macro */
+#include "parser/parsetree.h"        /* for rt_store() macro */
 
 /* ----------------------------------------------------------------
  *      exec-append-initialize-next
@@ -69,20 +69,19 @@
  * ----------------------------------------------------------------
  */
 bool
-exec_append_initialize_next(Append *node)
-{
-    EState         *estate;
-    AppendState    *unionstate;
+exec_append_initialize_next(Append *node) {
+    EState *estate;
+    AppendState *unionstate;
     TupleTableSlot *result_slot;
-    List           *rangeTable;
-    
-    int            whichplan;
-    int            nplans;
-    List           *rtentries;
-    ResTarget      *rtentry;
-    
-    Index          unionrelid;
-    
+    List *rangeTable;
+
+    int whichplan;
+    int nplans;
+    List *rtentries;
+    ResTarget *rtentry;
+
+    Index unionrelid;
+
     /* ----------------
      *  get information from the append node
      * ----------------
@@ -91,11 +90,11 @@ exec_append_initialize_next(Append *node)
     unionstate = node->unionstate;
     result_slot = unionstate->cstate.cs_ResultTupleSlot;
     rangeTable = estate->es_range_table;
-    
+
     whichplan = unionstate->as_whichplan;
-    nplans =    unionstate->as_nplans;
+    nplans = unionstate->as_nplans;
     rtentries = node->unionrtentries;
-    
+
     if (whichplan < 0) {
         /* ----------------
          *      if scanning in reverse, we start at
@@ -107,7 +106,7 @@ exec_append_initialize_next(Append *node)
          */
         unionstate->as_whichplan = 0;
         return FALSE;
-	
+
     } else if (whichplan >= nplans) {
         /* ----------------
          *      as above, end the scan if we go beyond
@@ -116,7 +115,7 @@ exec_append_initialize_next(Append *node)
          */
         unionstate->as_whichplan = nplans - 1;
         return FALSE;
-        
+
     } else {
         /* ----------------
          *      initialize the scan
@@ -125,29 +124,29 @@ exec_append_initialize_next(Append *node)
 	 *         of the Append node??? - jolly )
          * ----------------
          */
-	if (node->unionrelid > 0) {
-	    rtentry = nth(whichplan, rtentries);
-	    if (rtentry == NULL)
-		elog(DEBUG, "exec_append_initialize_next: rtentry is nil");
-	    
-	    unionrelid = node->unionrelid;
+        if (node->unionrelid > 0) {
+            rtentry = nth(whichplan, rtentries);
+            if (rtentry == NULL)
+                elog(DEBUG, "exec_append_initialize_next: rtentry is nil");
 
-	    rt_store(unionrelid, rangeTable, rtentry);
+            unionrelid = node->unionrelid;
 
-	    if (unionstate->as_junkFilter_list) {
-		estate->es_junkFilter =
-		  (JunkFilter*)nth(whichplan, 
-				   unionstate->as_junkFilter_list);
-	    }
-	    if (unionstate->as_result_relation_info_list) {
-		estate->es_result_relation_info =
-		  (RelationInfo*) nth(whichplan, 
-				      unionstate->as_result_relation_info_list);
-	    }
-	    result_slot->ttc_whichplan = whichplan;
-	}
-	
-	return TRUE;
+            rt_store(unionrelid, rangeTable, rtentry);
+
+            if (unionstate->as_junkFilter_list) {
+                estate->es_junkFilter =
+                        (JunkFilter *) nth(whichplan,
+                                           unionstate->as_junkFilter_list);
+            }
+            if (unionstate->as_result_relation_info_list) {
+                estate->es_result_relation_info =
+                        (RelationInfo *) nth(whichplan,
+                                             unionstate->as_result_relation_info_list);
+            }
+            result_slot->ttc_whichplan = whichplan;
+        }
+
+        return TRUE;
     }
 }
 
@@ -167,37 +166,36 @@ exec_append_initialize_next(Append *node)
  * ----------------------------------------------------------------
  */
 bool
-ExecInitAppend(Append *node, EState *estate, Plan *parent)
-{
+ExecInitAppend(Append *node, EState *estate, Plan *parent) {
     AppendState *unionstate;
-    int         nplans;
-    List        *resultList;
-    List        *rtentries;
-    List        *unionplans;
-    bool        *initialized;
-    int         i;
-    Plan        *initNode;
-    List        *junkList;
+    int nplans;
+    List *resultList;
+    List *rtentries;
+    List *unionplans;
+    bool *initialized;
+    int i;
+    Plan *initNode;
+    List *junkList;
     RelationInfo *es_rri = estate->es_result_relation_info;
-    
+
     /* ----------------
      *  assign execution state to node and get information
      *  for append state
      * ----------------
      */
     node->plan.state = estate;
-    
+
     unionplans = node->unionplans;
     nplans = length(unionplans);
     rtentries = node->unionrtentries;
-    
+
     CXT1_printf("ExecInitAppend: context is %d\n", CurrentMemoryContext);
-    initialized = (bool *)palloc(nplans * sizeof(bool));
-    
+    initialized = (bool *) palloc(nplans * sizeof(bool));
+
     /* ----------------
      *  create new AppendState for our append node
      * ----------------
-     */   
+     */
     unionstate = makeNode(AppendState);
     unionstate->as_whichplan = 0;
     unionstate->as_nplans = nplans;
@@ -205,7 +203,7 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
     unionstate->as_rtentries = rtentries;
 
     node->unionstate = unionstate;
-    
+
     /* ----------------
      *  Miscellanious initialization
      *
@@ -217,7 +215,7 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
      * ----------------
      */
     ExecAssignNodeBaseInfo(estate, &unionstate->cstate, parent);
-    
+
 #define APPEND_NSLOTS 1
     /* ----------------
      *	append nodes still have Result slots, which hold pointers
@@ -225,7 +223,7 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
      * ----------------
      */
     ExecInitResultTupleSlot(estate, &unionstate->cstate);
-    
+
     /*
      * If the inherits rtentry is the result relation, we have to make
      * a result relation info list for all inheritors so we can update
@@ -233,40 +231,38 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
      *
      * e.g. replace p (age = p.age + 1) from p in person*
      */
-    if ((es_rri != (RelationInfo*)NULL) &&
-	(node->unionrelid == es_rri->ri_RangeTableIndex))
-	{
-	    RelationInfo *rri;
-	    List         *rtentryP;
-	    
-	    foreach(rtentryP,rtentries)
-		{
-		    Oid reloid;
-		    RangeTblEntry *rtentry = lfirst(rtentryP);
-		    
-		    reloid = rtentry->relid;
- 		    rri = makeNode(RelationInfo); 
-		    rri->ri_RangeTableIndex = es_rri->ri_RangeTableIndex;
-		    rri->ri_RelationDesc = heap_open(reloid);
-		    rri->ri_NumIndices = 0;
-		    rri->ri_IndexRelationDescs = NULL; /* index descs */
-		    rri->ri_IndexRelationInfo = NULL;  /* index key info */
+    if ((es_rri != (RelationInfo *) NULL) &&
+        (node->unionrelid == es_rri->ri_RangeTableIndex)) {
+        RelationInfo *rri;
+        List *rtentryP;
 
- 		    resultList = lcons(rri,resultList);
-		    ExecOpenIndices(reloid, rri);
-		}
-	    unionstate->as_result_relation_info_list = resultList;
-	}
+        foreach(rtentryP, rtentries) {
+            Oid reloid;
+            RangeTblEntry *rtentry = lfirst(rtentryP);
+
+            reloid = rtentry->relid;
+            rri = makeNode(RelationInfo);
+            rri->ri_RangeTableIndex = es_rri->ri_RangeTableIndex;
+            rri->ri_RelationDesc = heap_open(reloid);
+            rri->ri_NumIndices = 0;
+            rri->ri_IndexRelationDescs = NULL; /* index descs */
+            rri->ri_IndexRelationInfo = NULL;  /* index key info */
+
+            resultList = lcons(rri, resultList);
+            ExecOpenIndices(reloid, rri);
+        }
+        unionstate->as_result_relation_info_list = resultList;
+    }
     /* ----------------
      *  call ExecInitNode on each of the plans in our list
      *  and save the results into the array "initialized"
      * ----------------
-     */       
+     */
     junkList = NIL;
 
-    for(i = 0; i < nplans ; i++ ) {
-	JunkFilter *j;
-	List       *targetList;
+    for (i = 0; i < nplans; i++) {
+        JunkFilter *j;
+        List *targetList;
         /* ----------------
          *  NOTE: we first modify range table in 
          *        exec_append_initialize_next() and
@@ -278,28 +274,28 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
         exec_append_initialize_next(node);
 
         initNode = (Plan *) nth(i, unionplans);
-        initialized[i] =  ExecInitNode(initNode, estate, (Plan*) node);
-	
-	/* ---------------
-	 *  Each targetlist in the subplan may need its own junk filter
-	 *
-	 *  This is true only when the reln being replaced/deleted is
-	 *  the one that we're looking at the subclasses of
-	 * ---------------
-	 */
-	if ((es_rri != (RelationInfo*)NULL) &&
-	    (node->unionrelid == es_rri->ri_RangeTableIndex)) {
-	    
-	    targetList = initNode->targetlist;
-	    j = (JunkFilter *) ExecInitJunkFilter(targetList);
-	    junkList = lappend(junkList, j);
-	}
-	
+        initialized[i] = ExecInitNode(initNode, estate, (Plan *) node);
+
+        /* ---------------
+         *  Each targetlist in the subplan may need its own junk filter
+         *
+         *  This is true only when the reln being replaced/deleted is
+         *  the one that we're looking at the subclasses of
+         * ---------------
+         */
+        if ((es_rri != (RelationInfo *) NULL) &&
+            (node->unionrelid == es_rri->ri_RangeTableIndex)) {
+
+            targetList = initNode->targetlist;
+            j = (JunkFilter *) ExecInitJunkFilter(targetList);
+            junkList = lappend(junkList, j);
+        }
+
     }
     unionstate->as_junkFilter_list = junkList;
     if (junkList != NIL)
-	estate->es_junkFilter = (JunkFilter *)lfirst(junkList);
-    
+        estate->es_junkFilter = (JunkFilter *) lfirst(junkList);
+
     /* ----------------
      *	initialize the return type from the appropriate subplan.
      * ----------------
@@ -307,30 +303,29 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
     initNode = (Plan *) nth(0, unionplans);
     ExecAssignResultType(&unionstate->cstate,
 /*			 ExecGetExecTupDesc(initNode), */
-			 ExecGetTupType(initNode));
+                         ExecGetTupType(initNode));
     unionstate->cstate.cs_ProjInfo = NULL;
-    
+
     /* ----------------
      *  return the result from the first subplan's initialization
      * ----------------
-     */       
+     */
     unionstate->as_whichplan = 0;
     exec_append_initialize_next(node);
 #if 0
     result = (List *) initialized[0];
-#endif    
+#endif
     return TRUE;
 }
 
 int
-ExecCountSlotsAppend(Append *node)
-{
+ExecCountSlotsAppend(Append *node) {
     List *plan;
     List *unionplans = node->unionplans;
-    int  nSlots     = 0;
-    
-    foreach (plan,unionplans) {
-	nSlots += ExecCountSlotsNode((Plan *)lfirst(plan));
+    int nSlots = 0;
+
+    foreach (plan, unionplans) {
+        nSlots += ExecCountSlotsNode((Plan *) lfirst(plan));
     }
     return nSlots + APPEND_NSLOTS;
 }
@@ -344,54 +339,53 @@ ExecCountSlotsAppend(Append *node)
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
-ExecProcAppend(Append *node)
-{
-    EState              *estate;
-    AppendState         *unionstate;
-    
-    int                 whichplan;
-    List                *unionplans;
-    Plan                *subnode;
-    TupleTableSlot      *result;
-    TupleTableSlot      *result_slot;
-    ScanDirection       direction;
-    
+ExecProcAppend(Append *node) {
+    EState *estate;
+    AppendState *unionstate;
+
+    int whichplan;
+    List *unionplans;
+    Plan *subnode;
+    TupleTableSlot *result;
+    TupleTableSlot *result_slot;
+    ScanDirection direction;
+
     /* ----------------
      *  get information from the node
      * ----------------
      */
-    unionstate =      node->unionstate;
-    estate = 	      node->plan.state;
-    direction =       estate->es_direction;
-    
-    unionplans =      node->unionplans;
-    whichplan =       unionstate->as_whichplan;
-    result_slot =     unionstate->cstate.cs_ResultTupleSlot;
-    
+    unionstate = node->unionstate;
+    estate = node->plan.state;
+    direction = estate->es_direction;
+
+    unionplans = node->unionplans;
+    whichplan = unionstate->as_whichplan;
+    result_slot = unionstate->cstate.cs_ResultTupleSlot;
+
     /* ----------------
      *  figure out which subplan we are currently processing
      * ----------------
      */
     subnode = (Plan *) nth(whichplan, unionplans);
-    
+
     if (subnode == NULL)
         elog(DEBUG, "ExecProcAppend: subnode is NULL");
-    
+
     /* ----------------
      *  get a tuple from the subplan
      * ----------------
      */
-    result = ExecProcNode(subnode, (Plan*)node);
-    
-    if (! TupIsNull(result)) {
+    result = ExecProcNode(subnode, (Plan *) node);
+
+    if (!TupIsNull(result)) {
         /* ----------------
          *  if the subplan gave us something then place a copy of
 	 *  whatever we get into our result slot and return it, else..
          * ----------------
          */
-	return ExecStoreTuple(result->val,
-			      result_slot, result->ttc_buffer, false);
-	
+        return ExecStoreTuple(result->val,
+                              result_slot, result->ttc_buffer, false);
+
     } else {
         /* ----------------
          *  .. go on to the "next" subplan in the appropriate
@@ -399,27 +393,24 @@ ExecProcAppend(Append *node)
          * ----------------
          */
         whichplan = unionstate->as_whichplan;
-        
-        if (ScanDirectionIsForward(direction))
-	    {
-		unionstate->as_whichplan = whichplan + 1;
-	    }
-        else
-	    {
-		unionstate->as_whichplan = whichplan - 1;
-	    }
-	
-	/* ----------------
-	 *  return something from next node or an empty slot
-	 *  all of our subplans have been exhausted.
-	 * ----------------
-	 */
+
+        if (ScanDirectionIsForward(direction)) {
+            unionstate->as_whichplan = whichplan + 1;
+        } else {
+            unionstate->as_whichplan = whichplan - 1;
+        }
+
+        /* ----------------
+         *  return something from next node or an empty slot
+         *  all of our subplans have been exhausted.
+         * ----------------
+         */
         if (exec_append_initialize_next(node)) {
-	    ExecSetSlotDescriptorIsNew(result_slot, true);
+            ExecSetSlotDescriptorIsNew(result_slot, true);
             return
-		ExecProcAppend(node);
+                    ExecProcAppend(node);
         } else
-	    return ExecClearTuple(result_slot);
+            return ExecClearTuple(result_slot);
     }
 }
 
@@ -432,52 +423,51 @@ ExecProcAppend(Append *node)
  * ----------------------------------------------------------------
  */
 void
-ExecEndAppend(Append *node)
-{
+ExecEndAppend(Append *node) {
     AppendState *unionstate;
-    int         nplans;
-    List        *unionplans;
-    bool     	*initialized;
-    int         i;
-    List        *resultRelationInfoList;
-    RelationInfo    *resultRelationInfo;
+    int nplans;
+    List *unionplans;
+    bool *initialized;
+    int i;
+    List *resultRelationInfoList;
+    RelationInfo *resultRelationInfo;
 
     /* ----------------
      *  get information from the node
      * ----------------
      */
-    unionstate =  node->unionstate;
-    unionplans =  node->unionplans;
-    nplans =      unionstate->as_nplans;
+    unionstate = node->unionstate;
+    unionplans = node->unionplans;
+    nplans = unionstate->as_nplans;
     initialized = unionstate->as_initialized;
-    
+
     /* ----------------
      *  shut down each of the subscans
      * ----------------
      */
-    for(i = 0; i < nplans; i++) {
-        if (initialized[i]==TRUE) {
-            ExecEndNode( (Plan *) nth(i, unionplans), (Plan*)node );
+    for (i = 0; i < nplans; i++) {
+        if (initialized[i] == TRUE) {
+            ExecEndNode((Plan *) nth(i, unionplans), (Plan *) node);
         }
     }
-    
+
     /* ----------------
      *  close out the different result relations
      * ----------------
      */
     resultRelationInfoList = unionstate->as_result_relation_info_list;
     while (resultRelationInfoList != NIL) {
-      Relation resultRelationDesc;
-	
-      resultRelationInfo = (RelationInfo*) lfirst(resultRelationInfoList);
-      resultRelationDesc = resultRelationInfo->ri_RelationDesc;
-      heap_close(resultRelationDesc);
-      pfree(resultRelationInfo);
-      resultRelationInfoList = lnext(resultRelationInfoList);
+        Relation resultRelationDesc;
+
+        resultRelationInfo = (RelationInfo *) lfirst(resultRelationInfoList);
+        resultRelationDesc = resultRelationInfo->ri_RelationDesc;
+        heap_close(resultRelationDesc);
+        pfree(resultRelationInfo);
+        resultRelationInfoList = lnext(resultRelationInfoList);
     }
     if (unionstate->as_result_relation_info_list)
-      pfree(unionstate->as_result_relation_info_list);
+        pfree(unionstate->as_result_relation_info_list);
 
-  /* XXX should free unionstate->as_rtentries  and unionstate->as_junkfilter_list here  */
+    /* XXX should free unionstate->as_rtentries  and unionstate->as_junkfilter_list here  */
 }
 

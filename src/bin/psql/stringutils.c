@@ -21,55 +21,52 @@
 
 /* removes whitespaces from the left, right and both sides of a string */
 /* MODIFIES the string passed in and returns the head of it */
-char* leftTrim(char* s)  
-{
-  char* s2 = s;
-  int shift=0;
-  int j=0;
+char *leftTrim(char *s) {
+    char *s2 = s;
+    int shift = 0;
+    int j = 0;
 
-  while (isspace(*s))
-    { s++; shift++;}
-  if (shift > 0)
-    {
-      while ( (s2[j] = s2[j+shift]) !='\0')
-	j++;
+    while (isspace(*s)) {
+        s++;
+        shift++;
+    }
+    if (shift > 0) {
+        while ((s2[j] = s2[j + shift]) != '\0')
+            j++;
     }
 
-  return s2;
+    return s2;
 }
 
-char* rightTrim(char* s)
-{
-  char* sEnd;
-  sEnd = s+strlen(s)-1;
-  while (isspace(*sEnd))
-    sEnd--;
-  if (sEnd < s)
-    s[0]='\0';
-  else
-    s[sEnd-s+1]='\0';
-  return s;
+char *rightTrim(char *s) {
+    char *sEnd;
+    sEnd = s + strlen(s) - 1;
+    while (isspace(*sEnd))
+        sEnd--;
+    if (sEnd < s)
+        s[0] = '\0';
+    else
+        s[sEnd - s + 1] = '\0';
+    return s;
 }
 
-char* doubleTrim(char* s)
-{
-  strcpy(s,leftTrim(rightTrim(s)));
-  return s;
+char *doubleTrim(char *s) {
+    strcpy(s, leftTrim(rightTrim(s)));
+    return s;
 }
 
 /* dupstr : copies a string, while allocating space for it. 
    the CALLER is responsible for freeing the space
    returns NULL if the argument is NULL*/
-char* dupstr(char *s)
-{
-  char* result;
+char *dupstr(char *s) {
+    char *result;
 
-  if (s == NULL)
-    return NULL;
+    if (s == NULL)
+        return NULL;
 
-  result = (char*)malloc(strlen(s)+1);
-  strcpy(result, s);
-  return result;
+    result = (char *) malloc(strlen(s) + 1);
+    strcpy(result, s);
+    return result;
 }
 
 
@@ -77,11 +74,11 @@ char* dupstr(char *s)
 void testStringUtils()
 {
   static char* tests[] = {" goodbye  \n", /* space on both ends */
-			  "hello world",  /* no spaces to trim */
-			  "",		/* empty string */
-			  "a",		/* string with one char*/
-			  " ",		/* string with one whitespace*/
-			  NULL_STR};
+              "hello world",  /* no spaces to trim */
+              "",		/* empty string */
+              "a",		/* string with one char*/
+              " ",		/* string with one whitespace*/
+              NULL_STR};
 
   int i=0;
   while (tests[i]!=NULL_STR)

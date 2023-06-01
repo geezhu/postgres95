@@ -37,9 +37,8 @@
  *	Assumes relation descriptor is for an index relation.
  */
 IndexStrategy
-RelationGetIndexStrategy(Relation relation)
-{
-  return relation->rd_istrat;
+RelationGetIndexStrategy(Relation relation) {
+    return relation->rd_istrat;
 }
 
 /*
@@ -65,12 +64,11 @@ RelationGetIndexStrategy(Relation relation)
  */
 void
 RelationSetIndexSupport(Relation relation,
-			IndexStrategy strategy,
-			RegProcedure *support)
-{
+                        IndexStrategy strategy,
+                        RegProcedure *support) {
     Assert(PointerIsValid(relation));
     Assert(IndexStrategyIsValid(strategy));
-    
+
     relation->rd_istrat = strategy;
     relation->rd_support = support;
 }

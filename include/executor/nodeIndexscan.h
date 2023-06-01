@@ -10,8 +10,8 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	NODEINDEXSCAN_H
-#define	NODEINDEXSCAN_H
+#ifndef    NODEINDEXSCAN_H
+#define    NODEINDEXSCAN_H
 
 extern TupleTableSlot *ExecIndexScan(IndexScan *node);
 
@@ -29,4 +29,4 @@ extern bool ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent);
 
 extern int ExecCountSlotsIndexScan(IndexScan *node);
 
-#endif	/* NODEINDEXSCAN_H */
+#endif    /* NODEINDEXSCAN_H */

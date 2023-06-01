@@ -34,14 +34,13 @@
 
 Datum
 ExecEvalIter(Iter *iterNode,
-	     ExprContext *econtext,
-	     bool *resultIsNull,
-	     bool *iterIsDone)
-{
+             ExprContext *econtext,
+             bool *resultIsNull,
+             bool *iterIsDone) {
     Node *expression;
-    
+
     expression = iterNode->iterexpr;
-    
+
     /*
      * Really Iter nodes are only needed for C functions, postquel function
      * by their nature return 1 result at a time.  For now we are only worrying
@@ -52,10 +51,9 @@ ExecEvalIter(Iter *iterNode,
 
 void
 ExecEvalFjoin(TargetEntry *tlist,
-	      ExprContext *econtext,
-	      bool *isNullVect,
-	      bool *fj_isDone)
-{
+              ExprContext *econtext,
+              bool *isNullVect,
+              bool *fj_isDone) {
 
 #ifdef SETS_FIXED
     bool     isDone;
@@ -72,108 +70,107 @@ ExecEvalFjoin(TargetEntry *tlist,
      * the Fjoin node.
      */
     if (!fjNode->fj_initialized)
-	{
-	    /*
-	     * Initialize all of the Outer nodes
-	     */
-	    curNode = 1;
-	    foreach(tlistP, lnext(tlist))
-		{
-		    TargetEntry *tle = lfirst(tlistP);
-		    
-		    resVect[curNode] = ExecEvalIter((Iter*)tle->expr,
-						    econtext,
-						    &isNullVect[curNode],
-						    &isDone);
-		    if (isDone)
-			isNullVect[curNode] = alwaysDone[curNode] = true;
-		    else
-			alwaysDone[curNode] = false;
-		    
-		    curNode++;
-		}
-	    
-	    /*
-	     * Initialize the inner node
-	     */
-	    resVect[0] = ExecEvalIter((Iter*)fjNode->fj_innerNode->expr,
-				      econtext,
-				      &isNullVect[0],
-				      &isDone);
-	    if (isDone)
-		isNullVect[0] = alwaysDone[0] = true;
-	    else
-		alwaysDone[0] = false;
-	    
-	    /*
-	     * Mark the Fjoin as initialized now.
-	     */
-	    fjNode->fj_initialized = TRUE;
-	    
-	    /*
-	     * If the inner node is always done, then we are done for now
-	     */
-	    if (isDone)
-		return;
-	}
+    {
+        /*
+         * Initialize all of the Outer nodes
+         */
+        curNode = 1;
+        foreach(tlistP, lnext(tlist))
+        {
+            TargetEntry *tle = lfirst(tlistP);
+            
+            resVect[curNode] = ExecEvalIter((Iter*)tle->expr,
+                            econtext,
+                            &isNullVect[curNode],
+                            &isDone);
+            if (isDone)
+            isNullVect[curNode] = alwaysDone[curNode] = true;
+            else
+            alwaysDone[curNode] = false;
+            
+            curNode++;
+        }
+        
+        /*
+         * Initialize the inner node
+         */
+        resVect[0] = ExecEvalIter((Iter*)fjNode->fj_innerNode->expr,
+                      econtext,
+                      &isNullVect[0],
+                      &isDone);
+        if (isDone)
+        isNullVect[0] = alwaysDone[0] = true;
+        else
+        alwaysDone[0] = false;
+        
+        /*
+         * Mark the Fjoin as initialized now.
+         */
+        fjNode->fj_initialized = TRUE;
+        
+        /*
+         * If the inner node is always done, then we are done for now
+         */
+        if (isDone)
+        return;
+    }
     else
-	{
-	    /*
-	     * If we're already initialized, all we need to do is get the
-	     * next inner result and pair it up with the existing outer node
-	     * result vector.  Watch out for the degenerate case, where the
-	     * inner node never returns results.
-	     */
-	    
-	    /*
-	     * Fill in nulls for every function that is always done.
-	     */
-	    for (curNode=fjNode->fj_nNodes-1; curNode >= 0; curNode--)
-		isNullVect[curNode] = alwaysDone[curNode];
-	    
-	    if (alwaysDone[0] == true)
-		{
-		    *fj_isDone = FjoinBumpOuterNodes(tlist,
-						     econtext,
-						     resVect,
-						     isNullVect);
-		    return;
-		}
-	    else
-		resVect[0] = ExecEvalIter((Iter*)fjNode->fj_innerNode->expr,
-					  econtext,
-					  &isNullVect[0],
-					  &isDone);
-	}
+    {
+        /*
+         * If we're already initialized, all we need to do is get the
+         * next inner result and pair it up with the existing outer node
+         * result vector.  Watch out for the degenerate case, where the
+         * inner node never returns results.
+         */
+        
+        /*
+         * Fill in nulls for every function that is always done.
+         */
+        for (curNode=fjNode->fj_nNodes-1; curNode >= 0; curNode--)
+        isNullVect[curNode] = alwaysDone[curNode];
+        
+        if (alwaysDone[0] == true)
+        {
+            *fj_isDone = FjoinBumpOuterNodes(tlist,
+                             econtext,
+                             resVect,
+                             isNullVect);
+            return;
+        }
+        else
+        resVect[0] = ExecEvalIter((Iter*)fjNode->fj_innerNode->expr,
+                      econtext,
+                      &isNullVect[0],
+                      &isDone);
+    }
     
     /*
      * if the inner node is done
      */
     if (isDone)
-	{
-	    *fj_isDone = FjoinBumpOuterNodes(tlist,
-					     econtext,
-					     resVect,
-					     isNullVect);
-	    if (*fj_isDone)
-		return;
-	    
-	    resVect[0] = ExecEvalIter((Iter*)fjNode->fj_innerNode->expr,
-				      econtext,
-				      &isNullVect[0],
-				      &isDone);
-	    
-	}
+    {
+        *fj_isDone = FjoinBumpOuterNodes(tlist,
+                         econtext,
+                         resVect,
+                         isNullVect);
+        if (*fj_isDone)
+        return;
+        
+        resVect[0] = ExecEvalIter((Iter*)fjNode->fj_innerNode->expr,
+                      econtext,
+                      &isNullVect[0],
+                      &isDone);
+        
+    }
 #endif
     return;
 }
 
 bool
 FjoinBumpOuterNodes(TargetEntry *tlist,
-		    ExprContext *econtext,
-		    DatumPtr results,
-		    char *nulls)
-{
+                    ExprContext *econtext,
+                    DatumPtr results,
+                    char *nulls) {
 #ifdef SETS_FIXED
     bool   funcIsDone = true;
     Fjoin  *fjNode    = tlist->fjoin;
@@ -188,19 +185,19 @@ FjoinBumpOuterNodes(TargetEntry *tlist,
      * done returning values.  Watch out for funcs that are always done.
      */
     while ((funcIsDone == true) && (outerList != NIL))
-	{
-	    TargetEntry *tle = lfirst(outerList);
-	    
-	    if (alwaysDone[curNode] == true)
-		nulls[curNode] = 'n';
-	    else
-		results[curNode] = ExecEvalIter((Iter)tle->expr,
-						econtext,
-						&nulls[curNode],
-						&funcIsDone);
-	    curNode++;
-	    outerList = lnext(outerList);
-	}
+    {
+        TargetEntry *tle = lfirst(outerList);
+        
+        if (alwaysDone[curNode] == true)
+        nulls[curNode] = 'n';
+        else
+        results[curNode] = ExecEvalIter((Iter)tle->expr,
+                        econtext,
+                        &nulls[curNode],
+                        &funcIsDone);
+        curNode++;
+        outerList = lnext(outerList);
+    }
     
     /*
      * If every function is done, then we are done flattening.
@@ -208,10 +205,10 @@ FjoinBumpOuterNodes(TargetEntry *tlist,
      * next tuple from the plan and redo all of the flattening.
      */
     if (funcIsDone)
-	{
-	    set_fj_initialized(fjNode, false);
-	    return (true);
-	}
+    {
+        set_fj_initialized(fjNode, false);
+        return (true);
+    }
     
     /*
      * We found a function that wasn't done.  Now re-run every function
@@ -219,17 +216,17 @@ FjoinBumpOuterNodes(TargetEntry *tlist,
      */
     trailNode = 1;
     while (trailNode != curNode-1)
-	{
-	    TargetEntry *tle = lfirst(trailers);
-	    
-	    if (alwaysDone[trailNode] != true)
-		results[trailNode] = ExecEvalIter((Iter)tle->expr,
-						  econtext,
-						  &nulls[trailNode],
-						  &funcIsDone);
-	    trailNode++;
-	    trailers = lnext(trailers);
-	}
+    {
+        TargetEntry *tle = lfirst(trailers);
+        
+        if (alwaysDone[trailNode] != true)
+        results[trailNode] = ExecEvalIter((Iter)tle->expr,
+                          econtext,
+                          &nulls[trailNode],
+                          &funcIsDone);
+        trailNode++;
+        trailers = lnext(trailers);
+    }
     return false;
 #endif
     return false;

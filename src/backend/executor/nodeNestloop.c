@@ -52,19 +52,18 @@
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
-ExecNestLoop(NestLoop *node, Plan* parent)
-{
-    NestLoopState 	*nlstate;
-    Plan	  	*innerPlan;
-    Plan	  	*outerPlan;
-    bool 	  	needNewOuterTuple;
+ExecNestLoop(NestLoop *node, Plan *parent) {
+    NestLoopState *nlstate;
+    Plan *innerPlan;
+    Plan *outerPlan;
+    bool needNewOuterTuple;
 
-    TupleTableSlot  	*outerTupleSlot;
-    TupleTableSlot  	*innerTupleSlot;
+    TupleTableSlot *outerTupleSlot;
+    TupleTableSlot *innerTupleSlot;
 
-    List	  	*qual;
-    bool	  	qualResult;
-    ExprContext	  	*econtext;
+    List *qual;
+    bool qualResult;
+    ExprContext *econtext;
 
     /* ----------------
      *	get information from the node
@@ -72,10 +71,10 @@ ExecNestLoop(NestLoop *node, Plan* parent)
      */
     ENL1_printf("getting info from node");
 
-    nlstate =    node->nlstate;
-    qual =       node->join.qual;
-    outerPlan =  outerPlan(&node->join);
-    innerPlan =  innerPlan(&node->join);
+    nlstate = node->nlstate;
+    qual = node->join.qual;
+    outerPlan = outerPlan(&node->join);
+    innerPlan = innerPlan(&node->join);
 
     /* ----------------
      *	initialize expression context
@@ -96,146 +95,146 @@ ExecNestLoop(NestLoop *node, Plan* parent)
      */
 
     if (nlstate->jstate.cs_TupFromTlist) {
-	TupleTableSlot  *result;
-	bool		isDone;
+        TupleTableSlot *result;
+        bool isDone;
 
-	result = ExecProject(nlstate->jstate.cs_ProjInfo, &isDone);
-	if (!isDone)
-	    return result;
+        result = ExecProject(nlstate->jstate.cs_ProjInfo, &isDone);
+        if (!isDone)
+            return result;
     }
 
     ENL1_printf("entering main loop");
-    for(;;) {
-	/* ----------------
-	 *  The essential idea now is to get the next inner tuple
-	 *  and join it with the current outer tuple.
-	 * ----------------
-	 */
-	needNewOuterTuple = false;
-	
-	/* ----------------
-	 *  If outer tuple is not null then that means
-	 *  we are in the middle of a scan and we should
-	 *  restore our previously saved scan position.
-	 * ----------------
-	 */
-	if (! TupIsNull(outerTupleSlot)) {	    
-	    ENL1_printf("have outer tuple, restoring outer plan");
-	    ExecRestrPos(outerPlan);
-	} else {
-	    ENL1_printf("outer tuple is nil, need new outer tuple");
-	    needNewOuterTuple = true;
-	}
-	
-	/* ----------------
-	 *  if we have an outerTuple, try to get the next inner tuple.
-	 * ----------------
-	 */
-	if (!needNewOuterTuple) {
-	    ENL1_printf("getting new inner tuple");
-	
-	    innerTupleSlot = ExecProcNode(innerPlan, (Plan*)node);
-	    econtext->ecxt_innertuple = innerTupleSlot;
-	    
-	    if (TupIsNull(innerTupleSlot)) {
-		ENL1_printf("no inner tuple, need new outer tuple");
-		needNewOuterTuple = true;
-	    }
-	}
-	
-	/* ----------------
-	 *  loop until we have a new outer tuple and a new
-	 *  inner tuple.
-	 * ----------------
-	 */
-	while (needNewOuterTuple) {
-	    /* ----------------
-	     *	now try to get the next outer tuple
-	     * ----------------
-	     */
-	    ENL1_printf("getting new outer tuple");
-	    outerTupleSlot = ExecProcNode(outerPlan, (Plan*)node);
-	    econtext->ecxt_outertuple = outerTupleSlot;
-	    
-	    /* ----------------
-	     *  if there are no more outer tuples, then the join
-	     *  is complete..
-	     * ----------------
-	     */
-	    if (TupIsNull(outerTupleSlot)) {
-		ENL1_printf("no outer tuple, ending join");
-		return NULL;
-	    }
-	    
-	    /* ----------------
-	     *  we have a new outer tuple so we mark our position
-	     *  in the outer scan and save the outer tuple in the
-	     *  NestLoop state
-	     * ----------------
-	     */
-	    ENL1_printf("saving new outer tuple information");
-	    ExecMarkPos(outerPlan);
-	    nlstate->jstate.cs_OuterTupleSlot = outerTupleSlot;
-	    
-	    /* ----------------
-	     *	now rescan the inner plan and get a new inner tuple
-	     * ----------------
-	     */
-	    
-	    ENL1_printf("rescanning inner plan");
-	    /* 
-	     * The scan key of the inner plan might depend on the current
-	     * outer tuple (e.g. in index scans), that's why we pass our
-	     * expr context.
-	     */
-	    ExecReScan(innerPlan, econtext, parent);
+    for (;;) {
+        /* ----------------
+         *  The essential idea now is to get the next inner tuple
+         *  and join it with the current outer tuple.
+         * ----------------
+         */
+        needNewOuterTuple = false;
 
-	    ENL1_printf("getting new inner tuple");
-	    
-	    innerTupleSlot = ExecProcNode(innerPlan, (Plan*)node);
-	    econtext->ecxt_innertuple = innerTupleSlot;
-	    
-	    if (TupIsNull(innerTupleSlot)) {
-		ENL1_printf("couldn't get inner tuple - need new outer tuple");
-	    } else {
-		ENL1_printf("got inner and outer tuples");
-		needNewOuterTuple = false;
-	    }
-	} /* while (needNewOuterTuple) */
-	
-	/* ----------------
-	 *   at this point we have a new pair of inner and outer
-	 *   tuples so we test the inner and outer tuples to see
-	 *   if they satisify the node's qualification.
-	 * ----------------
-	 */
-	ENL1_printf("testing qualification");
-	qualResult = ExecQual((List*)qual, econtext);
-	
-	if (qualResult) {
-	    /* ----------------
-	     *  qualification was satisified so we project and
-	     *  return the slot containing the result tuple
-	     *  using ExecProject().
-	     * ----------------
-	     */
-	    ProjectionInfo *projInfo;
-	    TupleTableSlot *result;
-	    bool           isDone;
-	    
-	    ENL1_printf("qualification succeeded, projecting tuple");
-	    
-	    projInfo = nlstate->jstate.cs_ProjInfo;
-	    result = ExecProject(projInfo, &isDone);
-	    nlstate->jstate.cs_TupFromTlist = !isDone;
-	    return result;
-	} 
-	
-	/* ----------------
-	 *  qualification failed so we have to try again..
-	 * ----------------
-	 */
-	ENL1_printf("qualification failed, looping");
+        /* ----------------
+         *  If outer tuple is not null then that means
+         *  we are in the middle of a scan and we should
+         *  restore our previously saved scan position.
+         * ----------------
+         */
+        if (!TupIsNull(outerTupleSlot)) {
+            ENL1_printf("have outer tuple, restoring outer plan");
+            ExecRestrPos(outerPlan);
+        } else {
+            ENL1_printf("outer tuple is nil, need new outer tuple");
+            needNewOuterTuple = true;
+        }
+
+        /* ----------------
+         *  if we have an outerTuple, try to get the next inner tuple.
+         * ----------------
+         */
+        if (!needNewOuterTuple) {
+            ENL1_printf("getting new inner tuple");
+
+            innerTupleSlot = ExecProcNode(innerPlan, (Plan *) node);
+            econtext->ecxt_innertuple = innerTupleSlot;
+
+            if (TupIsNull(innerTupleSlot)) {
+                ENL1_printf("no inner tuple, need new outer tuple");
+                needNewOuterTuple = true;
+            }
+        }
+
+        /* ----------------
+         *  loop until we have a new outer tuple and a new
+         *  inner tuple.
+         * ----------------
+         */
+        while (needNewOuterTuple) {
+            /* ----------------
+             *	now try to get the next outer tuple
+             * ----------------
+             */
+            ENL1_printf("getting new outer tuple");
+            outerTupleSlot = ExecProcNode(outerPlan, (Plan *) node);
+            econtext->ecxt_outertuple = outerTupleSlot;
+
+            /* ----------------
+             *  if there are no more outer tuples, then the join
+             *  is complete..
+             * ----------------
+             */
+            if (TupIsNull(outerTupleSlot)) {
+                ENL1_printf("no outer tuple, ending join");
+                return NULL;
+            }
+
+            /* ----------------
+             *  we have a new outer tuple so we mark our position
+             *  in the outer scan and save the outer tuple in the
+             *  NestLoop state
+             * ----------------
+             */
+            ENL1_printf("saving new outer tuple information");
+            ExecMarkPos(outerPlan);
+            nlstate->jstate.cs_OuterTupleSlot = outerTupleSlot;
+
+            /* ----------------
+             *	now rescan the inner plan and get a new inner tuple
+             * ----------------
+             */
+
+            ENL1_printf("rescanning inner plan");
+            /* 
+             * The scan key of the inner plan might depend on the current
+             * outer tuple (e.g. in index scans), that's why we pass our
+             * expr context.
+             */
+            ExecReScan(innerPlan, econtext, parent);
+
+            ENL1_printf("getting new inner tuple");
+
+            innerTupleSlot = ExecProcNode(innerPlan, (Plan *) node);
+            econtext->ecxt_innertuple = innerTupleSlot;
+
+            if (TupIsNull(innerTupleSlot)) {
+                ENL1_printf("couldn't get inner tuple - need new outer tuple");
+            } else {
+                ENL1_printf("got inner and outer tuples");
+                needNewOuterTuple = false;
+            }
+        } /* while (needNewOuterTuple) */
+
+        /* ----------------
+         *   at this point we have a new pair of inner and outer
+         *   tuples so we test the inner and outer tuples to see
+         *   if they satisify the node's qualification.
+         * ----------------
+         */
+        ENL1_printf("testing qualification");
+        qualResult = ExecQual((List *) qual, econtext);
+
+        if (qualResult) {
+            /* ----------------
+             *  qualification was satisified so we project and
+             *  return the slot containing the result tuple
+             *  using ExecProject().
+             * ----------------
+             */
+            ProjectionInfo *projInfo;
+            TupleTableSlot *result;
+            bool isDone;
+
+            ENL1_printf("qualification succeeded, projecting tuple");
+
+            projInfo = nlstate->jstate.cs_ProjInfo;
+            result = ExecProject(projInfo, &isDone);
+            nlstate->jstate.cs_TupFromTlist = !isDone;
+            return result;
+        }
+
+        /* ----------------
+         *  qualification failed so we have to try again..
+         * ----------------
+         */
+        ENL1_printf("qualification failed, looping");
     }
 }
 
@@ -248,13 +247,12 @@ ExecNestLoop(NestLoop *node, Plan* parent)
  * ----------------------------------------------------------------  	
  */
 bool
-ExecInitNestLoop(NestLoop *node, EState *estate, Plan *parent)
-{
-    NestLoopState   *nlstate;
+ExecInitNestLoop(NestLoop *node, EState *estate, Plan *parent) {
+    NestLoopState *nlstate;
 
     NL1_printf("ExecInitNestLoop: %s\n",
-	       "initializing node");
-	
+               "initializing node");
+
     /* ----------------
      *	assign execution state to node
      * ----------------
@@ -291,8 +289,8 @@ ExecInitNestLoop(NestLoop *node, EState *estate, Plan *parent)
      *    now initialize children
      * ----------------
      */
-    ExecInitNode(outerPlan((Plan*)node), estate, (Plan*)node);
-    ExecInitNode(innerPlan((Plan*)node), estate, (Plan*)node);
+    ExecInitNode(outerPlan((Plan *) node), estate, (Plan *) node);
+    ExecInitNode(innerPlan((Plan *) node), estate, (Plan *) node);
 
     /* ----------------
      * 	initialize tuple type and projection info
@@ -309,16 +307,15 @@ ExecInitNestLoop(NestLoop *node, EState *estate, Plan *parent)
     nlstate->jstate.cs_TupFromTlist = false;
 
     NL1_printf("ExecInitNestLoop: %s\n",
-	       "node initialized");
+               "node initialized");
     return TRUE;
 }
 
 int
-ExecCountSlotsNestLoop(NestLoop *node)
-{
+ExecCountSlotsNestLoop(NestLoop *node) {
     return ExecCountSlotsNode(outerPlan(node)) +
-	   ExecCountSlotsNode(innerPlan(node)) +
-	   NESTLOOP_NSLOTS;
+           ExecCountSlotsNode(innerPlan(node)) +
+           NESTLOOP_NSLOTS;
 }
 
 /* ----------------------------------------------------------------
@@ -328,18 +325,17 @@ ExecCountSlotsNestLoop(NestLoop *node)
  * ----------------------------------------------------------------
  */
 void
-ExecEndNestLoop(NestLoop *node)
-{
-    NestLoopState   *nlstate;
+ExecEndNestLoop(NestLoop *node) {
+    NestLoopState *nlstate;
 
     NL1_printf("ExecEndNestLoop: %s\n",
-	       "ending node processing");
+               "ending node processing");
 
     /* ----------------
      *	get info from the node
      * ----------------
      */
-    nlstate =  node->nlstate;
+    nlstate = node->nlstate;
 
     /* ----------------
      *	Free the projection info
@@ -349,15 +345,15 @@ ExecEndNestLoop(NestLoop *node)
      *	      returned by ExecMain().  So for now, this
      *	      is freed at end-transaction time.  -cim 6/2/91     
      * ----------------
-     */    
+     */
     ExecFreeProjectionInfo(&nlstate->jstate);
 
     /* ----------------
      *	close down subplans
      * ----------------
      */
-    ExecEndNode(outerPlan((Plan *) node), (Plan*)node);
-    ExecEndNode(innerPlan((Plan *) node), (Plan*)node);
+    ExecEndNode(outerPlan((Plan *) node), (Plan *) node);
+    ExecEndNode(innerPlan((Plan *) node), (Plan *) node);
 
     /* ----------------
      *	clean out the tuple table 
@@ -366,5 +362,5 @@ ExecEndNestLoop(NestLoop *node)
     ExecClearTuple(nlstate->jstate.cs_ResultTupleSlot);
 
     NL1_printf("ExecEndNestLoop: %s\n",
-	       "node processing ended");
+               "node processing ended");
 }

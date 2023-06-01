@@ -10,12 +10,12 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	TUPDESC_H
+#ifndef    TUPDESC_H
 #define TUPDESC_H
 
 #include "postgres.h"
 #include "access/attnum.h"
-#include "nodes/pg_list.h"	/* for List */
+#include "nodes/pg_list.h"    /* for List */
 #include "catalog/pg_attribute.h"
 
 /*
@@ -31,7 +31,7 @@
 /* for a tuple */
 
 typedef struct tupleDesc {
-    int  natts;
+    int natts;
     AttributeTupleForm *attrs;
 } *TupleDesc;
 
@@ -42,12 +42,12 @@ extern TupleDesc CreateTupleDesc(int natts, AttributeTupleForm *attrs);
 extern TupleDesc CreateTupleDescCopy(TupleDesc tupdesc);
 
 extern bool TupleDescInitEntry(TupleDesc desc,
-			       AttrNumber attributeNumber,
-			       char *attributeName, 
-			       char *typeName, 
-			       int attdim, 
-			       bool attisset);
+                               AttrNumber attributeNumber,
+                               char *attributeName,
+                               char *typeName,
+                               int attdim,
+                               bool attisset);
 
 extern TupleDesc BuildDescForRelation(List *schema, char *relname);
 
-#endif	/* TUPDESC_H */
+#endif    /* TUPDESC_H */

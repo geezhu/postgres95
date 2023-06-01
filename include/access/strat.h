@@ -18,69 +18,69 @@
 #include "access/attnum.h"
 #include "access/skey.h"
 
-typedef uint16	StrategyNumber;
+typedef uint16 StrategyNumber;
 
-#define InvalidStrategy	0
+#define InvalidStrategy    0
 
 typedef struct StrategyTransformMapData {
-    StrategyNumber	strategy[1];	/* VARIABLE LENGTH ARRAY */
-} StrategyTransformMapData;	/* VARIABLE LENGTH STRUCTURE */
+    StrategyNumber strategy[1];    /* VARIABLE LENGTH ARRAY */
+} StrategyTransformMapData;    /* VARIABLE LENGTH STRUCTURE */
 
-typedef StrategyTransformMapData	*StrategyTransformMap;
+typedef StrategyTransformMapData *StrategyTransformMap;
 
 typedef struct StrategyOperatorData {
-    StrategyNumber	strategy;
-    bits16		flags;		/* scan qualification flags h/skey.h */
+    StrategyNumber strategy;
+    bits16 flags;        /* scan qualification flags h/skey.h */
 } StrategyOperatorData;
 
-typedef StrategyOperatorData	*StrategyOperator;
+typedef StrategyOperatorData *StrategyOperator;
 
-typedef struct StrategyTermData {	/* conjunctive term */
-    uint16			degree;
-    StrategyOperatorData	operatorData[1];	/* VARIABLE LENGTH */
-} StrategyTermData;	/* VARIABLE LENGTH STRUCTURE */
+typedef struct StrategyTermData {    /* conjunctive term */
+    uint16 degree;
+    StrategyOperatorData operatorData[1];    /* VARIABLE LENGTH */
+} StrategyTermData;    /* VARIABLE LENGTH STRUCTURE */
 
-typedef StrategyTermData	*StrategyTerm;
+typedef StrategyTermData *StrategyTerm;
 
-typedef struct StrategyExpressionData {	/* disjunctive normal form */
-    StrategyTerm	term[1];	/* VARIABLE LENGTH ARRAY */
-} StrategyExpressionData;	/* VARIABLE LENGTH STRUCTURE */
+typedef struct StrategyExpressionData {    /* disjunctive normal form */
+    StrategyTerm term[1];    /* VARIABLE LENGTH ARRAY */
+} StrategyExpressionData;    /* VARIABLE LENGTH STRUCTURE */
 
-typedef StrategyExpressionData	*StrategyExpression;
+typedef StrategyExpressionData *StrategyExpression;
 
 typedef struct StrategyEvaluationData {
-    StrategyNumber		maxStrategy;
-    StrategyTransformMap	negateTransform;
-    StrategyTransformMap	commuteTransform;
-    StrategyTransformMap	negateCommuteTransform;
-    StrategyExpression	expression[12];	/* XXX VARIABLE LENGTH */
-} StrategyEvaluationData;	/* VARIABLE LENGTH STRUCTURE */
+    StrategyNumber maxStrategy;
+    StrategyTransformMap negateTransform;
+    StrategyTransformMap commuteTransform;
+    StrategyTransformMap negateCommuteTransform;
+    StrategyExpression expression[12];    /* XXX VARIABLE LENGTH */
+} StrategyEvaluationData;    /* VARIABLE LENGTH STRUCTURE */
 
-typedef StrategyEvaluationData	*StrategyEvaluation;
+typedef StrategyEvaluationData *StrategyEvaluation;
 
 /*
  * StrategyTransformMapIsValid --
  *	Returns true iff strategy transformation map is valid.
  */
-#define	StrategyTransformMapIsValid(transform) PointerIsValid(transform)
+#define    StrategyTransformMapIsValid(transform) PointerIsValid(transform)
 
 
-#ifndef	CorrectStrategies		/* XXX this should be removable */
-#define AMStrategies(foo)	12
+#ifndef    CorrectStrategies        /* XXX this should be removable */
+#define AMStrategies(foo)    12
 #else	/* !defined(CorrectStrategies) */
 #define AMStrategies(foo)	(foo)
-#endif	/* !defined(CorrectStrategies) */
+#endif    /* !defined(CorrectStrategies) */
 
 typedef struct StrategyMapData {
-	ScanKeyData		entry[1];	/* VARIABLE LENGTH ARRAY */
-} StrategyMapData;	/* VARIABLE LENGTH STRUCTURE */
+    ScanKeyData entry[1];    /* VARIABLE LENGTH ARRAY */
+} StrategyMapData;    /* VARIABLE LENGTH STRUCTURE */
 
-typedef StrategyMapData	*StrategyMap;
+typedef StrategyMapData *StrategyMap;
 
 typedef struct IndexStrategyData {
-	StrategyMapData	strategyMapData[1];	/* VARIABLE LENGTH ARRAY */
-} IndexStrategyData;	/* VARIABLE LENGTH STRUCTURE */
+    StrategyMapData strategyMapData[1];    /* VARIABLE LENGTH ARRAY */
+} IndexStrategyData;    /* VARIABLE LENGTH STRUCTURE */
 
-typedef IndexStrategyData	*IndexStrategy;
+typedef IndexStrategyData *IndexStrategy;
 
 #endif /*STRAT_H */

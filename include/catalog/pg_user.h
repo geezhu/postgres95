@@ -30,14 +30,14 @@
  *	pg_user definition.  cpp turns this into
  *	typedef struct FormData_pg_user
  * ----------------
- */ 
+ */
 CATALOG(pg_user) BOOTSTRAP {
-    NameData 	usename;
-    int4 	usesysid;
-    bool 	usecreatedb;
-    bool 	usetrace;
-    bool 	usesuper;
-    bool 	usecatupd;  
+    NameData usename;
+    int4 usesysid;
+    bool usecreatedb;
+    bool usetrace;
+    bool usesuper;
+    bool usecatupd;
 } FormData_pg_user;
 
 /* ----------------
@@ -45,25 +45,25 @@ CATALOG(pg_user) BOOTSTRAP {
  *	the format of pg_user relation.
  * ----------------
  */
-typedef FormData_pg_user	*Form_pg_user;
+typedef FormData_pg_user *Form_pg_user;
 
 /* ----------------
  *	compiler constants for pg_user
  * ----------------
  */
-#define Natts_pg_user			6
-#define Anum_pg_user_usename		1
-#define Anum_pg_user_usesysid		2
-#define Anum_pg_user_usecreatedb	3
-#define Anum_pg_user_usetrace		4
-#define Anum_pg_user_usesuper		5
-#define Anum_pg_user_usecatupd		6
+#define Natts_pg_user            6
+#define Anum_pg_user_usename        1
+#define Anum_pg_user_usesysid        2
+#define Anum_pg_user_usecreatedb    3
+#define Anum_pg_user_usetrace        4
+#define Anum_pg_user_usesuper        5
+#define Anum_pg_user_usecatupd        6
 
 /* ----------------
  *	initial contents of pg_user
  * ----------------
  */
-DATA(insert OID = 0 ( postgres PGUID t t t t ));
+DATA(insert OID = 0(postgres PGUID t t t t ));
 
 BKI_BEGIN
 #ifdef ALLOW_PG_GROUP

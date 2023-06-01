@@ -10,8 +10,8 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	REWRITEHANDLER_H
-#define	REWRITEHANDLER_H
+#ifndef    REWRITEHANDLER_H
+#define    REWRITEHANDLER_H
 
 
 struct _rewrite_meta_knowledge {
@@ -32,4 +32,4 @@ typedef struct _rewrite_meta_knowledge RewriteInfo;
 
 extern List *QueryRewrite(Query *parsetree);
 
-#endif	/*REWRITEHANDLER_H */
+#endif    /*REWRITEHANDLER_H */

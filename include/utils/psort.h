@@ -10,35 +10,35 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	PSORT_H
-#define	PSORT_H
+#ifndef    PSORT_H
+#define    PSORT_H
 
-#define	SORTMEM		(1 << 18)		/* 1/4 M - any static memory */
-#define	MAXTAPES	7			/* 7--See Fig. 70, p273 */
-#define	TAPEEXT		"pg_psort.XXXXXX"	/* TEMPDIR/TAPEEXT */
-#define	FREE(x)		free((char *) x)
+#define    SORTMEM        (1 << 18)        /* 1/4 M - any static memory */
+#define    MAXTAPES    7            /* 7--See Fig. 70, p273 */
+#define    TAPEEXT        "pg_psort.XXXXXX"    /* TEMPDIR/TAPEEXT */
+#define    FREE(x)        free((char *) x)
 
-struct	tape {
-    int		tp_dummy;	/* (D) */
-    int		tp_fib;		/* (A) */
-    FILE	*tp_file; 	/* (TAPE) */
-    struct tape	*tp_prev;
+struct tape {
+    int tp_dummy;    /* (D) */
+    int tp_fib;        /* (A) */
+    FILE *tp_file;    /* (TAPE) */
+    struct tape *tp_prev;
 };
 
-struct	cmplist {
-    int		cp_attn; 	/* attribute number */
-    int		cp_num;		/* comparison function code */
-    int		cp_rev;		/* invert comparison flag */
-    struct	cmplist		*cp_next; /* next in chain */
+struct cmplist {
+    int cp_attn;    /* attribute number */
+    int cp_num;        /* comparison function code */
+    int cp_rev;        /* invert comparison flag */
+    struct cmplist *cp_next; /* next in chain */
 };
 
-extern	int		Nkeys;
-extern	ScanKey		key;
-extern	int		SortMemory;	/* free memory */
-extern	Relation	SortRdesc;
-extern	struct leftist	*Tuples;
+extern int Nkeys;
+extern ScanKey key;
+extern int SortMemory;    /* free memory */
+extern Relation SortRdesc;
+extern struct leftist *Tuples;
 
-#ifdef	EBUG
+#ifdef    EBUG
 #include <stdio.h>
 #include "utils/elog.h"
 #include "storage/buf.h"
@@ -63,24 +63,35 @@ if (!(EXPR)) elog(FATAL, "%s:%d>> %s", __FILE__, __LINE__, STR)
 if (1) CODE; else
 
 #else
-#define	PDEBUG(MSG)
-#define	VDEBUG(VAR, FMT)
-#define	ASSERT(EXPR, MSG)
-#define	TRACE(VAL, CODE)
+#define    PDEBUG(MSG)
+#define    VDEBUG(VAR, FMT)
+#define    ASSERT(EXPR, MSG)
+#define    TRACE(VAL, CODE)
 #endif
 
 /* psort.c */
 extern void psort(Relation oldrel, Relation newrel, int nkeys, ScanKey key);
+
 extern void initpsort(void);
+
 extern void resetpsort(void);
+
 extern void initialrun(Relation rdesc);
+
 extern bool createrun(HeapScanDesc sdesc, FILE *file);
+
 extern HeapTuple tuplecopy(HeapTuple tup, Relation rdesc, Buffer b);
+
 extern FILE *mergeruns(void);
+
 extern void merge(struct tape *dest);
+
 extern void endpsort(Relation rdesc, FILE *file);
+
 extern FILE *gettape(void);
+
 extern void resettape(FILE *file);
+
 extern void destroytape(FILE *file);
 
-#endif	/* PSORT_H */
+#endif    /* PSORT_H */

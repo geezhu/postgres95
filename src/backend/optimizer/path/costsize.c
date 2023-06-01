@@ -12,6 +12,7 @@
  *-------------------------------------------------------------------------
  */
 #include <math.h>
+
 #ifdef WIN32
 #include <float.h>
 #include <limits.h>
@@ -21,7 +22,9 @@
 # include <machine/limits.h>
 # define MAXINT	INT_MAX
 # else
+
 # include <values.h>
+
 # endif /* !PORTNAME_BSD44_derived */
 #endif /* WIN32 */
 
@@ -34,20 +37,21 @@
 #include "optimizer/keys.h"
 #include "optimizer/tlist.h"
 
-#include "storage/bufmgr.h"	/* for BLCKSZ */
+#include "storage/bufmgr.h"    /* for BLCKSZ */
 
 static int compute_attribute_width(TargetEntry *tlistentry);
+
 static double base_log(double x, double b);
 
 int _disable_cost_ = 30000000;
- 
-bool _enable_seqscan_ =     true;
-bool _enable_indexscan_ =   true;
-bool _enable_sort_ =        true;
-bool _enable_hash_ =        true;
-bool _enable_nestloop_ =    true;
-bool _enable_mergesort_ =   true;
-bool _enable_hashjoin_ =    true;
+
+bool _enable_seqscan_ = true;
+bool _enable_indexscan_ = true;
+bool _enable_sort_ = true;
+bool _enable_hash_ = true;
+bool _enable_nestloop_ = true;
+bool _enable_mergesort_ = true;
+bool _enable_hashjoin_ = true;
 
 /*    
  * cost_seqscan--
@@ -70,24 +74,23 @@ bool _enable_hashjoin_ =    true;
  *    
  */
 Cost
-cost_seqscan(int relid, int relpages, int reltuples)
-{
+cost_seqscan(int relid, int relpages, int reltuples) {
     Cost temp = 0;
 
-    if ( !_enable_seqscan_ )
-	temp += _disable_cost_;
+    if (!_enable_seqscan_)
+        temp += _disable_cost_;
 
     if (relid < 0) {
-	/*
-	 * cost of sequentially scanning a materialized temporary relation
-	 */
-	temp += _TEMP_SCAN_COST_;
+        /*
+         * cost of sequentially scanning a materialized temporary relation
+         */
+        temp += _TEMP_SCAN_COST_;
     } else {
-	temp += relpages;
-	temp += _CPU_PAGE_WEIGHT_ * reltuples;
+        temp += relpages;
+        temp += _CPU_PAGE_WEIGHT_ * reltuples;
     }
     Assert(temp >= 0);
-    return(temp);
+    return (temp);
 }
 
 
@@ -112,27 +115,26 @@ cost_seqscan(int relid, int relpages, int reltuples)
  */
 Cost
 cost_index(Oid indexid,
-	   int expected_indexpages,
-	   Cost selec,
-	   int relpages,
-	   int reltuples,
-	   int indexpages,
-	   int indextuples,
-	   bool is_injoin)
-{
+           int expected_indexpages,
+           Cost selec,
+           int relpages,
+           int reltuples,
+           int indexpages,
+           int indextuples,
+           bool is_injoin) {
     Cost temp;
     Cost temp2;
 
     temp = temp2 = (Cost) 0;
 
     if (!_enable_indexscan_ && !is_injoin)
-	temp += _disable_cost_;
+        temp += _disable_cost_;
 
     /* expected index relation pages */
     temp += expected_indexpages;
 
     /*   about one base relation page */
-    temp += Min(relpages,(int)ceil((double)selec*indextuples));
+    temp += Min(relpages, (int) ceil((double) selec * indextuples));
 
     /*
      * per index tuple
@@ -140,9 +142,9 @@ cost_index(Oid indexid,
     temp2 += selec * indextuples;
     temp2 += selec * reltuples;
 
-    temp =  temp + (_CPU_PAGE_WEIGHT_ * temp2);
+    temp = temp + (_CPU_PAGE_WEIGHT_ * temp2);
     Assert(temp >= 0);
-    return(temp);
+    return (temp);
 }
 
 /*    
@@ -164,33 +166,31 @@ cost_index(Oid indexid,
  *    
  */
 Cost
-cost_sort(List *keys, int tuples, int width, bool noread)
-{
+cost_sort(List *keys, int tuples, int width, bool noread) {
     Cost temp = 0;
-    int npages = page_size (tuples,width);
-    Cost pages = (Cost)npages;
+    int npages = page_size(tuples, width);
+    Cost pages = (Cost) npages;
     Cost numTuples = tuples;
-    
-    if ( !_enable_sort_ ) 
-	temp += _disable_cost_ ;
-    if (tuples == 0 || keys==NULL)
-	{
-	    Assert(temp >= 0);
-	    return(temp);
-	}
-    temp += pages * base_log((double)pages, (double)2.0);
+
+    if (!_enable_sort_)
+        temp += _disable_cost_;
+    if (tuples == 0 || keys == NULL) {
+        Assert(temp >= 0);
+        return (temp);
+    }
+    temp += pages * base_log((double) pages, (double) 2.0);
 
     /*
      * could be base_log(pages, NBuffers), but we are only doing 2-way merges
      */
     temp += _CPU_PAGE_WEIGHT_ *
-	numTuples * base_log((double)pages,(double)2.0);
+            numTuples * base_log((double) pages, (double) 2.0);
 
-    if( !noread )
-	temp = temp + cost_seqscan(_TEMP_RELATION_ID_, npages, tuples);
+    if (!noread)
+        temp = temp + cost_seqscan(_TEMP_RELATION_ID_, npages, tuples);
     Assert(temp >= 0);
 
-    return(temp);
+    return (temp);
 }
 
 
@@ -203,13 +203,12 @@ cost_sort(List *keys, int tuples, int width, bool noread)
  *
  */
 Cost
-cost_result(int tuples, int width)
-{
-    Cost temp =0;
-    temp = temp + page_size(tuples,width);
+cost_result(int tuples, int width) {
+    Cost temp = 0;
+    temp = temp + page_size(tuples, width);
     temp = temp + _CPU_PAGE_WEIGHT_ * tuples;
     Assert(temp >= 0);
-    return(temp);
+    return (temp);
 }
 
 /*    
@@ -226,21 +225,20 @@ cost_result(int tuples, int width)
  */
 Cost
 cost_nestloop(Cost outercost,
-	      Cost innercost,
-	      int outertuples,
-	      int innertuples,
-	      int outerpages,
-	      bool is_indexjoin)
-{
-    Cost temp =0;
+              Cost innercost,
+              int outertuples,
+              int innertuples,
+              int outerpages,
+              bool is_indexjoin) {
+    Cost temp = 0;
 
-    if ( !_enable_nestloop_ ) 
-	temp += _disable_cost_;
+    if (!_enable_nestloop_)
+        temp += _disable_cost_;
     temp += outercost;
     temp += outertuples * innercost;
     Assert(temp >= 0);
 
-    return(temp);
+    return (temp);
 }
 
 /*    
@@ -259,27 +257,26 @@ cost_nestloop(Cost outercost,
  */
 Cost
 cost_mergesort(Cost outercost,
-	       Cost innercost,
-	       List *outersortkeys,
-	       List *innersortkeys,
-	       int outersize,
-	       int innersize,
-	       int outerwidth,
-	       int innerwidth)
-{
+               Cost innercost,
+               List *outersortkeys,
+               List *innersortkeys,
+               int outersize,
+               int innersize,
+               int outerwidth,
+               int innerwidth) {
     Cost temp = 0;
 
-    if ( !_enable_mergesort_ ) 
-	temp += _disable_cost_;
-	
+    if (!_enable_mergesort_)
+        temp += _disable_cost_;
+
     temp += outercost;
     temp += innercost;
-    temp += cost_sort(outersortkeys,outersize,outerwidth,false);
-    temp += cost_sort(innersortkeys,innersize,innerwidth,false);
+    temp += cost_sort(outersortkeys, outersize, outerwidth, false);
+    temp += cost_sort(innersortkeys, innersize, innerwidth, false);
     temp += _CPU_PAGE_WEIGHT_ * (outersize + innersize);
     Assert(temp >= 0);
 
-    return(temp);
+    return (temp);
 }
 
 /*    
@@ -297,23 +294,22 @@ cost_mergesort(Cost outercost,
  */
 Cost
 cost_hashjoin(Cost outercost,
-	      Cost innercost,
-	      List *outerkeys,
-	      List *innerkeys,
-	      int outersize,
-	      int innersize,
-	      int outerwidth,
-	      int innerwidth)
-{
+              Cost innercost,
+              List *outerkeys,
+              List *innerkeys,
+              int outersize,
+              int innersize,
+              int outerwidth,
+              int innerwidth) {
     Cost temp = 0;
-    int outerpages = page_size (outersize,outerwidth);
-    int innerpages = page_size (innersize,innerwidth);
-    int nrun = ceil((double)outerpages/(double)NBuffers);
+    int outerpages = page_size(outersize, outerwidth);
+    int innerpages = page_size(innersize, innerwidth);
+    int nrun = ceil((double) outerpages / (double) NBuffers);
 
     if (outerpages < innerpages)
-	return _disable_cost_;
-    if ( !_enable_hashjoin_ ) 
-	temp += _disable_cost_;
+        return _disable_cost_;
+    if (!_enable_hashjoin_)
+        temp += _disable_cost_;
 /*    temp += outercost + (nrun + 1) * innercost; */
     /* 
        the innercost shouldn't be used it.  Instead the 
@@ -327,7 +323,7 @@ cost_hashjoin(Cost outercost,
     temp += _CPU_PAGE_WEIGHT_ * (outersize + nrun * innersize);
     Assert(temp >= 0);
 
-    return(temp);
+    return (temp);
 }
 
 /*    
@@ -340,21 +336,20 @@ cost_hashjoin(Cost outercost,
  *    
  * Returns the size.
  */
-int compute_rel_size(Rel *rel)
-{
+int compute_rel_size(Rel *rel) {
     Cost temp;
     int temp1;
 
-    temp = rel->tuples * product_selec(rel->clauseinfo); 
+    temp = rel->tuples * product_selec(rel->clauseinfo);
     Assert(temp >= 0);
     if (temp >= (MAXINT - 1)) {
-	temp1 = MAXINT;
+        temp1 = MAXINT;
     } else {
-	temp1 = ceil((double) temp);
+        temp1 = ceil((double) temp);
     }
     Assert(temp1 >= 0);
     Assert(temp1 <= MAXINT);
-    return(temp1);
+    return (temp1);
 }
 
 /*    
@@ -364,8 +359,7 @@ int compute_rel_size(Rel *rel)
  * Returns the width of the tuple as a fixnum.
  */
 int
-compute_rel_width(Rel *rel)
-{
+compute_rel_width(Rel *rel) {
     return (compute_targetlist_width(get_actual_tlist(rel->targetlist)));
 }
 
@@ -376,16 +370,15 @@ compute_rel_width(Rel *rel)
  * Returns the width of the tuple as a fixnum.
  */
 int
-compute_targetlist_width(List *targetlist)
-{
+compute_targetlist_width(List *targetlist) {
     List *temp_tl;
     int tuple_width = 0;
 
     foreach (temp_tl, targetlist) {
-	tuple_width = tuple_width + 
-	    compute_attribute_width(lfirst(temp_tl));
+        tuple_width = tuple_width +
+                      compute_attribute_width(lfirst(temp_tl));
     }
-    return(tuple_width);
+    return (tuple_width);
 }
 
 /*    
@@ -398,13 +391,12 @@ compute_targetlist_width(List *targetlist)
  * Returns the width of the attribute as a fixnum.
  */
 static int
-compute_attribute_width(TargetEntry *tlistentry)
-{
+compute_attribute_width(TargetEntry *tlistentry) {
     int width = get_typlen(tlistentry->resdom->restype);
-    if (width < 0) 
-	return(_DEFAULT_ATTRIBUTE_WIDTH_);
-    else 
-	return(width);
+    if (width < 0)
+        return (_DEFAULT_ATTRIBUTE_WIDTH_);
+    else
+        return (width);
 }
 
 /*    
@@ -414,24 +406,23 @@ compute_attribute_width(TargetEntry *tlistentry)
  * Returns a fixnum.
  */
 int
-compute_joinrel_size(JoinPath *joinpath)
-{
+compute_joinrel_size(JoinPath *joinpath) {
     Cost temp = 1.0;
     int temp1 = 0;
 
-    temp *= ((Path*)joinpath->outerjoinpath)->parent->size;
-    temp *= ((Path*)joinpath->innerjoinpath)->parent->size;
-		      
+    temp *= ((Path *) joinpath->outerjoinpath)->parent->size;
+    temp *= ((Path *) joinpath->innerjoinpath)->parent->size;
+
     temp = temp * product_selec(joinpath->pathclauseinfo);
-    if (temp >= (MAXINT -1)) {
-	temp1 = MAXINT;
+    if (temp >= (MAXINT - 1)) {
+        temp1 = MAXINT;
     } else {
-	/* should be ceil here, we don't want joinrel size's of one, do we? */
-	temp1 = ceil((double)temp);
+        /* should be ceil here, we don't want joinrel size's of one, do we? */
+        temp1 = ceil((double) temp);
     }
     Assert(temp1 >= 0);
 
-    return(temp1);
+    return (temp1);
 }
 
 /*    
@@ -439,18 +430,16 @@ compute_joinrel_size(JoinPath *joinpath)
  *    Returns an estimate of the number of pages covered by a given
  *    number of tuples of a given width (size in bytes).
  */
-int page_size(int tuples, int width)
-{
-    int temp =0;
+int page_size(int tuples, int width) {
+    int temp = 0;
 
-    temp = ceil((double)(tuples * (width + sizeof(HeapTupleData))) 
-		/ BLCKSZ);
+    temp = ceil((double) (tuples * (width + sizeof(HeapTupleData)))
+                / BLCKSZ);
     Assert(temp >= 0);
-    return(temp);
+    return (temp);
 }
 
 static double
-base_log(double x, double b)
-{
-    return(log(x)/log(b));
+base_log(double x, double b) {
+    return (log(x) / log(b));
 }

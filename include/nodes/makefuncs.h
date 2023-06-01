@@ -19,30 +19,30 @@
 #include "nodes/primnodes.h"
 
 extern Oper *makeOper(Oid opno,
-		      Oid opid,
-		      Oid opresulttype,
-		      int opsize,
-		      FunctionCachePtr op_fcache);
+                      Oid opid,
+                      Oid opresulttype,
+                      int opsize,
+                      FunctionCachePtr op_fcache);
 
-extern Var *makeVar(Index varno, 
-		    AttrNumber varattno,
-		    Oid vartype,
-		    Index varnoold,
-		    AttrNumber varoattno);
+extern Var *makeVar(Index varno,
+                    AttrNumber varattno,
+                    Oid vartype,
+                    Index varnoold,
+                    AttrNumber varoattno);
 
 extern Resdom *makeResdom(AttrNumber resno,
-			  Oid restype,
-			  int reslen,
-			  char *resname,
-			  Index reskey,
-			  Oid reskeyop,
-			  int resjunk);
-     
-extern Const *makeConst(Oid consttype,
-			Size constlen,
-			Datum constvalue,
-			bool constisnull,
-			bool constbyval,
-			bool constisset);
+                          Oid restype,
+                          int reslen,
+                          char *resname,
+                          Index reskey,
+                          Oid reskeyop,
+                          int resjunk);
 
-#endif	/* MAKEFUNC_H */
+extern Const *makeConst(Oid consttype,
+                        Size constlen,
+                        Datum constvalue,
+                        bool constisnull,
+                        bool constbyval,
+                        bool constisset);
+
+#endif    /* MAKEFUNC_H */

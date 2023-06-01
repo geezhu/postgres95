@@ -13,7 +13,7 @@
  */
 #include "c.h"
 #include "utils/palloc.h"
-#include "utils/builtins.h"		/* where function declarations go */
+#include "utils/builtins.h"        /* where function declarations go */
 
 
 /***************************************************************************** 
@@ -25,11 +25,10 @@
  *
  *	XXX Currently, just creates an integer.
  */
-int32 dtin(char *datetime)
-{
+int32 dtin(char *datetime) {
     if (datetime == NULL)
-	return((int32) 0);
-    return((int32) atol(datetime));
+        return ((int32) 0);
+    return ((int32) atol(datetime));
 }
 
 /*
@@ -37,14 +36,13 @@ int32 dtin(char *datetime)
  *
  *	XXX assumes sign, 10 digits max, '\0'
  */
-char *dtout(int32 datetime)
-{
-    char		*result;
-    
+char *dtout(int32 datetime) {
+    char *result;
+
     result = (char *) palloc(12);
     Assert(result);
     ltoa(datetime, result);
-    return(result);
+    return (result);
 }
 
 /***************************************************************************** 

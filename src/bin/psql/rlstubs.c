@@ -14,8 +14,7 @@
 #include <stdio.h>
 
 char *
-readline(char *prompt)
-{
+readline(char *prompt) {
     static char buf[500];
 
     printf("%s");
@@ -23,19 +22,16 @@ readline(char *prompt)
 }
 
 int
-write_history()
-{
+write_history() {
     return 0;
 }
 
 int
-using_history()
-{
+using_history() {
     return 0;
 }
 
 int
-add_history()
-{
+add_history() {
     return 0;
 }

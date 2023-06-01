@@ -17,7 +17,7 @@
 #include "access/skey.h"
 #include "access/heapam.h"
 #include "utils/tqual.h"
-#include "access/valid.h"	/* where the declarations go */
+#include "access/valid.h"    /* where the declarations go */
 #include "access/xact.h"
 
 #include "storage/buf.h"
@@ -36,35 +36,34 @@
  */
 bool
 heap_keytest(HeapTuple t,
-	     TupleDesc tupdesc,
-	     int nkeys,
-	     ScanKey keys)
-{
-    bool	isnull;
-    Datum	atp;
-    int		test;
-    
+             TupleDesc tupdesc,
+             int nkeys,
+             ScanKey keys) {
+    bool isnull;
+    Datum atp;
+    int test;
+
     for (; nkeys--; keys++) {
-	atp = (Datum)heap_getattr(t, InvalidBuffer,
-				  keys->sk_attno, 
-				  tupdesc,
-				  &isnull);
-	
-	if (isnull)
-	    /* XXX eventually should check if SK_ISNULL */
-	    return false;
-	
-	if (keys->sk_flags & SK_COMMUTE)
-	    test = (long) FMGR_PTR2(keys->sk_func, keys->sk_procedure,
-				    keys->sk_argument, atp);
-	else
-	    test = (long) FMGR_PTR2(keys->sk_func, keys->sk_procedure,
-				    atp, keys->sk_argument);
-	
-	if (!test == !(keys->sk_flags & SK_NEGATE))
-	    return false;
+        atp = (Datum) heap_getattr(t, InvalidBuffer,
+                                   keys->sk_attno,
+                                   tupdesc,
+                                   &isnull);
+
+        if (isnull)
+            /* XXX eventually should check if SK_ISNULL */
+            return false;
+
+        if (keys->sk_flags & SK_COMMUTE)
+            test = (long) FMGR_PTR2(keys->sk_func, keys->sk_procedure,
+                                    keys->sk_argument, atp);
+        else
+            test = (long) FMGR_PTR2(keys->sk_func, keys->sk_procedure,
+                                    atp, keys->sk_argument);
+
+        if (!test == !(keys->sk_flags & SK_NEGATE))
+            return false;
     }
-    
+
     return true;
 }
 
@@ -90,30 +89,29 @@ heap_keytest(HeapTuple t,
  */
 HeapTuple
 heap_tuple_satisfies(ItemId itemId,
-		     Relation relation,
-		     PageHeader disk_page,
-		     TimeQual	qual,
-		     int nKeys,
-		     ScanKey key)
-{
-    HeapTuple	tuple;
+                     Relation relation,
+                     PageHeader disk_page,
+                     TimeQual qual,
+                     int nKeys,
+                     ScanKey key) {
+    HeapTuple tuple;
     bool res;
-    
-    if (! ItemIdIsUsed(itemId))
-	return NULL;
-    
+
+    if (!ItemIdIsUsed(itemId))
+        return NULL;
+
     tuple = (HeapTuple) PageGetItem((Page) disk_page, itemId);
-    
+
     if (key != NULL)
-	res = heap_keytest(tuple, RelationGetTupleDescriptor(relation), 
-			   nKeys, key);
+        res = heap_keytest(tuple, RelationGetTupleDescriptor(relation),
+                           nKeys, key);
     else
-	res = TRUE;
-    
+        res = TRUE;
+
     if (res && (relation->rd_rel->relkind == RELKIND_UNCATALOGED
-		|| HeapTupleSatisfiesTimeQual(tuple,qual)))
-	return tuple;
-    
+                || HeapTupleSatisfiesTimeQual(tuple, qual)))
+        return tuple;
+
     return (HeapTuple) NULL;
 }
 
@@ -123,12 +121,11 @@ heap_tuple_satisfies(ItemId itemId,
  *	pair.
  */
 bool
-TupleUpdatedByCurXactAndCmd(HeapTuple t)
-{
+TupleUpdatedByCurXactAndCmd(HeapTuple t) {
     if (TransactionIdEquals(t->t_xmax,
-			    GetCurrentTransactionId()) &&
-	t->t_cmax == GetCurrentCommandId())
-	return true;
-    
+                            GetCurrentTransactionId()) &&
+        t->t_cmax == GetCurrentCommandId())
+        return true;
+
     return false;
 }

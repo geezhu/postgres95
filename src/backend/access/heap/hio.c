@@ -44,50 +44,49 @@
  */
 void
 RelationPutHeapTuple(Relation relation,
-		     BlockNumber blockIndex,
-		     HeapTuple tuple)
-{
-    Buffer		buffer;
-    Page		pageHeader;
-    BlockNumber		numberOfBlocks;
-    OffsetNumber	offnum;
-    unsigned int	len;
-    ItemId		itemId;
-    Item		item;
-    
+                     BlockNumber blockIndex,
+                     HeapTuple tuple) {
+    Buffer buffer;
+    Page pageHeader;
+    BlockNumber numberOfBlocks;
+    OffsetNumber offnum;
+    unsigned int len;
+    ItemId itemId;
+    Item item;
+
     /* ----------------
      *	increment access statistics
      * ----------------
      */
     IncrHeapAccessStat(local_RelationPutHeapTuple);
     IncrHeapAccessStat(global_RelationPutHeapTuple);
-    
+
     Assert(RelationIsValid(relation));
     Assert(HeapTupleIsValid(tuple));
-    
+
     numberOfBlocks = RelationGetNumberOfBlocks(relation);
     Assert(blockIndex < numberOfBlocks);
-    
+
     buffer = ReadBuffer(relation, blockIndex);
 #ifndef NO_BUFFERISVALID
     if (!BufferIsValid(buffer)) {
-	elog(WARN, "RelationPutHeapTuple: no buffer for %ld in %s",
-	     blockIndex, &relation->rd_rel->relname);
+        elog(WARN, "RelationPutHeapTuple: no buffer for %ld in %s",
+             blockIndex, &relation->rd_rel->relname);
     }
 #endif
-    
-    pageHeader = (Page)BufferGetPage(buffer);
-    len = (unsigned)DOUBLEALIGN(tuple->t_len);	/* be conservative */
-    Assert((int)len <= PageGetFreeSpace(pageHeader));
-    
-    offnum = PageAddItem((Page)pageHeader, (Item)tuple,
-			 tuple->t_len, InvalidOffsetNumber, LP_USED);
-    
-    itemId = PageGetItemId((Page)pageHeader, offnum);
-    item = PageGetItem((Page)pageHeader, itemId);
-    
-    ItemPointerSet(&((HeapTuple)item)->t_ctid, blockIndex, offnum);
-    
+
+    pageHeader = (Page) BufferGetPage(buffer);
+    len = (unsigned) DOUBLEALIGN(tuple->t_len);    /* be conservative */
+    Assert((int) len <= PageGetFreeSpace(pageHeader));
+
+    offnum = PageAddItem((Page) pageHeader, (Item) tuple,
+                         tuple->t_len, InvalidOffsetNumber, LP_USED);
+
+    itemId = PageGetItemId((Page) pageHeader, offnum);
+    item = PageGetItem((Page) pageHeader, itemId);
+
+    ItemPointerSet(&((HeapTuple) item)->t_ctid, blockIndex, offnum);
+
     WriteBuffer(buffer);
     /* return an accurate tuple */
     ItemPointerSet(&tuple->t_ctid, blockIndex, offnum);
@@ -124,72 +123,67 @@ RelationPutHeapTuple(Relation relation,
  * performance benchmarks.
  */
 void
-RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple)
-{
-    Buffer		buffer;
-    Page		pageHeader;
-    BlockNumber		lastblock;
-    OffsetNumber	offnum;
-    unsigned int	len;
-    ItemId		itemId;
-    Item		item;
-    
+RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple) {
+    Buffer buffer;
+    Page pageHeader;
+    BlockNumber lastblock;
+    OffsetNumber offnum;
+    unsigned int len;
+    ItemId itemId;
+    Item item;
+
     Assert(RelationIsValid(relation));
     Assert(HeapTupleIsValid(tuple));
-    
+
     /*
      * XXX This does an lseek - VERY expensive - but at the moment it
      * is the only way to accurately determine how many blocks are in
      * a relation.  A good optimization would be to get this to actually
      * work properly.
      */
-    
+
     lastblock = RelationGetNumberOfBlocks(relation);
-    
-    if (lastblock == 0)
-	{
-	    buffer = ReadBuffer(relation, lastblock);
-	    pageHeader = (Page)BufferGetPage(buffer);
-	    if (PageIsNew((PageHeader) pageHeader))
-		{
-		    buffer = ReleaseAndReadBuffer(buffer, relation, P_NEW);
-		    pageHeader = (Page)BufferGetPage(buffer);
-		    PageInit(pageHeader, BufferGetPageSize(buffer), 0);
-		}
-	}
-    else
-	buffer = ReadBuffer(relation, lastblock - 1);
-    
-    pageHeader = (Page)BufferGetPage(buffer);
-    len = (unsigned)DOUBLEALIGN(tuple->t_len);	/* be conservative */
-    
+
+    if (lastblock == 0) {
+        buffer = ReadBuffer(relation, lastblock);
+        pageHeader = (Page) BufferGetPage(buffer);
+        if (PageIsNew((PageHeader) pageHeader)) {
+            buffer = ReleaseAndReadBuffer(buffer, relation, P_NEW);
+            pageHeader = (Page) BufferGetPage(buffer);
+            PageInit(pageHeader, BufferGetPageSize(buffer), 0);
+        }
+    } else
+        buffer = ReadBuffer(relation, lastblock - 1);
+
+    pageHeader = (Page) BufferGetPage(buffer);
+    len = (unsigned) DOUBLEALIGN(tuple->t_len);    /* be conservative */
+
     /*
      * Note that this is true if the above returned a bogus page, which
      * it will do for a completely empty relation.
      */
-    
-    if (len > PageGetFreeSpace(pageHeader))
-	{
-	    buffer = ReleaseAndReadBuffer(buffer, relation, P_NEW);
-	    pageHeader = (Page)BufferGetPage(buffer);
-	    PageInit(pageHeader, BufferGetPageSize(buffer), 0);
-	    
-	    if (len > PageGetFreeSpace(pageHeader))
-		elog(WARN, "Tuple is too big: size %d", len);
-	}
-    
-    offnum = PageAddItem((Page)pageHeader, (Item)tuple,
-			 tuple->t_len, InvalidOffsetNumber, LP_USED);
-    
-    itemId = PageGetItemId((Page)pageHeader, offnum);
-    item = PageGetItem((Page)pageHeader, itemId);
-    
+
+    if (len > PageGetFreeSpace(pageHeader)) {
+        buffer = ReleaseAndReadBuffer(buffer, relation, P_NEW);
+        pageHeader = (Page) BufferGetPage(buffer);
+        PageInit(pageHeader, BufferGetPageSize(buffer), 0);
+
+        if (len > PageGetFreeSpace(pageHeader))
+            elog(WARN, "Tuple is too big: size %d", len);
+    }
+
+    offnum = PageAddItem((Page) pageHeader, (Item) tuple,
+                         tuple->t_len, InvalidOffsetNumber, LP_USED);
+
+    itemId = PageGetItemId((Page) pageHeader, offnum);
+    item = PageGetItem((Page) pageHeader, itemId);
+
     lastblock = BufferGetBlockNumber(buffer);
-    
-    ItemPointerSet(&((HeapTuple)item)->t_ctid, lastblock, offnum);
-    
+
+    ItemPointerSet(&((HeapTuple) item)->t_ctid, lastblock, offnum);
+
     /* return an accurate tuple */
     ItemPointerSet(&tuple->t_ctid, lastblock, offnum);
-    
+
     WriteBuffer(buffer);
 }

@@ -13,17 +13,18 @@
 #ifndef FMGRTAB_H
 #define FMGRTAB_H
 
-#include "postgres.h"		/* for ObjectId */
-#include "fmgr.h"		/* genearated by Gen_fmgrtab.sh */
+#include "postgres.h"        /* for ObjectId */
+#include "fmgr.h"        /* genearated by Gen_fmgrtab.sh */
 
 typedef struct {
-    Oid		proid;
-    uint16	nargs;
-    func_ptr	func;
-    char*       funcName;
+    Oid proid;
+    uint16 nargs;
+    func_ptr func;
+    char *funcName;
 } FmgrCall;
 
-extern FmgrCall	*fmgr_isbuiltin(Oid id);
-extern func_ptr fmgr_lookupByName(char* name);
+extern FmgrCall *fmgr_isbuiltin(Oid id);
 
-#endif	/* FMGRTAB_H */
+extern func_ptr fmgr_lookupByName(char *name);
+
+#endif    /* FMGRTAB_H */

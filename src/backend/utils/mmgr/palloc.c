@@ -57,23 +57,21 @@
  *	NonallocatedPointer if pointer was not returned by palloc or repalloc
  *		or may have been subsequently freed.
  */
-void*
-palloc(Size size)
-{
+void *
+palloc(Size size) {
 #ifdef PALLOC_IS_MALLOC
-   return malloc(size); 
+    return malloc(size);
 #else
-   return (MemoryContextAlloc(CurrentMemoryContext, size));  
+    return (MemoryContextAlloc(CurrentMemoryContext, size));
 #endif /* PALLOC_IS_MALLOC */
 }
 
 void
-pfree(void *pointer)
-{	
+pfree(void *pointer) {
 #ifdef PALLOC_IS_MALLOC
-  free(pointer); 
+    free(pointer);
 #else
-  MemoryContextFree(CurrentMemoryContext, pointer); 
+    MemoryContextFree(CurrentMemoryContext, pointer);
 #endif /* PALLOC_IS_MALLOC */
 }
 
@@ -92,24 +90,22 @@ pfree(void *pointer)
  *		or may have been freed already.
  */
 void *
-repalloc(void *pointer, Size size)
-{
+repalloc(void *pointer, Size size) {
 #ifdef PALLOC_IS_MALLOC
-  return realloc(pointer, size); 
+    return realloc(pointer, size);
 #else
-  return (MemoryContextRealloc(CurrentMemoryContext, pointer, size)); 
+    return (MemoryContextRealloc(CurrentMemoryContext, pointer, size));
 #endif
 }
 
 /* pstrdup 
     allocates space for and copies a string
     just like strdup except it uses palloc instead of malloc */
-char*
-pstrdup(char* string)
-{
+char *
+pstrdup(char *string) {
     char *nstr;
 
-    nstr = strcpy((char *)palloc(strlen(string)+1), string);
+    nstr = strcpy((char *) palloc(strlen(string) + 1), string);
     return nstr;
 }
 

@@ -38,30 +38,27 @@ extern TransactionId FirstTransactionId;
  * ----------------------------------------------------------------
  */
 bool
-TransactionIdIsValid(TransactionId transactionId)
-{
-    return ((bool) (transactionId != NullTransactionId) );
+TransactionIdIsValid(TransactionId transactionId) {
+    return ((bool) (transactionId != NullTransactionId));
 }
 
 /* XXX char16 name for catalogs */
 TransactionId
-xidin(char *representation)
-{
+xidin(char *representation) {
     return (atol(representation));
 }
 
 /* XXX char16 name for catalogs */
-char*
-xidout(TransactionId transactionId)
-{
+char *
+xidout(TransactionId transactionId) {
 /*    return(TransactionIdFormString(transactionId)); */
-    char 			*representation;
-    
+    char *representation;
+
     /* maximum 32 bit unsigned integer representation takes 10 chars */
     representation = palloc(11);
-    
-    (void)sprintf(representation, "%u", transactionId);
-    
+
+    (void) sprintf(representation, "%u", transactionId);
+
     return (representation);
 
 }
@@ -74,8 +71,7 @@ xidout(TransactionId transactionId)
  * ----------------------------------------------------------------
  */
 void
-StoreInvalidTransactionId(TransactionId *destination)
-{
+StoreInvalidTransactionId(TransactionId *destination) {
     *destination = NullTransactionId;
 }
 
@@ -87,8 +83,7 @@ StoreInvalidTransactionId(TransactionId *destination)
  */
 void
 TransactionIdStore(TransactionId transactionId,
-		   TransactionId *destination)
-{
+                   TransactionId *destination) {
     *destination = transactionId;
 }
 
@@ -97,8 +92,7 @@ TransactionIdStore(TransactionId transactionId,
  * ----------------------------------------------------------------
  */
 bool
-TransactionIdEquals(TransactionId id1, TransactionId id2)
-{
+TransactionIdEquals(TransactionId id1, TransactionId id2) {
     return ((bool) (id1 == id2));
 }
 
@@ -107,9 +101,8 @@ TransactionIdEquals(TransactionId id1, TransactionId id2)
  * ----------------------------------------------------------------
  */
 bool
-TransactionIdIsLessThan(TransactionId id1, TransactionId id2)
-{
-    return ((bool)(id1 < id2));
+TransactionIdIsLessThan(TransactionId id1, TransactionId id2) {
+    return ((bool) (id1 < id2));
 }
 
 /* ----------------------------------------------------------------
@@ -122,11 +115,9 @@ TransactionIdIsLessThan(TransactionId id1, TransactionId id2)
  *				  0  else;
  */
 bool
-xideq(TransactionId xid1, TransactionId xid2)
-{
-    return( (bool) (xid1 == xid2) );
+xideq(TransactionId xid1, TransactionId xid2) {
+    return ((bool) (xid1 == xid2));
 }
-
 
 
 /* ----------------------------------------------------------------
@@ -134,12 +125,11 @@ xideq(TransactionId xid1, TransactionId xid2)
  * ----------------------------------------------------------------
  */
 void
-TransactionIdIncrement(TransactionId *transactionId)
-{
-    
+TransactionIdIncrement(TransactionId *transactionId) {
+
     (*transactionId)++;
     if (*transactionId == DisabledTransactionId)
-	elog(FATAL, "TransactionIdIncrement: exhausted XID's");
+        elog(FATAL, "TransactionIdIncrement: exhausted XID's");
     return;
 }
 
@@ -148,8 +138,7 @@ TransactionIdIncrement(TransactionId *transactionId)
  * ----------------------------------------------------------------
  */
 void
-TransactionIdAdd(TransactionId *xid, int value)
-{
+TransactionIdAdd(TransactionId *xid, int value) {
     *xid += value;
     return;
 }

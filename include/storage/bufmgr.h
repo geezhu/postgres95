@@ -10,15 +10,15 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	BUFMGR_H
+#ifndef    BUFMGR_H
 #define BUFMGR_H
 
 #include "c.h"
 
-#include "machine.h"		/* for BLCKSZ */
+#include "machine.h"        /* for BLCKSZ */
 #include "utils/rel.h"
 
-#include "storage/buf_internals.h"	/* UGLY! -- ay */
+#include "storage/buf_internals.h"    /* UGLY! -- ay */
 
 /*
  * the maximum size of a disk block for any possible installation.
@@ -27,15 +27,15 @@
  * limited to 2^13 bytes because we have limited ItemIdData.lp_off and
  * ItemIdData.lp_len to 13 bits (see itemid.h).
  */
-#define	MAXBLCKSZ	8192
+#define    MAXBLCKSZ    8192
 
 typedef void *Block;
 
 
 /* special pageno for bget */
-#define P_NEW	InvalidBlockNumber	/* grow the file to get a new page */
+#define P_NEW    InvalidBlockNumber    /* grow the file to get a new page */
 
-typedef bits16	BufferLock;
+typedef bits16 BufferLock;
 
 /**********************************************************************
 
@@ -66,47 +66,76 @@ extern int ShowPinTrace;
  * prototypes for functions in bufmgr.c 
  */
 extern Buffer RelationGetBufferWithBuffer(Relation relation,
-		  BlockNumber blockNumber, Buffer buffer);
+                                          BlockNumber blockNumber, Buffer buffer);
+
 extern Buffer ReadBuffer(Relation reln, BlockNumber blockNum);
+
 extern Buffer ReadBuffer_Debug(char *file, int line, Relation reln,
-			       BlockNumber blockNum);
+                               BlockNumber blockNum);
+
 extern int WriteBuffer(Buffer buffer);
+
 extern void WriteBuffer_Debug(char *file, int line, Buffer buffer);
+
 extern void DirtyBufferCopy(Oid dbid, Oid relid, BlockNumber blkno,
-			    char *dest);
+                            char *dest);
+
 extern int WriteNoReleaseBuffer(Buffer buffer);
+
 extern Buffer ReleaseAndReadBuffer(Buffer buffer, Relation relation,
-				   BlockNumber blockNum);
+                                   BlockNumber blockNum);
 
 extern void InitBufferPool(IPCKey key);
+
 extern void PrintBufferUsage(FILE *statfp);
+
 extern void ResetBufferUsage(void);
+
 extern void ResetBufferPool(void);
+
 extern int BufferPoolCheckLeak(void);
+
 extern void FlushBufferPool(int StableMainMemoryFlag);
+
 extern bool BufferIsValid(Buffer bufnum);
+
 extern BlockNumber BufferGetBlockNumber(Buffer buffer);
+
 extern Relation BufferGetRelation(Buffer buffer);
+
 extern BlockNumber RelationGetNumberOfBlocks(Relation relation);
+
 extern Block BufferGetBlock(Buffer buffer);
+
 extern void ReleaseTmpRelBuffers(Relation tempreldesc);
+
 extern void DropBuffers(Oid dbid);
+
 extern void PrintBufferDescs(void);
+
 extern void PrintPinnedBufs(void);
+
 extern int BufferShmemSize(void);
+
 extern void BufferPoolBlowaway(void);
+
 extern void IncrBufferRefCount(Buffer buffer);
+
 extern int ReleaseBuffer(Buffer buffer);
 
 extern void IncrBufferRefCount_Debug(char *file, int line, Buffer buffer);
+
 extern void ReleaseBuffer_Debug(char *file, int line, Buffer buffer);
+
 extern int ReleaseAndReadBuffer_Debug(char *file,
-				int line,
-				Buffer buffer,
-				Relation relation,
-				BlockNumber blockNum);
+                                      int line,
+                                      Buffer buffer,
+                                      Relation relation,
+                                      BlockNumber blockNum);
+
 extern void BufferRefCountReset(int *refcountsave);
+
 extern void BufferRefCountRestore(int *refcountsave);
 
-#endif	/* !defined(BufMgrIncluded) */
+#endif    /* !defined(BufMgrIncluded) */
 

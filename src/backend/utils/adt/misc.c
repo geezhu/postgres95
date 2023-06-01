@@ -28,28 +28,26 @@ extern int srandom(unsigned);
  * Check if data is Null 
  */
 bool
-NullValue(Datum value, bool *isNull)
-{
+NullValue(Datum value, bool *isNull) {
     if (*isNull) {
-	*isNull = false;
-	return(true);
+        *isNull = false;
+        return (true);
     }
-    return(false);
-    
+    return (false);
+
 }
 
 /*----------------------------------------------------------------------*
  *     check if data is not Null                                        *
  *--------------------------------------------------------------------- */
 bool
-NonNullValue(Datum value, bool *isNull)
-{
+NonNullValue(Datum value, bool *isNull) {
     if (*isNull) {
-	*isNull = false;
-	return(false);
+        *isNull = false;
+        return (false);
     }
-    return(true);
-    
+    return (true);
+
 }
 
 /*
@@ -64,9 +62,8 @@ NonNullValue(Datum value, bool *isNull)
  * will return about 1/10 of the tuples in TEMP
  *
  */
-bool 
-oidrand(Oid o, int32 X)
-{
+bool
+oidrand(Oid o, int32 X) {
     bool result;
 
     if (X == 0) return true;
@@ -79,18 +76,15 @@ oidrand(Oid o, int32 X)
    oidsrand(int32 X) -
       seeds the random number generator
       always return true
-*/ 
+*/
 bool
-oidsrand(int32 X)
-{
+oidsrand(int32 X) {
     srand(X);
     return true;
 }
 
 
-
 int32
-userfntest(int i)
-{
+userfntest(int i) {
     return (i);
 }

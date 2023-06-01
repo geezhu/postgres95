@@ -21,17 +21,16 @@
 #include "storage/proc.h"
 #include "storage/smgr.h"
 #include "storage/lock.h"
-#include "miscadmin.h"		/* for DebugLvl */
+#include "miscadmin.h"        /* for DebugLvl */
 
 /*
  * SystemPortAddressCreateMemoryKey --
  *	Returns a memory key given a port address.
  */
 IPCKey
-SystemPortAddressCreateIPCKey(SystemPortAddress address)
-{
-    Assert(address < 32768);	/* XXX */
-    
+SystemPortAddressCreateIPCKey(SystemPortAddress address) {
+    Assert(address < 32768);    /* XXX */
+
     return (SystemPortAddressGetIPCKey(address));
 }
 
@@ -53,10 +52,9 @@ SystemPortAddressCreateIPCKey(SystemPortAddress address)
   **************************************************/
 
 void
-CreateSharedMemoryAndSemaphores(IPCKey key)
-{
-    int		size;
-    
+CreateSharedMemoryAndSemaphores(IPCKey key) {
+    int size;
+
 #ifdef HAS_TEST_AND_SET
     /* ---------------
      *  create shared memory for slocks
@@ -70,20 +68,20 @@ CreateSharedMemoryAndSemaphores(IPCKey key)
      */
     CreateSpinlocks(IPCKeyGetSpinLockSemaphoreKey(key));
     size = BufferShmemSize() + LockShmemSize();
-    
+
 #ifdef MAIN_MEMORY
     size += MMShmemSize();
 #endif /* MAIN_MEMORY */
-    
+
     if (DebugLvl > 1) {
-	fprintf(stderr, "binding ShmemCreate(key=%x, size=%d)\n",
-		IPCKeyGetBufferMemoryKey(key), size);
+        fprintf(stderr, "binding ShmemCreate(key=%x, size=%d)\n",
+                IPCKeyGetBufferMemoryKey(key), size);
     }
     ShmemCreate(IPCKeyGetBufferMemoryKey(key), size);
     ShmemBindingTabReset();
     InitShmem(key, size);
     InitBufferPool(key);
-    
+
     /* ----------------
      *	do the lock table stuff
      * ----------------
@@ -91,7 +89,7 @@ CreateSharedMemoryAndSemaphores(IPCKey key)
     InitLocks();
     InitMultiLevelLockm();
     if (InitMultiLevelLockm() == INVALID_TABLEID)
-	elog(FATAL, "Couldn't create the lock table");
+        elog(FATAL, "Couldn't create the lock table");
 
     /* ----------------
      *  do process table stuff
@@ -99,7 +97,7 @@ CreateSharedMemoryAndSemaphores(IPCKey key)
      */
     InitProcGlobal(key);
     on_exitpg(ProcFreeAllSemaphores, 0);
-    
+
     CreateSharedInvalidationState(key);
 }
 
@@ -109,19 +107,18 @@ CreateSharedMemoryAndSemaphores(IPCKey key)
  *	Attachs existant shared memory and semaphores.
  */
 void
-AttachSharedMemoryAndSemaphores(IPCKey key)
-{
+AttachSharedMemoryAndSemaphores(IPCKey key) {
     int size;
-    
+
     /* ----------------
      *	create rather than attach if using private key
      * ----------------
      */
     if (key == PrivateIPCKey) {
-	CreateSharedMemoryAndSemaphores(key);
-	return;
+        CreateSharedMemoryAndSemaphores(key);
+        return;
     }
-    
+
 #ifdef HAS_TEST_AND_SET
     /* ----------------
      *  attach the slock shared memory
@@ -136,14 +133,14 @@ AttachSharedMemoryAndSemaphores(IPCKey key)
     size = BufferShmemSize() + LockShmemSize();
     InitShmem(key, size);
     InitBufferPool(key);
-    
+
     /* ----------------
      *	initialize lock table stuff
      * ----------------
      */
     InitLocks();
     if (InitMultiLevelLockm() == INVALID_TABLEID)
-	elog(FATAL, "Couldn't attach to the lock table");
-    
+        elog(FATAL, "Couldn't attach to the lock table");
+
     AttachSharedInvalidationState(key);
 }

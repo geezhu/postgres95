@@ -10,11 +10,11 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	ITEM_H
+#ifndef    ITEM_H
 #define ITEM_H
 
 #include "c.h"
 
-typedef Pointer	Item;
+typedef Pointer Item;
 
-#endif	/* ITEM_H */
+#endif    /* ITEM_H */

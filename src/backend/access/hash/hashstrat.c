@@ -26,26 +26,26 @@
  *  only one valid strategy for hash tables: equality. 
  */
 
-static StrategyNumber	HTNegate[1] = {
-    InvalidStrategy
+static StrategyNumber HTNegate[1] = {
+        InvalidStrategy
 };
 
-static StrategyNumber	HTCommute[1] = {
-    HTEqualStrategyNumber
+static StrategyNumber HTCommute[1] = {
+        HTEqualStrategyNumber
 };
 
-static StrategyNumber	HTNegateCommute[1] = {
-    InvalidStrategy
+static StrategyNumber HTNegateCommute[1] = {
+        InvalidStrategy
 };
 
-static StrategyEvaluationData	HTEvaluationData = {
-    /* XXX static for simplicity */
+static StrategyEvaluationData HTEvaluationData = {
+        /* XXX static for simplicity */
 
-    HTMaxStrategyNumber,
-    (StrategyTransformMap)HTNegate,
-    (StrategyTransformMap)HTCommute,
-    (StrategyTransformMap)HTNegateCommute,
-    {NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL}
+        HTMaxStrategyNumber,
+        (StrategyTransformMap) HTNegate,
+        (StrategyTransformMap) HTCommute,
+        (StrategyTransformMap) HTNegateCommute,
+        {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}
 };
 
 /* ----------------------------------------------------------------
@@ -55,10 +55,9 @@ static StrategyEvaluationData	HTEvaluationData = {
 
 StrategyNumber
 _hash_getstrat(Relation rel,
-	       AttrNumber attno,
-	       RegProcedure proc)
-{
-    StrategyNumber	strat;
+               AttrNumber attno,
+               RegProcedure proc) {
+    StrategyNumber strat;
 
     strat = RelationGetStrategy(rel, attno, &HTEvaluationData, proc);
 
@@ -69,13 +68,12 @@ _hash_getstrat(Relation rel,
 
 bool
 _hash_invokestrat(Relation rel,
-		  AttrNumber attno,
-		  StrategyNumber strat,
-		  Datum left,
-		  Datum right)
-{
-    return (RelationInvokeStrategy(rel, &HTEvaluationData, attno, strat, 
-				   left, right));
+                  AttrNumber attno,
+                  StrategyNumber strat,
+                  Datum left,
+                  Datum right) {
+    return (RelationInvokeStrategy(rel, &HTEvaluationData, attno, strat,
+                                   left, right));
 }
 
 

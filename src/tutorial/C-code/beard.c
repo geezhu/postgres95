@@ -13,7 +13,7 @@
  */
 
 typedef struct ImageHdr {
-    int		size;
+    int size;
 } ImageHdr;
 
 #define BUFSIZE 10
@@ -23,8 +23,7 @@ typedef struct ImageHdr {
  *   clips lower 1/3 of picture and return as large object
  */
 Oid
-beard(Oid picture)
-{
+beard(Oid picture) {
     Oid beard;
     int pic_fd, beard_fd;
     ImageHdr ihdr;
@@ -32,10 +31,10 @@ beard(Oid picture)
     int cc;
 
     if ((pic_fd = lo_open(picture, INV_READ)) == -1)
-	elog(WARN, "Cannot access picture large object");
+        elog(WARN, "Cannot access picture large object");
 
-    if (lo_read(pic_fd, (char*)&ihdr, sizeof(ihdr)) != sizeof(ihdr))
-	elog(WARN, "Picture large object corrupted");
+    if (lo_read(pic_fd, (char *) &ihdr, sizeof(ihdr)) != sizeof(ihdr))
+        elog(WARN, "Picture large object corrupted");
 
     beardOffset = (ihdr.size / 3) * 2;
 
@@ -43,15 +42,15 @@ beard(Oid picture)
      * new large object
      */
     if ((beard = lo_creat(INV_MD)) == 0)  /* ?? is this right? */
-	elog(WARN, "Cannot create new large object");
+        elog(WARN, "Cannot create new large object");
 
     if ((beard_fd = lo_open(beard, INV_WRITE)) == -1)
-	elog(WARN, "Cannot access beard large object");
+        elog(WARN, "Cannot access beard large object");
 
     lo_lseek(pic_fd, beardOffset, SET_CUR);
     while ((cc = lo_read(pic_fd, buf, BUFSIZE)) > 0) {
-	if (lo_write(beard_fd, buf, cc) != cc)
-	    elog(WARN, "error while writing large object");
+        if (lo_write(beard_fd, buf, cc) != cc)
+            elog(WARN, "error while writing large object");
     }
 
     lo_close(pic_fd);

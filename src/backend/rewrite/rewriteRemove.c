@@ -13,38 +13,37 @@
  */
 #include "access/skey.h"
 #include "catalog/pg_rewrite.h"
-#include "catalog/catname.h"	/* for RewriteRelationName */
+#include "catalog/catname.h"    /* for RewriteRelationName */
 #include "utils/syscache.h"
-#include "utils/elog.h"		/* for elog stuff */
+#include "utils/elog.h"        /* for elog stuff */
 #include "utils/palloc.h"
-#include "utils/tqual.h"	/* 'NowTimeQual' defined here.. */
-#include "access/heapam.h"	/* heap AM calls defined here */
-#include "fmgr.h"		/* for CHAR_16_EQ */
+#include "utils/tqual.h"    /* 'NowTimeQual' defined here.. */
+#include "access/heapam.h"    /* heap AM calls defined here */
+#include "fmgr.h"        /* for CHAR_16_EQ */
 
-#include "rewrite/rewriteRemove.h"	/* where the decls go */
+#include "rewrite/rewriteRemove.h"    /* where the decls go */
 #include "rewrite/rewriteSupport.h"
 
 /*-----------------------------------------------------------------------
  * RewriteGetRuleEventRel
  *-----------------------------------------------------------------------
  */
-char*
-RewriteGetRuleEventRel(char *rulename)
-{
+char *
+RewriteGetRuleEventRel(char *rulename) {
     HeapTuple htp;
     Oid eventrel;
-    
+
     htp = SearchSysCacheTuple(REWRITENAME, PointerGetDatum(rulename),
-			      0,0,0);
+                              0, 0, 0);
     if (!HeapTupleIsValid(htp))
-	elog(WARN, "RewriteGetRuleEventRel: rule \"%s\" not found",
-	     rulename);
+        elog(WARN, "RewriteGetRuleEventRel: rule \"%s\" not found",
+             rulename);
     eventrel = ((Form_pg_rewrite) GETSTRUCT(htp))->ev_class;
-    htp = SearchSysCacheTuple(RELOID, PointerGetDatum(eventrel), 
-			      0,0,0);
+    htp = SearchSysCacheTuple(RELOID, PointerGetDatum(eventrel),
+                              0, 0, 0);
     if (!HeapTupleIsValid(htp))
-	elog(WARN, "RewriteGetRuleEventRel: class %d not found",
-	     eventrel);
+        elog(WARN, "RewriteGetRuleEventRel: class %d not found",
+             eventrel);
     return ((Form_pg_class) GETSTRUCT(htp))->relname.data;
 }
 
@@ -64,58 +63,57 @@ RewriteGetRuleEventRel(char *rulename)
  * ----------------------------------------------------------------
  */
 void
-RemoveRewriteRule(char *ruleName)
-{
-    Relation RewriteRelation	= NULL;
-    HeapScanDesc scanDesc	= NULL;
+RemoveRewriteRule(char *ruleName) {
+    Relation RewriteRelation = NULL;
+    HeapScanDesc scanDesc = NULL;
     ScanKeyData scanKeyData;
-    HeapTuple tuple		= NULL;
-    Oid ruleId			= (Oid)0;
-    Oid eventRelationOid	= (Oid)NULL;
-    Datum eventRelationOidDatum	= (Datum)NULL;
-    Buffer buffer		= (Buffer)NULL;
-    bool isNull		= false;
+    HeapTuple tuple = NULL;
+    Oid ruleId = (Oid) 0;
+    Oid eventRelationOid = (Oid) NULL;
+    Datum eventRelationOidDatum = (Datum) NULL;
+    Buffer buffer = (Buffer) NULL;
+    bool isNull = false;
 
     /*
      * Open the pg_rewrite relation. 
      */
     RewriteRelation = heap_openr(RewriteRelationName);
-    
+
     /*
      * Scan the RuleRelation ('pg_rewrite') until we find a tuple
      */
     ScanKeyEntryInitialize(&scanKeyData, 0, Anum_pg_rewrite_rulename,
-			   F_CHAR16EQ, NameGetDatum(ruleName));
+                           F_CHAR16EQ, NameGetDatum(ruleName));
     scanDesc = heap_beginscan(RewriteRelation,
-			      0, NowTimeQual, 1, &scanKeyData);
-    
-    tuple = heap_getnext(scanDesc, 0, (Buffer *)NULL);
-    
+                              0, NowTimeQual, 1, &scanKeyData);
+
+    tuple = heap_getnext(scanDesc, 0, (Buffer *) NULL);
+
     /*
      * complain if no rule with such name existed
      */
     if (!HeapTupleIsValid(tuple)) {
-	heap_close(RewriteRelation);
-	elog(WARN, "No rule with name = '%s' was found.\n", ruleName);
+        heap_close(RewriteRelation);
+        elog(WARN, "No rule with name = '%s' was found.\n", ruleName);
     }
-    
+
     /*
      * Store the OID of the rule (i.e. the tuple's OID)
      * and the event relation's OID
      */
     ruleId = tuple->t_oid;
     eventRelationOidDatum =
-	PointerGetDatum(heap_getattr(tuple,
-				     buffer,
-				     Anum_pg_rewrite_ev_class,
-		     RelationGetTupleDescriptor(RewriteRelation),
-				     &isNull));
+            PointerGetDatum(heap_getattr(tuple,
+                                         buffer,
+                                         Anum_pg_rewrite_ev_class,
+                                         RelationGetTupleDescriptor(RewriteRelation),
+                                         &isNull));
     if (isNull) {
-	/* XXX strange!!! */
-	elog(WARN, "RemoveRewriteRule: null event target relation!");
+        /* XXX strange!!! */
+        elog(WARN, "RemoveRewriteRule: null event target relation!");
     }
     eventRelationOid = DatumGetObjectId(eventRelationOidDatum);
-    
+
     /*
      * Now delete the relation level locks from the updated relation.
      * (Make sure we do this before we remove the rule from pg_rewrite.
@@ -138,41 +136,40 @@ RemoveRewriteRule(char *ruleName)
  *    being removed.
  */
 void
-RelationRemoveRules(Oid relid)
-{
-    Relation RewriteRelation	= NULL;
-    HeapScanDesc scanDesc	= NULL;
+RelationRemoveRules(Oid relid) {
+    Relation RewriteRelation = NULL;
+    HeapScanDesc scanDesc = NULL;
     ScanKeyData scanKeyData;
-    HeapTuple tuple		= NULL;
+    HeapTuple tuple = NULL;
 
     /*
      * Open the pg_rewrite relation. 
      */
     RewriteRelation = heap_openr(RewriteRelationName);
-    
+
     /*
      * Scan the RuleRelation ('pg_rewrite') for all the tuples that
      * has the same ev_class as relid (the relation to be removed).
      */
     ScanKeyEntryInitialize(&scanKeyData,
-			   0,
-			   Anum_pg_rewrite_ev_class,
-			   F_OIDEQ,
-			   ObjectIdGetDatum(relid));
+                           0,
+                           Anum_pg_rewrite_ev_class,
+                           F_OIDEQ,
+                           ObjectIdGetDatum(relid));
     scanDesc = heap_beginscan(RewriteRelation,
-			      0, NowTimeQual, 1, &scanKeyData);
+                              0, NowTimeQual, 1, &scanKeyData);
 
-    for(;;) {
-	tuple = heap_getnext(scanDesc, 0, (Buffer *)NULL);
-    
-	if (!HeapTupleIsValid(tuple)) {
-	    break; /* we're done */
-	}
-    
-	/*
-	 * delete the tuple...
-	 */
-	heap_delete(RewriteRelation, &(tuple->t_ctid));
+    for (;;) {
+        tuple = heap_getnext(scanDesc, 0, (Buffer *) NULL);
+
+        if (!HeapTupleIsValid(tuple)) {
+            break; /* we're done */
+        }
+
+        /*
+         * delete the tuple...
+         */
+        heap_delete(RewriteRelation, &(tuple->t_ctid));
     }
 
     heap_endscan(scanDesc);

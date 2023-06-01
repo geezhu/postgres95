@@ -35,17 +35,16 @@
  *    
  */
 JInfo *
-joininfo_member(List *join_relids, List *joininfo_list)
-{
+joininfo_member(List *join_relids, List *joininfo_list) {
     List *i = NIL;
     List *other_rels = NIL;
 
-    foreach(i,joininfo_list) {
-	other_rels = lfirst(i);
-	if(same(join_relids, ((JInfo*)other_rels)->otherrels))
-	    return((JInfo*)other_rels);
+    foreach(i, joininfo_list) {
+        other_rels = lfirst(i);
+        if (same(join_relids, ((JInfo *) other_rels)->otherrels))
+            return ((JInfo *) other_rels);
     }
-    return((JInfo*)NULL);
+    return ((JInfo *) NULL);
 }
 
 
@@ -60,20 +59,19 @@ joininfo_member(List *join_relids, List *joininfo_list)
  *    
  */
 JInfo *
-find_joininfo_node(Rel *this_rel, List *join_relids)
-{
+find_joininfo_node(Rel *this_rel, List *join_relids) {
     JInfo *joininfo = joininfo_member(join_relids,
-				      this_rel->joininfo);
-    if( joininfo == NULL ) {
-	joininfo = makeNode(JInfo);
-	joininfo->otherrels = join_relids;
-	joininfo->jinfoclauseinfo = NIL;
-	joininfo->mergesortable = false;
-	joininfo->hashjoinable = false;
-	joininfo->inactive = false;
-	this_rel->joininfo = lcons(joininfo, this_rel->joininfo);
+                                      this_rel->joininfo);
+    if (joininfo == NULL) {
+        joininfo = makeNode(JInfo);
+        joininfo->otherrels = join_relids;
+        joininfo->jinfoclauseinfo = NIL;
+        joininfo->mergesortable = false;
+        joininfo->hashjoinable = false;
+        joininfo->inactive = false;
+        this_rel->joininfo = lcons(joininfo, this_rel->joininfo);
     }
-    return(joininfo);
+    return (joininfo);
 }
 
 /*    
@@ -85,23 +83,22 @@ find_joininfo_node(Rel *this_rel, List *join_relids)
  *    
  */
 Var *
-other_join_clause_var(Var *var, Expr *clause)
-{
-     Var *retval;
-     Var *l, *r;
+other_join_clause_var(Var *var, Expr *clause) {
+    Var *retval;
+    Var *l, *r;
 
-     retval = (Var*) NULL;
+    retval = (Var *) NULL;
 
-     if( var != NULL  && join_clause_p((Node*)clause)) {
-	  l = (Var *) get_leftop(clause);
-	  r = (Var *) get_rightop(clause);
+    if (var != NULL && join_clause_p((Node *) clause)) {
+        l = (Var *) get_leftop(clause);
+        r = (Var *) get_rightop(clause);
 
-	  if(var_equal(var, l)) {
-	       retval = r;
-	  } else if(var_equal(var, r)) {
-	       retval = l;
-	  }
-     }
+        if (var_equal(var, l)) {
+            retval = r;
+        } else if (var_equal(var, r)) {
+            retval = l;
+        }
+    }
 
-     return(retval);
+    return (retval);
 }

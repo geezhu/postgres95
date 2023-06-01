@@ -30,27 +30,29 @@
  *	pg_server definition.  cpp turns this into
  *	typedef struct FormData_pg_server
  * ----------------
- */ 
-CATALOG(pg_server) BOOTSTRAP {
-    NameData 	sername;
-    int2 	serpid;
-    int2 	serport;
-} FormData_pg_server;
+ */
+CATALOG(pg_server)
+BOOTSTRAP {
+NameData sername;
+int2 serpid;
+int2 serport;
+}
+FormData_pg_server;
 
 /* ----------------
  *	Form_pg_server corresponds to a pointer to a tuple with
  *	the format of pg_server relation.
  * ----------------
  */
-typedef FormData_pg_server	*Form_pg_server;
+typedef FormData_pg_server *Form_pg_server;
 
 /* ----------------
  *	compiler constants for pg_server
  * ----------------
  */
-#define Natts_pg_server			3
-#define Anum_pg_server_sername		1
-#define Anum_pg_server_serpid		2
-#define Anum_pg_server_serport		3
+#define Natts_pg_server            3
+#define Anum_pg_server_sername        1
+#define Anum_pg_server_serpid        2
+#define Anum_pg_server_serport        3
 
 #endif /* PG_SERVER_H */

@@ -57,13 +57,14 @@
  * Currently only used by ExecHashGetBucket and set only by ExecMakeVarConst
  * and by ExecEvalArrayRef.
  */
-bool 	execConstByVal;
-int 	execConstLen;
+bool execConstByVal;
+int execConstLen;
 
 /* static functions decls */
 static Datum ExecEvalAggreg(Aggreg *agg, ExprContext *econtext, bool *isNull);
+
 static Datum ExecEvalArrayRef(ArrayRef *arrayRef, ExprContext *econtext,
-			      bool *isNull, bool *isDone);
+                              bool *isNull, bool *isDone);
 
 /* --------------------------------
  *    ExecEvalArrayRef
@@ -76,79 +77,78 @@ static Datum ExecEvalArrayRef(ArrayRef *arrayRef, ExprContext *econtext,
  */
 static Datum
 ExecEvalArrayRef(ArrayRef *arrayRef,
-		 ExprContext *econtext,
-		 bool *isNull,
-		 bool *isDone)
-{
-    bool	dummy;
-    int 	i = 0, j = 0;
-    ArrayType 	*array_scanner;
-    List   	*upperIndexpr, *lowerIndexpr;
-    Node	*assgnexpr;
-    List	*elt;
-    IntArray 	upper, lower;
-    int 	*lIndex;
+                 ExprContext *econtext,
+                 bool *isNull,
+                 bool *isDone) {
+    bool dummy;
+    int i = 0, j = 0;
+    ArrayType *array_scanner;
+    List *upperIndexpr, *lowerIndexpr;
+    Node *assgnexpr;
+    List *elt;
+    IntArray upper, lower;
+    int *lIndex;
     char *dataPtr;
-    
+
     execConstByVal = arrayRef->refelembyval;
-    *isNull       =	false; 
-    array_scanner =	(ArrayType*)ExecEvalExpr(arrayRef->refexpr,
-					     econtext,
-					     isNull,
-					     isDone);
-    if (*isNull) return (Datum)NULL;
-    
+    *isNull = false;
+    array_scanner = (ArrayType *) ExecEvalExpr(arrayRef->refexpr,
+                                               econtext,
+                                               isNull,
+                                               isDone);
+    if (*isNull) return (Datum) NULL;
+
     upperIndexpr = arrayRef->refupperindexpr;
 
     foreach (elt, upperIndexpr) {
-    	upper.indx[i++] = (int32)ExecEvalExpr((Node*)lfirst(elt),
-					      econtext,
-					      isNull,
-					      &dummy);
-    	if (*isNull) return (Datum)NULL;
+        upper.indx[i++] = (int32) ExecEvalExpr((Node *) lfirst(elt),
+                                               econtext,
+                                               isNull,
+                                               &dummy);
+        if (*isNull) return (Datum) NULL;
     }
-    
+
     lowerIndexpr = arrayRef->reflowerindexpr;
     lIndex = NULL;
     if (lowerIndexpr != NIL) {
-	foreach (elt, lowerIndexpr) {
-	    lower.indx[j++] = (int32)ExecEvalExpr((Node*)lfirst(elt),
-						  econtext,
-						  isNull,
-						  &dummy);
-	    if (*isNull) return (Datum)NULL;
-	}
-	if (i != j)
-	    elog(WARN, 
-		 "ExecEvalArrayRef: upper and lower indices mismatch");
-	lIndex = lower.indx;
+        foreach (elt, lowerIndexpr) {
+            lower.indx[j++] = (int32) ExecEvalExpr((Node *) lfirst(elt),
+                                                   econtext,
+                                                   isNull,
+                                                   &dummy);
+            if (*isNull) return (Datum) NULL;
+        }
+        if (i != j)
+            elog(WARN,
+                 "ExecEvalArrayRef: upper and lower indices mismatch");
+        lIndex = lower.indx;
     }
 
-    assgnexpr    = arrayRef->refassgnexpr;
+    assgnexpr = arrayRef->refassgnexpr;
     if (assgnexpr != NULL) {
-	dataPtr = (char*)ExecEvalExpr((Node *)
-				      assgnexpr, econtext,
-				      isNull, &dummy);
-	if (*isNull) return (Datum)NULL;
-	if (lIndex == NULL)
-	    return (Datum) array_set(array_scanner, i, upper.indx, dataPtr, 
-				     arrayRef->refelembyval,
-				     arrayRef->refelemlength,
-				     arrayRef->refattrlength, isNull);
-	return (Datum) array_assgn(array_scanner, i, upper.indx,
-				   lower.indx, 
-				   (ArrayType*)dataPtr, 
-				   arrayRef->refelembyval,
-				   arrayRef->refelemlength, isNull);
+        dataPtr = (char *) ExecEvalExpr((Node *)
+                                                assgnexpr, econtext,
+                                        isNull, &dummy);
+        if (*isNull) return (Datum) NULL;
+        if (lIndex == NULL)
+            return (Datum) array_set(array_scanner, i, upper.indx, dataPtr,
+                                     arrayRef->refelembyval,
+                                     arrayRef->refelemlength,
+                                     arrayRef->refattrlength, isNull);
+        return (Datum) array_assgn(array_scanner, i, upper.indx,
+                                   lower.indx,
+                                   (ArrayType *) dataPtr,
+                                   arrayRef->refelembyval,
+                                   arrayRef->refelemlength, isNull);
     }
-    if (lIndex == NULL) 
-	return (Datum) array_ref(array_scanner, i, upper.indx,
-				 arrayRef->refelembyval,
-				 arrayRef->refelemlength,
-				 arrayRef->refattrlength, isNull);
+    if (lIndex == NULL)
+        return (Datum) array_ref(array_scanner, i, upper.indx,
+                                 arrayRef->refelembyval,
+                                 arrayRef->refelemlength,
+                                 arrayRef->refattrlength, isNull);
     return (Datum) array_clip(array_scanner, i, upper.indx, lower.indx,
-			      arrayRef->refelembyval,
-			      arrayRef->refelemlength, isNull);
+                              arrayRef->refelembyval,
+                              arrayRef->refelemlength, isNull);
 }
 
 
@@ -160,9 +160,8 @@ ExecEvalArrayRef(ArrayRef *arrayRef,
  * ----------------------------------------------------------------
  */
 static Datum
-ExecEvalAggreg(Aggreg *agg, ExprContext *econtext, bool *isNull)
-{
-    
+ExecEvalAggreg(Aggreg *agg, ExprContext *econtext, bool *isNull) {
+
     *isNull = econtext->ecxt_nulls[agg->aggno];
     return econtext->ecxt_values[agg->aggno];
 }
@@ -175,86 +174,84 @@ ExecEvalAggreg(Aggreg *agg, ExprContext *econtext, bool *isNull)
  * ----------------------------------------------------------------
  */
 Datum
-ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
-{
-    Datum	    	result;
-    TupleTableSlot  	*slot;
-    AttrNumber 		attnum;
-    HeapTuple		heapTuple;
-    TupleDesc		tuple_type;
-    Buffer 		buffer;
-    bool		byval;
-    int16   		len;
-    
+ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull) {
+    Datum result;
+    TupleTableSlot *slot;
+    AttrNumber attnum;
+    HeapTuple heapTuple;
+    TupleDesc tuple_type;
+    Buffer buffer;
+    bool byval;
+    int16 len;
+
     /* ----------------
      *	get the slot we want
      * ----------------
      */
-    switch(variable->varno) {
-    case INNER: /* get the tuple from the inner node */
-	slot = econtext->ecxt_innertuple;
-	break;
-	
-    case OUTER: /* get the tuple from the outer node */
-	slot = econtext->ecxt_outertuple;
-	break;
-	
-    default: /* get the tuple from the relation being scanned */
-	slot = econtext->ecxt_scantuple;
-	break;
-    } 
-    
+    switch (variable->varno) {
+        case INNER: /* get the tuple from the inner node */
+            slot = econtext->ecxt_innertuple;
+            break;
+
+        case OUTER: /* get the tuple from the outer node */
+            slot = econtext->ecxt_outertuple;
+            break;
+
+        default: /* get the tuple from the relation being scanned */
+            slot = econtext->ecxt_scantuple;
+            break;
+    }
+
     /* ----------------
      *   extract tuple information from the slot
      * ----------------
      */
-    heapTuple =  slot->val;
+    heapTuple = slot->val;
     tuple_type = slot->ttc_tupleDescriptor;
-    buffer =	 slot->ttc_buffer;
-    
-    attnum =  	variable->varattno;
-    
+    buffer = slot->ttc_buffer;
+
+    attnum = variable->varattno;
+
     /*
      * If the attribute number is invalid, then we are supposed to
      * return the entire tuple, we give back a whole slot so that
      * callers know what the tuple looks like.
      */
-    if (attnum == InvalidAttrNumber)
-	{
-	    TupleTableSlot  *tempSlot;
-	    TupleDesc td;
-	    HeapTuple tup;
+    if (attnum == InvalidAttrNumber) {
+        TupleTableSlot *tempSlot;
+        TupleDesc td;
+        HeapTuple tup;
 
-	    tempSlot = makeNode(TupleTableSlot);
-	    tempSlot->ttc_shouldFree = false;
-	    tempSlot->ttc_descIsNew = true;
-	    tempSlot->ttc_tupleDescriptor = (TupleDesc)NULL,
-	    tempSlot->ttc_buffer = InvalidBuffer;
-	    tempSlot->ttc_whichplan = -1;
+        tempSlot = makeNode(TupleTableSlot);
+        tempSlot->ttc_shouldFree = false;
+        tempSlot->ttc_descIsNew = true;
+        tempSlot->ttc_tupleDescriptor = (TupleDesc) NULL,
+                tempSlot->ttc_buffer = InvalidBuffer;
+        tempSlot->ttc_whichplan = -1;
 
-	    tup = heap_copytuple(slot->val);
-	    td = CreateTupleDescCopy(slot->ttc_tupleDescriptor);
-	    
-	    ExecSetSlotDescriptor(tempSlot, td);
-	    
-	    ExecStoreTuple(tup, tempSlot, InvalidBuffer, true);
-	    return (Datum) tempSlot;
-	}
-    
-    result =  (Datum)
-      heap_getattr(heapTuple,  /* tuple containing attribute */
-		   buffer,     /* buffer associated with tuple */
-		   attnum,     /* attribute number of desired attribute */
-		   tuple_type, /* tuple descriptor of tuple */
-		   isNull);    /* return: is attribute null? */
-    
+        tup = heap_copytuple(slot->val);
+        td = CreateTupleDescCopy(slot->ttc_tupleDescriptor);
+
+        ExecSetSlotDescriptor(tempSlot, td);
+
+        ExecStoreTuple(tup, tempSlot, InvalidBuffer, true);
+        return (Datum) tempSlot;
+    }
+
+    result = (Datum)
+            heap_getattr(heapTuple,  /* tuple containing attribute */
+                         buffer,     /* buffer associated with tuple */
+                         attnum,     /* attribute number of desired attribute */
+                         tuple_type, /* tuple descriptor of tuple */
+                         isNull);    /* return: is attribute null? */
+
     /* ----------------
      *	return null if att is null
      * ----------------
      */
     if (*isNull)
-	return (Datum) NULL;
-    
+        return (Datum) NULL;
+
     /* ----------------
      *   get length and type information..
      *   ??? what should we do about variable length attributes
@@ -266,22 +263,22 @@ ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
      * ----------------
      */
     if (attnum < 0) {
-	/* ----------------
-	 *  If this is a pseudo-att, we get the type and fake the length.
-	 *  There ought to be a routine to return the real lengths, so
-	 *  we'll mark this one ... XXX -mao
-	 * ----------------
-	 */
-        len = 	heap_sysattrlen(attnum);  	/* XXX see -mao above */
-	byval = heap_sysattrbyval(attnum);	/* XXX see -mao above */
+        /* ----------------
+         *  If this is a pseudo-att, we get the type and fake the length.
+         *  There ought to be a routine to return the real lengths, so
+         *  we'll mark this one ... XXX -mao
+         * ----------------
+         */
+        len = heap_sysattrlen(attnum);    /* XXX see -mao above */
+        byval = heap_sysattrbyval(attnum);    /* XXX see -mao above */
     } else {
-        len =   tuple_type->attrs[ attnum-1 ]->attlen;
-	byval = tuple_type->attrs[ attnum-1 ]->attbyval ? true : false ;
+        len = tuple_type->attrs[attnum - 1]->attlen;
+        byval = tuple_type->attrs[attnum - 1]->attbyval ? true : false;
     }
-    
+
     execConstByVal = byval;
-    execConstLen =   len;
-    
+    execConstLen = len;
+
     return result;
 }
 
@@ -310,20 +307,19 @@ ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
  * ----------------------------------------------------------------
  */
 Datum
-ExecEvalParam(Param *expression, ExprContext *econtext, bool *isNull)
-{
-    
-    char  	  	*thisParameterName;
-    int		  	thisParameterKind;
-    AttrNumber		thisParameterId;
-    int 	  	matchFound;
-    ParamListInfo	paramList;
-    
+ExecEvalParam(Param *expression, ExprContext *econtext, bool *isNull) {
+
+    char *thisParameterName;
+    int thisParameterKind;
+    AttrNumber thisParameterId;
+    int matchFound;
+    ParamListInfo paramList;
+
     thisParameterName = expression->paramname;
     thisParameterKind = expression->paramkind;
-    thisParameterId =   expression->paramid;
-    paramList = 	econtext->ecxt_param_list_info;
-    
+    thisParameterId = expression->paramid;
+    paramList = econtext->ecxt_param_list_info;
+
     *isNull = false;
     /*
      * search the list with the parameter info to find a matching name.
@@ -331,84 +327,81 @@ ExecEvalParam(Param *expression, ExprContext *econtext, bool *isNull)
      */
     matchFound = 0;
     if (paramList != NULL) {
-	/*
-	 * search for an entry in 'paramList' that matches
-	 * the `expression'.
-	 */
-	while(paramList->kind != PARAM_INVALID && !matchFound) {
-	    switch (thisParameterKind) {
-	    case PARAM_NAMED:
-		if (thisParameterKind == paramList->kind &&
-		    strcmp(paramList->name, thisParameterName) == 0){
-		    matchFound = 1;
-		} 
-		break;
-	    case PARAM_NUM:
-		if (thisParameterKind == paramList->kind &&
-		    paramList->id == thisParameterId) {
-		    matchFound = 1;
-		}
-		break;
-	    case PARAM_OLD:
-	    case PARAM_NEW:
-		if (thisParameterKind == paramList->kind &&
-		    paramList->id == thisParameterId)
-		    {
-			matchFound = 1;
-			/*
-			 * sanity check
-			 */
-		        if (strcmp(paramList->name, thisParameterName) != 0){
-			    elog(WARN,
-				 "ExecEvalParam: new/old params with same id & diff names");
-			}
-		    }
-		break;
-	    default:
-		/*
-		 * oops! this is not supposed to happen!
-		 */
-		elog(WARN, "ExecEvalParam: invalid paramkind %d",
-		     thisParameterKind);
-	    }
-	    if (! matchFound) {
-		paramList++;
-	    }
-	} /*while*/
+        /*
+         * search for an entry in 'paramList' that matches
+         * the `expression'.
+         */
+        while (paramList->kind != PARAM_INVALID && !matchFound) {
+            switch (thisParameterKind) {
+                case PARAM_NAMED:
+                    if (thisParameterKind == paramList->kind &&
+                        strcmp(paramList->name, thisParameterName) == 0) {
+                        matchFound = 1;
+                    }
+                    break;
+                case PARAM_NUM:
+                    if (thisParameterKind == paramList->kind &&
+                        paramList->id == thisParameterId) {
+                        matchFound = 1;
+                    }
+                    break;
+                case PARAM_OLD:
+                case PARAM_NEW:
+                    if (thisParameterKind == paramList->kind &&
+                        paramList->id == thisParameterId) {
+                        matchFound = 1;
+                        /*
+                         * sanity check
+                         */
+                        if (strcmp(paramList->name, thisParameterName) != 0) {
+                            elog(WARN,
+                                 "ExecEvalParam: new/old params with same id & diff names");
+                        }
+                    }
+                    break;
+                default:
+                    /*
+                     * oops! this is not supposed to happen!
+                     */
+                    elog(WARN, "ExecEvalParam: invalid paramkind %d",
+                         thisParameterKind);
+            }
+            if (!matchFound) {
+                paramList++;
+            }
+        } /*while*/
     } /*if*/
-    
+
     if (!matchFound) {
-	/*
-	 * ooops! we couldn't find this parameter
-	 * in the parameter list. Signal an error
-	 */
-	elog(WARN, "ExecEvalParam: Unknown value for parameter %s",
-	     thisParameterName);
+        /*
+         * ooops! we couldn't find this parameter
+         * in the parameter list. Signal an error
+         */
+        elog(WARN, "ExecEvalParam: Unknown value for parameter %s",
+             thisParameterName);
     }
-    
+
     /*
      * return the value.
      */
-    if (paramList->isnull)
-	{
-	    *isNull = true;
-	    return (Datum)NULL;
-	}
-    
-    if (expression->param_tlist != NIL)
-	{
-	    HeapTuple      tup;
-	    Datum          value;
-	    List           *tlist = expression->param_tlist;
-	    TargetEntry	   *tle = (TargetEntry *)lfirst(tlist);
-	    TupleTableSlot *slot = (TupleTableSlot *)paramList->value;
-	    
-	    tup = slot->val;
-	    value = ProjectAttribute(slot->ttc_tupleDescriptor,
-				     tle, tup, isNull);
-	    return value;
-	}
-    return(paramList->value);
+    if (paramList->isnull) {
+        *isNull = true;
+        return (Datum) NULL;
+    }
+
+    if (expression->param_tlist != NIL) {
+        HeapTuple tup;
+        Datum value;
+        List *tlist = expression->param_tlist;
+        TargetEntry *tle = (TargetEntry *) lfirst(tlist);
+        TupleTableSlot *slot = (TupleTableSlot *) paramList->value;
+
+        tup = slot->val;
+        value = ProjectAttribute(slot->ttc_tupleDescriptor,
+                                 tle, tup, isNull);
+        return value;
+    }
+    return (paramList->value);
 }
 
 
@@ -428,141 +421,133 @@ ExecEvalParam(Param *expression, ExprContext *econtext, bool *isNull)
  * ----------------
  */
 char *
-GetAttributeByNum(TupleTableSlot  *slot,
-		  AttrNumber attrno,
-		  bool *isNull)
-{
+GetAttributeByNum(TupleTableSlot *slot,
+                  AttrNumber attrno,
+                  bool *isNull) {
     Datum retval;
-    
+
     if (!AttributeNumberIsValid(attrno))
-	elog(WARN, "GetAttributeByNum: Invalid attribute number");
-    
+        elog(WARN, "GetAttributeByNum: Invalid attribute number");
+
     if (!AttrNumberIsForUserDefinedAttr(attrno))
-	elog(WARN, "GetAttributeByNum: cannot access system attributes here");
-    
-    if (isNull == (bool *)NULL)
-	elog(WARN, "GetAttributeByNum: a NULL isNull flag was passed");
-    
-    if (TupIsNull(slot))
-	{
-	    *isNull = true;
-	    return (char *) NULL;
-	}
-    
+        elog(WARN, "GetAttributeByNum: cannot access system attributes here");
+
+    if (isNull == (bool *) NULL)
+        elog(WARN, "GetAttributeByNum: a NULL isNull flag was passed");
+
+    if (TupIsNull(slot)) {
+        *isNull = true;
+        return (char *) NULL;
+    }
+
     retval = (Datum)
-	heap_getattr(slot->val,
-		     slot->ttc_buffer,
-		     attrno,
-		     slot->ttc_tupleDescriptor,
-		     isNull);
+            heap_getattr(slot->val,
+                         slot->ttc_buffer,
+                         attrno,
+                         slot->ttc_tupleDescriptor,
+                         isNull);
     if (*isNull)
-	return (char *) NULL;
+        return (char *) NULL;
     return (char *) retval;
 }
 
 /* XXX char16 name for catalogs */
 char *
 att_by_num(TupleTableSlot *slot,
-	   AttrNumber attrno,
-	   bool *isNull)
-{
-    return(GetAttributeByNum(slot, attrno, isNull));
+           AttrNumber attrno,
+           bool *isNull) {
+    return (GetAttributeByNum(slot, attrno, isNull));
 }
 
 char *
-GetAttributeByName(TupleTableSlot *slot, char *attname, bool *isNull)
-{
+GetAttributeByName(TupleTableSlot *slot, char *attname, bool *isNull) {
     AttrNumber attrno;
     TupleDesc tupdesc;
     HeapTuple tuple;
     Datum retval;
     int natts;
     int i;
-    
+
     if (attname == NULL)
-	elog(WARN, "GetAttributeByName: Invalid attribute name");
-    
-    if (isNull == (bool *)NULL)
-	elog(WARN, "GetAttributeByName: a NULL isNull flag was passed");
-    
-    if (TupIsNull(slot))
-	{
-	    *isNull = true;
-	    return (char *) NULL;
-	}
-    
+        elog(WARN, "GetAttributeByName: Invalid attribute name");
+
+    if (isNull == (bool *) NULL)
+        elog(WARN, "GetAttributeByName: a NULL isNull flag was passed");
+
+    if (TupIsNull(slot)) {
+        *isNull = true;
+        return (char *) NULL;
+    }
+
     tupdesc = slot->ttc_tupleDescriptor;
     tuple = slot->val;
-    
+
     natts = tuple->t_natts;
-    
+
     attrno = InvalidAttrNumber;
-    for (i=0;i<tupdesc->natts;i++) {
-	if (namestrcmp(&(tupdesc->attrs[i]->attname), attname) == 0) {
-	    attrno = tupdesc->attrs[i]->attnum;
-	    break;
-	}
+    for (i = 0; i < tupdesc->natts; i++) {
+        if (namestrcmp(&(tupdesc->attrs[i]->attname), attname) == 0) {
+            attrno = tupdesc->attrs[i]->attnum;
+            break;
+        }
     }
 
     if (attrno == InvalidAttrNumber)
-	elog(WARN, "GetAttributeByName: attribute %s not found", attname);
-    
+        elog(WARN, "GetAttributeByName: attribute %s not found", attname);
+
     retval = (Datum)
-	heap_getattr(slot->val,
-		     slot->ttc_buffer,
-		     attrno,
-		     tupdesc,
-		     isNull);
+            heap_getattr(slot->val,
+                         slot->ttc_buffer,
+                         attrno,
+                         tupdesc,
+                         isNull);
     if (*isNull)
-	return (char *) NULL;
+        return (char *) NULL;
     return (char *) retval;
 }
 
 /* XXX char16 name for catalogs */
 char *
-att_by_name(TupleTableSlot *slot, char *attname, bool *isNull)
-{
-    return(GetAttributeByName(slot, attname, isNull));
+att_by_name(TupleTableSlot *slot, char *attname, bool *isNull) {
+    return (GetAttributeByName(slot, attname, isNull));
 }
 
 void
 ExecEvalFuncArgs(FunctionCachePtr fcache,
-		 ExprContext *econtext,
-		 List *argList,
-		 Datum argV[],
-		 bool *argIsDone)
-{
+                 ExprContext *econtext,
+                 List *argList,
+                 Datum argV[],
+                 bool *argIsDone) {
     int i;
     bool argIsNull, *nullVect;
     List *arg;
-    
+
     nullVect = fcache->nullVect;
-    
+
     i = 0;
     foreach (arg, argList) {
-	/* ----------------
-	 *   evaluate the expression, in general functions cannot take
-	 *   sets as arguments but we make an exception in the case of
-	 *   nested dot expressions.  We have to watch out for this case
-	 *   here.
-	 * ----------------
-	 */
-	argV[i] = (Datum)
-	    ExecEvalExpr((Node *) lfirst(arg),
-			 econtext,
-			 &argIsNull,
-			 argIsDone);
-	if (! (*argIsDone))
-	    {
-		Assert(i == 0);
-		fcache->setArg = (char *)argV[0];
-		fcache->hasSetArg = true;
-	    }
-	if (argIsNull)
-	    nullVect[i] = true;
-	else
-	    nullVect[i] = false;
-	i++;
+        /* ----------------
+         *   evaluate the expression, in general functions cannot take
+         *   sets as arguments but we make an exception in the case of
+         *   nested dot expressions.  We have to watch out for this case
+         *   here.
+         * ----------------
+         */
+        argV[i] = (Datum)
+                ExecEvalExpr((Node *) lfirst(arg),
+                             econtext,
+                             &argIsNull,
+                             argIsDone);
+        if (!(*argIsDone)) {
+            Assert(i == 0);
+            fcache->setArg = (char *) argV[0];
+            fcache->hasSetArg = true;
+        }
+        if (argIsNull)
+            nullVect[i] = true;
+        else
+            nullVect[i] = false;
+        i++;
     }
 }
 
@@ -572,17 +557,16 @@ ExecEvalFuncArgs(FunctionCachePtr fcache,
  */
 Datum
 ExecMakeFunctionResult(Node *node,
-		       List *arguments,
-		       ExprContext *econtext,
-		       bool *isNull,
-		       bool *isDone)
-{
-    Datum	argv[MAXFMGRARGS];
+                       List *arguments,
+                       ExprContext *econtext,
+                       bool *isNull,
+                       bool *isDone) {
+    Datum argv[MAXFMGRARGS];
     FunctionCachePtr fcache;
-    Func	*funcNode = NULL;
-    Oper	*operNode = NULL;
-    bool        funcisset = false;
-    
+    Func *funcNode = NULL;
+    Oper *operNode = NULL;
+    bool funcisset = false;
+
     /*
      * This is kind of ugly, Func nodes now have targetlists so that
      * we know when and what to project out from postquel function results.
@@ -590,17 +574,14 @@ ExecMakeFunctionResult(Node *node,
      * of using only the fcache struct as before.  ExecMakeFunctionResult
      * becomes a little bit more of a dual personality as a result.
      */
-    if (IsA(node,Func))
-	{
-	    funcNode = (Func *)node;
-	    fcache = funcNode->func_fcache;
-	}
-    else
-	{
-	    operNode = (Oper *)node;
-	    fcache = operNode->op_fcache;
-	}
-    
+    if (IsA(node, Func)) {
+        funcNode = (Func *) node;
+        fcache = funcNode->func_fcache;
+    } else {
+        operNode = (Oper *) node;
+        fcache = operNode->op_fcache;
+    }
+
     /* ----------------
      *	arguments is a list of expressions to evaluate
      *  before passing to the function manager.
@@ -609,32 +590,30 @@ ExecMakeFunctionResult(Node *node,
      * ----------------
      */
     if (fcache->nargs != 0) {
-	bool argDone;
-	
-	if (fcache->nargs > MAXFMGRARGS) 
-	    elog(WARN, "ExecMakeFunctionResult: too many arguments");
-	
-	/*
-	 * If the setArg in the fcache is set we have an argument
-	 * returning a set of tuples (i.e. a nested dot expression).  We
-	 * don't want to evaluate the arguments again until the function
-	 * is done. hasSetArg will always be false until we eval the args
-	 * for the first time. We should set this in the parser.
-	 */
-	if ((fcache->hasSetArg) && fcache->setArg != NULL)
-	    {
-		argv[0] = (Datum)fcache->setArg;
-		argDone = false;
-	    }
-	else
-	    ExecEvalFuncArgs(fcache, econtext, arguments, argv, &argDone);
-	
-	if ((fcache->hasSetArg) && (argDone)) {
-	    if (isDone) *isDone = true;
-	    return (Datum)NULL;
-	}
+        bool argDone;
+
+        if (fcache->nargs > MAXFMGRARGS)
+            elog(WARN, "ExecMakeFunctionResult: too many arguments");
+
+        /*
+         * If the setArg in the fcache is set we have an argument
+         * returning a set of tuples (i.e. a nested dot expression).  We
+         * don't want to evaluate the arguments again until the function
+         * is done. hasSetArg will always be false until we eval the args
+         * for the first time. We should set this in the parser.
+         */
+        if ((fcache->hasSetArg) && fcache->setArg != NULL) {
+            argv[0] = (Datum) fcache->setArg;
+            argDone = false;
+        } else
+            ExecEvalFuncArgs(fcache, econtext, arguments, argv, &argDone);
+
+        if ((fcache->hasSetArg) && (argDone)) {
+            if (isDone) *isDone = true;
+            return (Datum) NULL;
+        }
     }
-    
+
     /* If this function is really a set, we have to diddle with things.
      * If the function has already been called at least once, then the 
      * setArg field of the fcache holds
@@ -651,83 +630,80 @@ ExecMakeFunctionResult(Node *node,
      * we have the right OID.  Also zero out the argv, since the real
      * set doesn't take any arguments.
      */
-    if (((Func *)node)->funcid == SetEvalRegProcedure) {
-	funcisset = true;
-	if (fcache->setArg) {
-	    argv[0] = 0;
+    if (((Func *) node)->funcid == SetEvalRegProcedure) {
+        funcisset = true;
+        if (fcache->setArg) {
+            argv[0] = 0;
 
-	    ((Func *)node)->funcid = (Oid) PointerGetDatum(fcache->setArg);
-		       
-	} else {
-	    ((Func *)node)->funcid = (Oid) argv[0];
-	    setFcache(node, argv[0], NIL,econtext);
-	    fcache = ((Func *)node)->func_fcache;
-	    fcache->setArg = (char*)argv[0];
-	    argv[0] = (Datum)0;
-	}
+            ((Func *) node)->funcid = (Oid) PointerGetDatum(fcache->setArg);
+
+        } else {
+            ((Func *) node)->funcid = (Oid) argv[0];
+            setFcache(node, argv[0], NIL, econtext);
+            fcache = ((Func *) node)->func_fcache;
+            fcache->setArg = (char *) argv[0];
+            argv[0] = (Datum) 0;
+        }
     }
-    
+
     /* ----------------
      *   now return the value gotten by calling the function manager, 
      *   passing the function the evaluated parameter values. 
      * ----------------
      */
     if (fcache->language == SQLlanguageId) {
-	Datum result;
-	
-	Assert(funcNode);
-	result = postquel_function (funcNode, (char **) argv, isNull, isDone);
-	/*
-	 * finagle the situation where we are iterating through all results
-	 * in a nested dot function (whose argument function returns a set
-	 * of tuples) and the current function finally finishes.  We need to
-	 * get the next argument in the set and run the function all over
-	 * again.  This is getting unclean.
-	 */
-	if ((*isDone) && (fcache->hasSetArg)) {
-	    bool argDone;
-	    
-	    ExecEvalFuncArgs(fcache, econtext, arguments, argv, &argDone);
-	    
-	    if (argDone) {
-	        fcache->setArg = (char *)NULL;
-		*isDone = true;
-		result = (Datum)NULL;
-	    }
-	    else
-		result = postquel_function(funcNode,
-					   (char **) argv,
-					   isNull,
-					   isDone);
-	}
-	if (funcisset) {
-	    /* reset the funcid so that next call to this routine will
-	     * still recognize this func as a set.
-	     * Note that for now we assume that the set function in
-	     * pg_proc must be a Postquel function - the funcid is
-	     * not reset below for C functions.
-	     */
-	    ((Func *)node)->funcid = SetEvalRegProcedure;
-	    /* If we're done with the results of this function, get rid
-	     * of its func cache.
-	     */
-	    if (*isDone) {
-		((Func *)node)->func_fcache = NULL;
-	    }
-	}
-	return result;
+        Datum result;
+
+        Assert(funcNode);
+        result = postquel_function(funcNode, (char **) argv, isNull, isDone);
+        /*
+         * finagle the situation where we are iterating through all results
+         * in a nested dot function (whose argument function returns a set
+         * of tuples) and the current function finally finishes.  We need to
+         * get the next argument in the set and run the function all over
+         * again.  This is getting unclean.
+         */
+        if ((*isDone) && (fcache->hasSetArg)) {
+            bool argDone;
+
+            ExecEvalFuncArgs(fcache, econtext, arguments, argv, &argDone);
+
+            if (argDone) {
+                fcache->setArg = (char *) NULL;
+                *isDone = true;
+                result = (Datum) NULL;
+            } else
+                result = postquel_function(funcNode,
+                                           (char **) argv,
+                                           isNull,
+                                           isDone);
+        }
+        if (funcisset) {
+            /* reset the funcid so that next call to this routine will
+             * still recognize this func as a set.
+             * Note that for now we assume that the set function in
+             * pg_proc must be a Postquel function - the funcid is
+             * not reset below for C functions.
+             */
+            ((Func *) node)->funcid = SetEvalRegProcedure;
+            /* If we're done with the results of this function, get rid
+             * of its func cache.
+             */
+            if (*isDone) {
+                ((Func *) node)->func_fcache = NULL;
+            }
+        }
+        return result;
+    } else {
+        int i;
+
+        if (isDone) *isDone = true;
+        for (i = 0; i < fcache->nargs; i++)
+            if (fcache->nullVect[i] == true) *isNull = true;
+
+        return ((Datum) fmgr_c(fcache->func, fcache->foid, fcache->nargs,
+                               (FmgrValues *) argv, isNull));
     }
-    else 
-	{
-	    int i;
-	    
-	    if (isDone) *isDone = true;
-	    for (i = 0; i < fcache->nargs; i++) 
-		if (fcache->nullVect[i] == true) *isNull = true;
-	    
-	    return((Datum) fmgr_c(fcache->func, fcache->foid, fcache->nargs,
-				  (FmgrValues *) argv, isNull));
-	}
 }
 
 
@@ -753,12 +729,11 @@ ExecMakeFunctionResult(Node *node,
  * ----------------------------------------------------------------
  */
 Datum
-ExecEvalOper(Expr *opClause, ExprContext *econtext, bool *isNull)
-{
-    Oper	*op; 
-    List	*argList;
+ExecEvalOper(Expr *opClause, ExprContext *econtext, bool *isNull) {
+    Oper *op;
+    List *argList;
     FunctionCachePtr fcache;
-    bool	isDone;
+    bool isDone;
 
     /* ----------------
      *  an opclause is a list (op args).  (I think)
@@ -769,26 +744,26 @@ ExecEvalOper(Expr *opClause, ExprContext *econtext, bool *isNull)
      *  calling the function on the evaluated arguments.
      * ----------------
      */
-    op = 	(Oper *) opClause->oper;
-    argList =   opClause->args;
-    
+    op = (Oper *) opClause->oper;
+    argList = opClause->args;
+
     /*
      * get the fcache from the Oper node.
      * If it is NULL, then initialize it
      */
     fcache = op->op_fcache;
     if (fcache == NULL) {
-        setFcache((Node*)op, op->opid, argList, econtext);
-    	fcache = op->op_fcache;
+        setFcache((Node *) op, op->opid, argList, econtext);
+        fcache = op->op_fcache;
     }
-    
+
     /* -----------
      *  call ExecMakeFunctionResult() with a dummy isDone that we ignore.
      *  We don't have operator whose arguments are sets.
      * -----------
      */
     return
-	ExecMakeFunctionResult((Node *)op, argList, econtext, isNull, &isDone);
+            ExecMakeFunctionResult((Node *) op, argList, econtext, isNull, &isDone);
 }
 
 /* ----------------------------------------------------------------
@@ -798,14 +773,13 @@ ExecEvalOper(Expr *opClause, ExprContext *econtext, bool *isNull)
 
 Datum
 ExecEvalFunc(Expr *funcClause,
-	     ExprContext *econtext,
-	     bool *isNull,
-	     bool *isDone)
-{
-    Func	*func;
-    List	*argList;
+             ExprContext *econtext,
+             bool *isNull,
+             bool *isDone) {
+    Func *func;
+    List *argList;
     FunctionCachePtr fcache;
-    
+
     /* ----------------
      *  an funcclause is a list (func args).  (I think)
      *
@@ -817,21 +791,21 @@ ExecEvalFunc(Expr *funcClause,
      *  this is nearly identical to the ExecEvalOper code.
      * ----------------
      */
-    func =	(Func *)funcClause->oper;
-    argList =   funcClause->args;
-    
+    func = (Func *) funcClause->oper;
+    argList = funcClause->args;
+
     /*
      * get the fcache from the Func node.
      * If it is NULL, then initialize it
      */
     fcache = func->func_fcache;
     if (fcache == NULL) {
-    	setFcache((Node*)func, func->funcid, argList, econtext);
-    	fcache = func->func_fcache;
+        setFcache((Node *) func, func->funcid, argList, econtext);
+        fcache = func->func_fcache;
     }
-    
+
     return
-	ExecMakeFunctionResult((Node*)func, argList, econtext, isNull, isDone);
+            ExecMakeFunctionResult((Node *) func, argList, econtext, isNull, isDone);
 }
 
 /* ----------------------------------------------------------------
@@ -851,37 +825,36 @@ ExecEvalFunc(Expr *funcClause,
  * ----------------------------------------------------------------
  */
 Datum
-ExecEvalNot(Expr *notclause, ExprContext *econtext, bool *isNull)
-{
+ExecEvalNot(Expr *notclause, ExprContext *econtext, bool *isNull) {
     Datum expr_value;
     Node *clause;
-    bool  isDone;
-    
+    bool isDone;
+
     clause = lfirst(notclause->args);
-    
+
     /* ----------------
      *  We don't iterate over sets in the quals, so pass in an isDone
      *  flag, but ignore it.
      * ----------------
      */
     expr_value = ExecEvalExpr(clause, econtext, isNull, &isDone);
-    
+
     /* ----------------
      *	if the expression evaluates to null, then we just
      *  cascade the null back to whoever called us.
      * ----------------
      */
     if (*isNull)
-	return expr_value;
-    
+        return expr_value;
+
     /* ----------------
      *  evaluation of 'not' is simple.. expr is false, then
      *  return 'true' and vice versa.
      * ----------------
      */
     if (DatumGetInt32(expr_value) == 0)
-	return (Datum) true;
-    
+        return (Datum) true;
+
     return (Datum) false;
 }
 
@@ -890,17 +863,16 @@ ExecEvalNot(Expr *notclause, ExprContext *econtext, bool *isNull)
  * ----------------------------------------------------------------
  */
 Datum
-ExecEvalOr(Expr *orExpr, ExprContext *econtext, bool *isNull)
-{
-    List   *clauses;
-    List   *clause;
-    bool   isDone;
+ExecEvalOr(Expr *orExpr, ExprContext *econtext, bool *isNull) {
+    List *clauses;
+    List *clause;
+    bool isDone;
     bool IsNull;
-    Datum  const_value;
-    
-    IsNull = false; 
+    Datum const_value;
+
+    IsNull = false;
     clauses = orExpr->args;
-    
+
     /* ----------------
      *  we use three valued logic functions here...
      *	we evaluate each of the clauses in turn,
@@ -914,36 +886,36 @@ ExecEvalOr(Expr *orExpr, ExprContext *econtext, bool *isNull)
      * ----------------
      */
     foreach (clause, clauses) {
-	
-	/* ----------------
-	 *  We don't iterate over sets in the quals, so pass in an isDone
-	 *  flag, but ignore it.
-	 * ----------------
-	 */
-	const_value = ExecEvalExpr((Node *) lfirst(clause),
-				   econtext,
-				   isNull,
-				   &isDone);
-	
-	/* ----------------
-	 *  if the expression evaluates to null, then we 
-	 *  remember it in the local IsNull flag, if none of the
-	 *  clauses are true then we need to set *isNull
-	 *  to true again.
-	 * ----------------
-	 */
-	if (*isNull)
-	    IsNull = *isNull;
-	
-	/* ----------------
-	 *   if we have a true result, then we return it.
-	 * ----------------
-	 */
-	if (DatumGetInt32(const_value) != 0)
-	    return const_value;
+
+        /* ----------------
+         *  We don't iterate over sets in the quals, so pass in an isDone
+         *  flag, but ignore it.
+         * ----------------
+         */
+        const_value = ExecEvalExpr((Node *) lfirst(clause),
+                                   econtext,
+                                   isNull,
+                                   &isDone);
+
+        /* ----------------
+         *  if the expression evaluates to null, then we 
+         *  remember it in the local IsNull flag, if none of the
+         *  clauses are true then we need to set *isNull
+         *  to true again.
+         * ----------------
+         */
+        if (*isNull)
+            IsNull = *isNull;
+
+        /* ----------------
+         *   if we have a true result, then we return it.
+         * ----------------
+         */
+        if (DatumGetInt32(const_value) != 0)
+            return const_value;
     }
-    
-    /* IsNull is true if at least one clause evaluated to NULL */	
+
+    /* IsNull is true if at least one clause evaluated to NULL */
     *isNull = IsNull;
     return const_value;
 }
@@ -953,18 +925,17 @@ ExecEvalOr(Expr *orExpr, ExprContext *econtext, bool *isNull)
  * ----------------------------------------------------------------
  */
 Datum
-ExecEvalAnd(Expr *andExpr, ExprContext *econtext, bool *isNull)
-{
-    List   *clauses;
-    List   *clause;
-    Datum  const_value;
-    bool   isDone;
+ExecEvalAnd(Expr *andExpr, ExprContext *econtext, bool *isNull) {
+    List *clauses;
+    List *clause;
+    Datum const_value;
+    bool isDone;
     bool IsNull;
-    
+
     IsNull = false;
-    
+
     clauses = andExpr->args;
-    
+
     /* ----------------
      *	we evaluate each of the clauses in turn,
      *  as soon as one is false we return that
@@ -974,36 +945,36 @@ ExecEvalAnd(Expr *andExpr, ExprContext *econtext, bool *isNull)
      * ----------------
      */
     foreach (clause, clauses) {
-	
-	/* ----------------
-	 *  We don't iterate over sets in the quals, so pass in an isDone
-	 *  flag, but ignore it.
-	 * ----------------
-	 */
-	const_value = ExecEvalExpr((Node *) lfirst(clause),
-				   econtext,
-				   isNull,
-				   &isDone);
-	
-	/* ----------------
-	 *  if the expression evaluates to null, then we 
-	 *  remember it in IsNull, if none of the clauses after
-	 *  this evaluates to false we will have to set *isNull
-	 *  to true again.
-	 * ----------------
-	 */
-	if (*isNull)
-	    IsNull = *isNull;
-	
-	/* ----------------
-	 *   if we have a false result, then we return it, since the
-	 *   conjunction must be false.
-	 * ----------------
-	 */
-	if (DatumGetInt32(const_value) == 0)
-	    return const_value;
+
+        /* ----------------
+         *  We don't iterate over sets in the quals, so pass in an isDone
+         *  flag, but ignore it.
+         * ----------------
+         */
+        const_value = ExecEvalExpr((Node *) lfirst(clause),
+                                   econtext,
+                                   isNull,
+                                   &isDone);
+
+        /* ----------------
+         *  if the expression evaluates to null, then we 
+         *  remember it in IsNull, if none of the clauses after
+         *  this evaluates to false we will have to set *isNull
+         *  to true again.
+         * ----------------
+         */
+        if (*isNull)
+            IsNull = *isNull;
+
+        /* ----------------
+         *   if we have a false result, then we return it, since the
+         *   conjunction must be false.
+         * ----------------
+         */
+        if (DatumGetInt32(const_value) == 0)
+            return const_value;
     }
-    
+
     *isNull = IsNull;
     return const_value;
 }
@@ -1030,92 +1001,91 @@ ExecEvalAnd(Expr *andExpr, ExprContext *econtext, bool *isNull)
  */
 Datum
 ExecEvalExpr(Node *expression,
-	     ExprContext *econtext,
-	     bool *isNull,
-	     bool *isDone)
-{
+             ExprContext *econtext,
+             bool *isNull,
+             bool *isDone) {
     Datum retDatum;
-    
+
     *isNull = false;
-    
+
     /*
      * Some callers don't care about is done and only want 1 result.  They
      * indicate this by passing NULL
      */
     if (isDone)
-	*isDone = true;
-    
+        *isDone = true;
+
     /* ----------------
      *	here we dispatch the work to the appropriate type
      *  of function given the type of our expression.
      * ----------------
      */
     if (expression == NULL) {
-	*isNull = true;
-	return (Datum) true;
+        *isNull = true;
+        return (Datum) true;
     }
 
-    switch(nodeTag(expression)) {
-    case T_Var:
-	retDatum = (Datum) ExecEvalVar((Var *) expression, econtext, isNull);
-	break;
-    case T_Const: {
-	Const *con = (Const *)expression;
+    switch (nodeTag(expression)) {
+        case T_Var:
+            retDatum = (Datum) ExecEvalVar((Var *) expression, econtext, isNull);
+            break;
+        case T_Const: {
+            Const *con = (Const *) expression;
 
-	if (con->constisnull)
-	    *isNull = true;
-    	retDatum = con->constvalue;
-	break;
+            if (con->constisnull)
+                *isNull = true;
+            retDatum = con->constvalue;
+            break;
+        }
+        case T_Param:
+            retDatum = (Datum) ExecEvalParam((Param *) expression, econtext, isNull);
+            break;
+        case T_Iter:
+            retDatum = (Datum) ExecEvalIter((Iter *) expression,
+                                            econtext,
+                                            isNull,
+                                            isDone);
+            break;
+        case T_Aggreg:
+            retDatum = (Datum) ExecEvalAggreg((Aggreg *) expression,
+                                              econtext,
+                                              isNull);
+            break;
+        case T_ArrayRef:
+            retDatum = (Datum) ExecEvalArrayRef((ArrayRef *) expression,
+                                                econtext,
+                                                isNull,
+                                                isDone);
+            break;
+        case T_Expr: {
+            Expr *expr = (Expr *) expression;
+            switch (expr->opType) {
+                case OP_EXPR:
+                    retDatum = (Datum) ExecEvalOper(expr, econtext, isNull);
+                    break;
+                case FUNC_EXPR:
+                    retDatum = (Datum) ExecEvalFunc(expr, econtext, isNull, isDone);
+                    break;
+                case OR_EXPR:
+                    retDatum = (Datum) ExecEvalOr(expr, econtext, isNull);
+                    break;
+                case AND_EXPR:
+                    retDatum = (Datum) ExecEvalAnd(expr, econtext, isNull);
+                    break;
+                case NOT_EXPR:
+                    retDatum = (Datum) ExecEvalNot(expr, econtext, isNull);
+                    break;
+                default:
+                    elog(WARN, "ExecEvalExpr: unknown expression type");
+                    break;
+            }
+            break;
+        }
+        default:
+            elog(WARN, "ExecEvalExpr: unknown expression type");
+            break;
     }
-    case T_Param:
-	retDatum = (Datum)ExecEvalParam((Param *)expression, econtext, isNull);
-	break;
-    case T_Iter:
-	retDatum = (Datum)  ExecEvalIter((Iter *) expression,
-					 econtext,
-					 isNull,
-					 isDone);
-	break;
-    case T_Aggreg:
-	retDatum = (Datum) ExecEvalAggreg((Aggreg *)expression,
-					  econtext,
-					  isNull);
-	break;
-    case T_ArrayRef:
-	retDatum = (Datum)  ExecEvalArrayRef((ArrayRef *) expression,
-					     econtext,
-					     isNull,
-					     isDone);
-	break;
-    case T_Expr: {
-	Expr *expr = (Expr *)expression;
-	switch (expr->opType) {
-	case OP_EXPR:
-	    retDatum = (Datum) ExecEvalOper(expr, econtext, isNull);
-	    break;
-	case FUNC_EXPR:
-	    retDatum = (Datum) ExecEvalFunc(expr, econtext, isNull, isDone);
-	    break;
-	case OR_EXPR:
-	    retDatum = (Datum) ExecEvalOr(expr, econtext, isNull);
-	    break;
-	case AND_EXPR:
-	    retDatum = (Datum)  ExecEvalAnd(expr, econtext, isNull);
-	    break;
-	case NOT_EXPR:
-	    retDatum = (Datum) ExecEvalNot(expr, econtext, isNull);
-	    break;
-	default:
-	    elog(WARN, "ExecEvalExpr: unknown expression type");
-	    break;
-	}
-	break;
-    }
-    default:
-	elog(WARN, "ExecEvalExpr: unknown expression type");
-	break;
-    }
-    
+
     return retDatum;
 }
 
@@ -1136,23 +1106,22 @@ ExecEvalExpr(Node *expression,
  * ----------------------------------------------------------------
  */
 bool
-ExecQualClause(Node *clause, ExprContext *econtext)
-{
-    Datum   expr_value;
+ExecQualClause(Node *clause, ExprContext *econtext) {
+    Datum expr_value;
     bool isNull;
     bool isDone;
-    
+
     /* when there is a null clause, consider the qualification to be true */
     if (clause == NULL)
-      return true;
+        return true;
 
     /*
      * pass isDone, but ignore it.  We don't iterate over multiple
      * returns in the qualifications.
      */
     expr_value = (Datum)
-	ExecEvalExpr(clause, econtext, &isNull, &isDone);
-    
+            ExecEvalExpr(clause, econtext, &isNull, &isDone);
+
     /* ----------------
      *	this is interesting behaviour here.  When a clause evaluates
      *  to null, then we consider this as passing the qualification.
@@ -1161,15 +1130,15 @@ ExecQualClause(Node *clause, ExprContext *econtext)
      * ----------------
      */
     if (isNull)
-	return true;
-    
+        return true;
+
     /* ----------------
      *  remember, we return true when the qualification fails..
      * ----------------
      */
     if (DatumGetInt32(expr_value) == 0)
-	return true;
-    
+        return true;
+
     return false;
 }
 
@@ -1181,11 +1150,10 @@ ExecQualClause(Node *clause, ExprContext *econtext)
  * ----------------------------------------------------------------
  */
 bool
-ExecQual(List *qual, ExprContext *econtext)
-{
-    List 		*clause;
-    bool 		result;
-    
+ExecQual(List *qual, ExprContext *econtext) {
+    List *clause;
+    bool result;
+
     /* ----------------
      *	debugging stuff
      * ----------------
@@ -1193,16 +1161,16 @@ ExecQual(List *qual, ExprContext *econtext)
     EV_printf("ExecQual: qual is ");
     EV_nodeDisplay(qual);
     EV_printf("\n");
-    
+
     IncrProcessed();
-    
+
     /* ----------------
      *	return true immediately if no qual
      * ----------------
      */
     if (qual == NIL)
-	return true;
-    
+        return true;
+
     /* ----------------
      *  a "qual" is a list of clauses.  To evaluate the
      *  qual, we evaluate each of the clauses in the list.
@@ -1214,11 +1182,11 @@ ExecQual(List *qual, ExprContext *econtext)
      */
     result = false;
     foreach (clause, qual) {
-	result = ExecQualClause((Node *)lfirst(clause), econtext);
-	if (result == true)
-	    break;
+        result = ExecQualClause((Node *) lfirst(clause), econtext);
+        if (result == true)
+            break;
     }
-    
+
     /* ----------------
      *	if result is true, then it means a clause failed so we
      *  return false.  if result is false then it means no clause
@@ -1226,26 +1194,25 @@ ExecQual(List *qual, ExprContext *econtext)
      * ----------------
      */
     if (result == true)
-	return false;
-    
+        return false;
+
     return true;
 }
 
 int
-ExecTargetListLength(List *targetlist)
-{
+ExecTargetListLength(List *targetlist) {
     int len;
     List *tl;
     TargetEntry *curTle;
-    
+
     len = 0;
     foreach (tl, targetlist) {
-	curTle = lfirst(tl);
-	
-	if (curTle->resdom != NULL)
-	    len++;
-	else
-	    len += curTle->fjoin->fj_nNodes;
+        curTle = lfirst(tl);
+
+        if (curTle->resdom != NULL)
+            len++;
+        else
+            len += curTle->fjoin->fj_nNodes;
     }
     return len;
 }
@@ -1259,25 +1226,24 @@ ExecTargetListLength(List *targetlist)
  */
 static HeapTuple
 ExecTargetList(List *targetlist,
-	       int nodomains, 
-	       TupleDesc targettype,
-	       Datum *values,
-	       ExprContext *econtext,
-	       bool *isDone)
-{
-    char		nulls_array[64];
-    bool		fjNullArray[64];
-    bool		*fjIsNull;
-    char		*null_head;
-    List 		*tl;
-    TargetEntry		*tle;
-    Node 		*expr;
-    Resdom    	  	*resdom;
-    AttrNumber		resind;
-    Datum 		constvalue;
-    HeapTuple 		newTuple;
-    bool 		isNull;
-    
+               int nodomains,
+               TupleDesc targettype,
+               Datum *values,
+               ExprContext *econtext,
+               bool *isDone) {
+    char nulls_array[64];
+    bool fjNullArray[64];
+    bool *fjIsNull;
+    char *null_head;
+    List *tl;
+    TargetEntry *tle;
+    Node *expr;
+    Resdom *resdom;
+    AttrNumber resind;
+    Datum constvalue;
+    HeapTuple newTuple;
+    bool isNull;
+
     /* ----------------
      *	debugging stuff
      * ----------------
@@ -1285,7 +1251,7 @@ ExecTargetList(List *targetlist,
     EV_printf("ExecTargetList: tl is ");
     EV_nodeDisplay(targetlist);
     EV_printf("\n");
-    
+
     /* ----------------
      * Return a dummy tuple if the targetlist is empty .
      * the dummy tuple is necessary to differentiate 
@@ -1293,27 +1259,27 @@ ExecTargetList(List *targetlist,
      * ----------------
      */
     if (targetlist == NIL) {
-	/* ----------------
-	 *	I now think that the only time this makes
-	 *	any sence is when we run a delete query.  Then
-	 *	we need to return something other than nil
-	 *	so we know to delete the tuple associated
-	 *      with the saved tupleid.. see what ExecutePlan
-	 *      does with the returned tuple.. -cim 9/21/89
-	 *
-	 *      It could also happen in queries like:
-	 *	    retrieve (foo.all) where bar.a = 3
-	 *
-	 *      is this a new phenomenon? it might cause bogus behavior
-	 *      if we try to free this tuple later!! I put a hook in
-	 *      ExecProject to watch out for this case -mer 24 Aug 1992
-	 * ----------------
-	 */
-	CXT1_printf("ExecTargetList: context is %d\n", CurrentMemoryContext);
-	*isDone = true;
-	return (HeapTuple) true;
+        /* ----------------
+         *	I now think that the only time this makes
+         *	any sence is when we run a delete query.  Then
+         *	we need to return something other than nil
+         *	so we know to delete the tuple associated
+         *      with the saved tupleid.. see what ExecutePlan
+         *      does with the returned tuple.. -cim 9/21/89
+         *
+         *      It could also happen in queries like:
+         *	    retrieve (foo.all) where bar.a = 3
+         *
+         *      is this a new phenomenon? it might cause bogus behavior
+         *      if we try to free this tuple later!! I put a hook in
+         *      ExecProject to watch out for this case -mer 24 Aug 1992
+         * ----------------
+         */
+        CXT1_printf("ExecTargetList: context is %d\n", CurrentMemoryContext);
+        *isDone = true;
+        return (HeapTuple) true;
     }
-    
+
     /* ----------------
      *  allocate an array of char's to hold the "null" information
      *  only if we have a really large targetlist.  otherwise we use
@@ -1321,111 +1287,110 @@ ExecTargetList(List *targetlist,
      * ----------------
      */
     if (nodomains > 64) {
-        null_head = (char *) palloc(nodomains+1);
-	fjIsNull = (bool *) palloc(nodomains+1);
+        null_head = (char *) palloc(nodomains + 1);
+        fjIsNull = (bool *) palloc(nodomains + 1);
     } else {
-	null_head = &nulls_array[0];
-	fjIsNull = &fjNullArray[0];
+        null_head = &nulls_array[0];
+        fjIsNull = &fjNullArray[0];
     }
-    
+
     /* ----------------
      *	evaluate all the expressions in the target list
      * ----------------
      */
     EV_printf("ExecTargetList: setting target list values\n");
-    
+
     *isDone = true;
     foreach (tl, targetlist) {
-	/* ----------------
-	 *    remember, a target list is a list of lists:
-	 *
-	 *	((<resdom | fjoin> expr) (<resdom | fjoin> expr) ...)
-	 *
-	 *    tl is a pointer to successive cdr's of the targetlist
-	 *    tle is a pointer to the target list entry in tl
-	 * ----------------
-	 */
-	tle = lfirst(tl);
+        /* ----------------
+         *    remember, a target list is a list of lists:
+         *
+         *	((<resdom | fjoin> expr) (<resdom | fjoin> expr) ...)
+         *
+         *    tl is a pointer to successive cdr's of the targetlist
+         *    tle is a pointer to the target list entry in tl
+         * ----------------
+         */
+        tle = lfirst(tl);
 
-	if (tle->resdom != NULL) {
-	    expr       = tle->expr;
-	    resdom     = tle->resdom;
-	    resind     = resdom->resno - 1;
-	    constvalue = (Datum) ExecEvalExpr(expr,
-					      econtext,
-					      &isNull,
-					      isDone);
-	    
-	    if ((IsA(expr,Iter)) && (*isDone))
-		return (HeapTuple)NULL;
-	    
-	    values[resind] = constvalue;
-	    
-	    if (!isNull)
-		null_head[resind] = ' ';
-	    else
-		null_head[resind] = 'n';
-	}else {
-	    int      curNode;
-	    Resdom   *fjRes;
-	    List     *fjTlist   = (List *)tle->expr;
-	    Fjoin    *fjNode    = tle->fjoin;
- 	    int      nNodes    = fjNode->fj_nNodes;
-	    DatumPtr results   = fjNode->fj_results;
-	    
-	    ExecEvalFjoin(tle, econtext, fjIsNull, isDone);
-	    if (*isDone)
-		return (HeapTuple)NULL;
-	    
-	    /*
-	     * get the result from the inner node
-	     */
-	    fjRes = (Resdom *)fjNode->fj_innerNode;
-	    resind = fjRes->resno - 1;
-	    if (fjIsNull[0])
-		null_head[resind] = 'n';
-	    else {
-		null_head[resind] = ' ';
-		values[resind] = results[0];
-	    }
-	    
-	    /*
-	     * Get results from all of the outer nodes
-	     */
-	    for (curNode = 1;
-		 curNode < nNodes;
-		 curNode++, fjTlist = lnext(fjTlist))
-		{
+        if (tle->resdom != NULL) {
+            expr = tle->expr;
+            resdom = tle->resdom;
+            resind = resdom->resno - 1;
+            constvalue = (Datum) ExecEvalExpr(expr,
+                                              econtext,
+                                              &isNull,
+                                              isDone);
+
+            if ((IsA(expr, Iter)) && (*isDone))
+                return (HeapTuple) NULL;
+
+            values[resind] = constvalue;
+
+            if (!isNull)
+                null_head[resind] = ' ';
+            else
+                null_head[resind] = 'n';
+        } else {
+            int curNode;
+            Resdom *fjRes;
+            List *fjTlist = (List *) tle->expr;
+            Fjoin *fjNode = tle->fjoin;
+            int nNodes = fjNode->fj_nNodes;
+            DatumPtr results = fjNode->fj_results;
+
+            ExecEvalFjoin(tle, econtext, fjIsNull, isDone);
+            if (*isDone)
+                return (HeapTuple) NULL;
+
+            /*
+             * get the result from the inner node
+             */
+            fjRes = (Resdom *) fjNode->fj_innerNode;
+            resind = fjRes->resno - 1;
+            if (fjIsNull[0])
+                null_head[resind] = 'n';
+            else {
+                null_head[resind] = ' ';
+                values[resind] = results[0];
+            }
+
+            /*
+             * Get results from all of the outer nodes
+             */
+            for (curNode = 1;
+                 curNode < nNodes;
+                 curNode++, fjTlist = lnext(fjTlist)) {
 #if 0 /* what is this?? */
-		    Node *outernode = lfirst(fjTlist);
-		    fjRes = (Resdom *)outernode->iterexpr;
-#endif		    
-		    resind = fjRes->resno - 1;
-		    if (fjIsNull[curNode]) {
-			null_head[resind] = 'n';
-		    }else {
-			null_head[resind] = ' ';
-			values[resind] = results[curNode];
-		    }
-		}
-	}
+                Node *outernode = lfirst(fjTlist);
+                fjRes = (Resdom *)outernode->iterexpr;
+#endif
+                resind = fjRes->resno - 1;
+                if (fjIsNull[curNode]) {
+                    null_head[resind] = 'n';
+                } else {
+                    null_head[resind] = ' ';
+                    values[resind] = results[curNode];
+                }
+            }
+        }
     }
-    
+
     /* ----------------
      * 	form the new result tuple (in the "normal" context)
      * ----------------
      */
     newTuple = (HeapTuple)
-	heap_formtuple(targettype, values, null_head);
-    
+            heap_formtuple(targettype, values, null_head);
+
     /* ----------------
      *	free the nulls array if we allocated one..
      * ----------------
      */
     if (nodomains > 64) pfree(null_head);
-    
+
     return
-	newTuple;
+            newTuple;
 }
 
 /* ----------------------------------------------------------------
@@ -1442,38 +1407,37 @@ ExecTargetList(List *targetlist,
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
-ExecProject(ProjectionInfo *projInfo, bool *isDone)
-{
-    TupleTableSlot	*slot;
-    List 	 	*targetlist;
-    int 	 	len;
-    TupleDesc	 	tupType;
-    Datum 	 	*tupValue;
-    ExprContext	 	*econtext;
-    HeapTuple		newTuple;
-    
+ExecProject(ProjectionInfo *projInfo, bool *isDone) {
+    TupleTableSlot *slot;
+    List *targetlist;
+    int len;
+    TupleDesc tupType;
+    Datum *tupValue;
+    ExprContext *econtext;
+    HeapTuple newTuple;
+
     /* ----------------
      *	sanity checks
      * ----------------
      */
     if (projInfo == NULL)
-	return (TupleTableSlot *) NULL;
+        return (TupleTableSlot *) NULL;
 
     /* ----------------
      *  get the projection info we want
      * ----------------
      */
-    slot = 		projInfo->pi_slot;
-    targetlist = 	projInfo->pi_targetlist;
-    len = 		projInfo->pi_len;
-    tupType = 		slot->ttc_tupleDescriptor;
-    
-    tupValue = 		projInfo->pi_tupValue;
-    econtext = 		projInfo->pi_exprContext;
-    
+    slot = projInfo->pi_slot;
+    targetlist = projInfo->pi_targetlist;
+    len = projInfo->pi_len;
+    tupType = slot->ttc_tupleDescriptor;
+
+    tupValue = projInfo->pi_tupValue;
+    econtext = projInfo->pi_exprContext;
+
     if (targetlist == NIL) {
-      *isDone = true;
-      return (TupleTableSlot *) NULL;
+        *isDone = true;
+        return (TupleTableSlot *) NULL;
     }
 
     /* ----------------
@@ -1481,12 +1445,12 @@ ExecProject(ProjectionInfo *projInfo, bool *isDone)
      * ----------------
      */
     newTuple = ExecTargetList(targetlist,
-			      len,
-			      tupType,
-			      tupValue,
-			      econtext,
-			      isDone);
-    
+                              len,
+                              tupType,
+                              tupValue,
+                              econtext,
+                              isDone);
+
     /* ----------------
      *	store the tuple in the projection slot and return the slot.
      *
@@ -1496,9 +1460,9 @@ ExecProject(ProjectionInfo *projInfo, bool *isDone)
      * ----------------
      */
     return (TupleTableSlot *)
-	ExecStoreTuple(newTuple, /* tuple to store */
-		       slot,     /* slot to store in */
-		       InvalidBuffer, 	   /* tuple has no buffer */
-		       true);
+            ExecStoreTuple(newTuple, /* tuple to store */
+                           slot,     /* slot to store in */
+                           InvalidBuffer,       /* tuple has no buffer */
+                           true);
 }
 

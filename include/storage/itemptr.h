@@ -10,7 +10,7 @@
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	ITEMPTR_H
+#ifndef    ITEMPTR_H
 #define ITEMPTR_H
 
 #include "c.h"
@@ -26,11 +26,11 @@
  * (ItemIdData) array we want.
  */
 typedef struct ItemPointerData {
-    BlockIdData		ip_blkid;
-    OffsetNumber	ip_posid;
+    BlockIdData ip_blkid;
+    OffsetNumber ip_posid;
 } ItemPointerData;
 
-typedef ItemPointerData	*ItemPointer;
+typedef ItemPointerData *ItemPointer;
 
 /* ----------------
  *	support macros
@@ -111,5 +111,5 @@ typedef ItemPointerData	*ItemPointer;
 
 extern bool ItemPointerEquals(ItemPointer pointer1, ItemPointer pointer2);
 
-#endif	/* ITEMPTR_H */
+#endif    /* ITEMPTR_H */
 

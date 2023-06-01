@@ -45,7 +45,7 @@ s...)
  */
 #define _ALIGNSIZE(TYPE)	offsetof(struct { char __c; TYPE __t;}, __t)
 #define _ALIGN(TYPE, LEN) \
-	(((long)(LEN) + (_ALIGNSIZE(TYPE) - 1)) & ~(_ALIGNSIZE(TYPE) - 1))
+    (((long)(LEN) + (_ALIGNSIZE(TYPE) - 1)) & ~(_ALIGNSIZE(TYPE) - 1))
 #define SHORTALIGN(LEN)		_ALIGN(short, (LEN))
 #define INTALIGN(LEN)		_ALIGN(int, (LEN))
 #define LONGALIGN(LEN)		_ALIGN(long, (LEN))
@@ -57,30 +57,30 @@ s...)
 /*
  *	SHORTALIGN(LEN)	- length (or address) aligned for shorts
  */
-#define	SHORTALIGN(LEN)\
-	(((long)(LEN) + (sizeof (short) - 1)) & ~(sizeof (short) - 1))
+#define    SHORTALIGN(LEN)\
+    (((long)(LEN) + (sizeof (short) - 1)) & ~(sizeof (short) - 1))
 
 #define INTALIGN(LEN)\
-	(((long)(LEN) + (sizeof (int) - 1)) & ~(sizeof (int) -1))
+    (((long)(LEN) + (sizeof (int) - 1)) & ~(sizeof (int) -1))
 
 /*
  *	LONGALIGN(LEN)	- length (or address) aligned for longs
  */
-#if defined(sun) && ! defined(sparc)
+#if defined(sun) && !defined(sparc)
 #define	LONGALIGN(LEN)	SHORTALIGN(LEN)
 #elif defined (PORTNAME_alpha)
 #define	LONGALIGN(LEN)\
-	(((long)(LEN) + (sizeof (int) - 1)) & ~(sizeof (int) -1))
+    (((long)(LEN) + (sizeof (int) - 1)) & ~(sizeof (int) -1))
 #else
-#define	LONGALIGN(LEN)\
-	(((long)(LEN) + (sizeof (long) - 1)) & ~(sizeof (long) -1))
+#define    LONGALIGN(LEN)\
+    (((long)(LEN) + (sizeof (long) - 1)) & ~(sizeof (long) -1))
 #endif
 
 #define DOUBLEALIGN(LEN)\
-	(((long)(LEN) + (sizeof (double) - 1)) & ~(sizeof (double) -1))
+    (((long)(LEN) + (sizeof (double) - 1)) & ~(sizeof (double) -1))
 
 #define MAXALIGN(LEN)\
-	(((long)(LEN) + (sizeof (double) - 1)) & ~(sizeof (double) -1))
+    (((long)(LEN) + (sizeof (double) - 1)) & ~(sizeof (double) -1))
 
 /*****************************************************************************
  *    bit.h                                                                  *
@@ -101,32 +101,39 @@ s...)
  */
 
 typedef struct OrderedElemData OrderedElemData;
-typedef OrderedElemData* OrderedElem;
+typedef OrderedElemData *OrderedElem;
 
 typedef struct OrderedSetData OrderedSetData;
-typedef OrderedSetData* OrderedSet;
+typedef OrderedSetData *OrderedSet;
 
 struct OrderedElemData {
-    OrderedElem	next;	/* Next elem or &this->set->dummy	*/
-    OrderedElem	prev;	/* Previous elem or &this->set->head	*/
-    OrderedSet	set;	/* Parent set				*/
+    OrderedElem next;    /* Next elem or &this->set->dummy	*/
+    OrderedElem prev;    /* Previous elem or &this->set->head	*/
+    OrderedSet set;    /* Parent set				*/
 };
 
 struct OrderedSetData {
-    OrderedElem	head;	/* First elem or &this->dummy		*/
-    OrderedElem	dummy;	/* (hack) Terminator == NULL		*/
-    OrderedElem	tail;	/* Last elem or &this->head		*/
-    Offset	offset;	/* Offset from struct base to elem	*/
+    OrderedElem head;    /* First elem or &this->dummy		*/
+    OrderedElem dummy;    /* (hack) Terminator == NULL		*/
+    OrderedElem tail;    /* Last elem or &this->head		*/
+    Offset offset;    /* Offset from struct base to elem	*/
     /* this could be signed short int! */
 };
 
 extern void OrderedSetInit(OrderedSet set, Offset offset);
+
 extern bool OrderedSetContains(OrderedSet set, OrderedElem elem);
+
 extern Pointer OrderedSetGetHead(OrderedSet set);
+
 extern Pointer OrderedSetGetTail(OrderedSet set);
+
 extern Pointer OrderedElemGetPredecessor(OrderedElem elem);
+
 extern Pointer OrderedElemGetSuccessor(OrderedElem elem);
-extern void  OrderedElemPop(OrderedElem elem);
+
+extern void OrderedElemPop(OrderedElem elem);
+
 extern void OrderedElemPushInto(OrderedElem elem, OrderedSet Set);
 
 /*****************************************************************************
@@ -188,21 +195,21 @@ typedef Pointer AllocPointer;
  *	See above for a description of the various nodes.
  */
 typedef enum AllocMode {
-    DynamicAllocMode,	/* always dynamically allocate */
-    StaticAllocMode,	/* always "statically" allocate */
-    TunableAllocMode,	/* allocations are "tuned" */
-    BoundedAllocMode	/* allocations bounded to fixed usage */
+    DynamicAllocMode,    /* always dynamically allocate */
+    StaticAllocMode,    /* always "statically" allocate */
+    TunableAllocMode,    /* allocations are "tuned" */
+    BoundedAllocMode    /* allocations bounded to fixed usage */
 } AllocMode;
 
-#define DefaultAllocMode	DynamicAllocMode
+#define DefaultAllocMode    DynamicAllocMode
 
 /*
  * AllocSet --
  *	Allocation set.
  */
 typedef struct AllocSetData {
-    OrderedSetData	setData;
-	/* Note: this will change in the future to support other modes */
+    OrderedSetData setData;
+    /* Note: this will change in the future to support other modes */
 } AllocSetData;
 
 typedef AllocSetData *AllocSet;
@@ -217,24 +224,28 @@ typedef AllocSetData *AllocSet;
  * AllocSetIsValid --
  *	True iff set is valid allocation set.
  */
-#define AllocSetIsValid(set) PointerIsValid(set)    
+#define AllocSetIsValid(set) PointerIsValid(set)
 
 extern void AllocSetInit(AllocSet set, AllocMode mode, Size limit);
 
 extern void AllocSetReset(AllocSet set);
 
 extern bool AllocSetContains(AllocSet set, AllocPointer pointer);
+
 extern AllocPointer AllocSetAlloc(AllocSet set, Size size);
+
 extern void AllocSetFree(AllocSet set, AllocPointer pointer);
-extern AllocPointer AllocSetRealloc(AllocSet set, AllocPointer pointer, 
-				    Size size);
+
+extern AllocPointer AllocSetRealloc(AllocSet set, AllocPointer pointer,
+                                    Size size);
 
 extern int AllocSetIterate(AllocSet set,
-			     void (*function)(AllocPointer pointer));
+                           void (*function)(AllocPointer pointer));
 
 extern int AllocSetCount(AllocSet set);
 
 extern void AllocPointerDump(AllocPointer pointer);
+
 extern void AllocSetDump(AllocSet set);
 
 /*****************************************************************************
@@ -253,9 +264,9 @@ extern void AllocSetDump(AllocSet set);
  *	LibCCopyLength is only used within this file. -cim 6/12/90
  * 
  */
-typedef int	LibCCopyLength;
+typedef int LibCCopyLength;
 
-typedef 	CLibCopyLength;
+typedef CLibCopyLength;
 
 /*
  * MemoryCopy --
@@ -268,14 +279,14 @@ typedef 	CLibCopyLength;
  *    limit.h --	POSTGRES limit definitions.                          *
  *****************************************************************************/
 
-#define MaxBitsPerByte	8
+#define MaxBitsPerByte    8
 
-typedef uint32	AttributeSize;	/* XXX should be defined elsewhere */
+typedef uint32 AttributeSize;    /* XXX should be defined elsewhere */
 
-#define MaxHeapTupleSize	0x7fffffff
-#define MaxAttributeSize	0x7fffffff
+#define MaxHeapTupleSize    0x7fffffff
+#define MaxAttributeSize    0x7fffffff
 
-#define MaxIndexAttributeNumber	7
+#define MaxIndexAttributeNumber    7
 
 
 #endif /* MEMUTILS_H */

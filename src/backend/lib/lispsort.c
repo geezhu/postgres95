@@ -26,31 +26,31 @@
 **             the nodes sorted.  The old list is *not* freed or modified (?)
 */
 List *lisp_qsort(List *the_list,    /* the list to be sorted */
-		 int (*compare)())      /* function to compare two nodes */
+                 int (*compare)())      /* function to compare two nodes */
 {
     int i;
     size_t num;
     List **nodearray;
     List *tmp, *output;
-    
+
     /* find size of list */
     num = length(the_list);
     if (num < 2)
-	return(copyObject(the_list));
-    
+        return (copyObject(the_list));
+
     /* copy elements of the list into an array */
     nodearray = (List **) palloc(num * sizeof(List *));
-    
+
     for (tmp = the_list, i = 0; tmp != NIL; tmp = lnext(tmp), i++)
-	nodearray[i] = copyObject(lfirst(tmp));
-    
+        nodearray[i] = copyObject(lfirst(tmp));
+
     /* sort the array */
     pg_qsort(nodearray, num, sizeof(List *), compare);
-    
+
     /* lcons together the array elements */
     output = NIL;
     for (i = num - 1; i >= 0; i--)
-	output = lcons(nodearray[i], output);
-    
-    return(output);
+        output = lcons(nodearray[i], output);
+
+    return (output);
 }

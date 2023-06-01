@@ -17,35 +17,33 @@
 #include "postgres.h"
 
 #include "access/attnum.h"
-#include "utils/geo-decls.h"	/* where function declarations go */
+#include "utils/geo-decls.h"    /* where function declarations go */
 #include "utils/palloc.h"
 
 float64
-areasel(Oid opid, 
-	Oid relid, 
-	AttrNumber attno, 
-	char *value,
-	int32 flag)
-{
-    float64	result;
-    
+areasel(Oid opid,
+        Oid relid,
+        AttrNumber attno,
+        char *value,
+        int32 flag) {
+    float64 result;
+
     result = (float64) palloc(sizeof(float64data));
     *result = 1.0 / 4.0;
-    return(result);
+    return (result);
 }
 
 float64
 areajoinsel(Oid opid,
-	    Oid relid,
-	    AttrNumber attno,
-	    char *value,
-	    int32 flag)
-{
-    float64	result;
-    
+            Oid relid,
+            AttrNumber attno,
+            char *value,
+            int32 flag) {
+    float64 result;
+
     result = (float64) palloc(sizeof(float64data));
     *result = 1.0 / 4.0;
-    return(result);
+    return (result);
 }
 
 /*
@@ -66,30 +64,28 @@ areajoinsel(Oid opid,
 
 float64
 leftsel(Oid opid,
-	Oid relid,
-	AttrNumber attno,
-	char *value,
-	int32 flag)
-{
-    float64	result;
-    
+        Oid relid,
+        AttrNumber attno,
+        char *value,
+        int32 flag) {
+    float64 result;
+
     result = (float64) palloc(sizeof(float64data));
     *result = 1.0 / 6.0;
-    return(result);
+    return (result);
 }
 
 float64
 leftjoinsel(Oid opid,
-	    Oid relid,
-	    AttrNumber attno,
-	    char *value,
-	    int32 flag)
-{
-    float64	result;
-    
+            Oid relid,
+            AttrNumber attno,
+            char *value,
+            int32 flag) {
+    float64 result;
+
     result = (float64) palloc(sizeof(float64data));
     *result = 1.0 / 6.0;
-    return(result);
+    return (result);
 }
 
 /*
@@ -97,28 +93,26 @@ leftjoinsel(Oid opid,
  */
 float64
 contsel(Oid opid,
-	Oid relid,
-	AttrNumber attno,
-	char *value,
-	int32 flag)
-{
-    float64	result;
-    
+        Oid relid,
+        AttrNumber attno,
+        char *value,
+        int32 flag) {
+    float64 result;
+
     result = (float64) palloc(sizeof(float64data));
     *result = 1.0 / 10.0;
-    return(result);
+    return (result);
 }
 
 float64
 contjoinsel(Oid opid,
-	    Oid relid,
-	    AttrNumber attno,
-	    char *value,
-	    int32 flag)
-{
-    float64	result;
-    
+            Oid relid,
+            AttrNumber attno,
+            char *value,
+            int32 flag) {
+    float64 result;
+
     result = (float64) palloc(sizeof(float64data));
     *result = 1.0 / 10.0;
-    return(result);
+    return (result);
 }
